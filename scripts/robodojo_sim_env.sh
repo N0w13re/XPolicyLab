@@ -43,8 +43,9 @@
 set -u
 
 ROBODOJO_ROOT="${1:-${ROBODOJO_ROOT:-}}"
+ROBODOJO_SIM_ENV="${2:-${ROBODOJO_SIM_ENV:-RoboDojo}}"
 if [[ -z "${ROBODOJO_ROOT}" ]]; then
-  echo "[robodojo-env] usage: source scripts/robodojo_sim_env.sh <RoboDojo-eval root>" >&2
+  echo "[robodojo-env] usage: source scripts/robodojo_sim_env.sh <RoboDojo-eval root> [sim conda env]" >&2
   return 1 2>/dev/null || exit 1
 fi
 if [[ ! -d "${ROBODOJO_ROOT}" ]]; then
@@ -97,11 +98,24 @@ if [[ ! -e "${ROBODOJO_CUDA_NATIVE}/libcuda.so.1" ]]; then
     ln -sf libcuda.so.1 "${ROBODOJO_CUDA_NATIVE}/libcuda.so"
   fi
 fi
+# Scope the override to the simulator conda env rather than exporting it here, so policy
+# servers -- separate processes, some of which want the newer CUDA runtime -- are untouched.
+# run_sim_env_client.sh reaches the simulator through `conda activate`, which runs activate.d.
 if [[ -e "${ROBODOJO_CUDA_NATIVE}/libcuda.so.1" ]]; then
-  case ":${LD_LIBRARY_PATH:-}:" in
-    *":${ROBODOJO_CUDA_NATIVE}:"*) ;;
-    *) export LD_LIBRARY_PATH="${ROBODOJO_CUDA_NATIVE}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" ;;
-  esac
+  sim_env_prefix="$(conda run -n "${ROBODOJO_SIM_ENV}" printenv CONDA_PREFIX 2>/dev/null | tail -1)"
+  if [[ -z "${sim_env_prefix}" || ! -d "${sim_env_prefix}" ]]; then
+    echo "[robodojo-env] WARNING: conda env '${ROBODOJO_SIM_ENV}' not found; not installing activate hook" >&2
+  else
+    mkdir -p "${sim_env_prefix}/etc/conda/activate.d"
+    cat > "${sim_env_prefix}/etc/conda/activate.d/zz-robodojo-native-cuda.sh" <<HOOK
+# Installed by XPolicyLab scripts/robodojo_sim_env.sh.
+# Isaac Sim shares Vulkan memory with CUDA, so it must use the CUDA driver that matches the
+# loaded kernel module rather than the forward-compatibility one on the default search path.
+export LD_LIBRARY_PATH="${ROBODOJO_CUDA_NATIVE}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
+export OMNI_KIT_ACCEPT_EULA=YES
+HOOK
+    echo "[robodojo-env] installed activate hook in ${sim_env_prefix}"
+  fi
 fi
 
 # --- 3. Kit settings ----------------------------------------------------------------------
@@ -117,5 +131,5 @@ if [[ -f "${ROBODOJO_EVAL_SH}" ]] && ! grep -q 'ROBODOJO_KIT_ARGS' "${ROBODOJO_E
 fi
 
 echo "[robodojo-env] ROBODOJO_ROOT=${ROBODOJO_ROOT}"
+echo "[robodojo-env] ROBODOJO_SIM_ENV=${ROBODOJO_SIM_ENV}"
 echo "[robodojo-env] ROBODOJO_KIT_ARGS=${ROBODOJO_KIT_ARGS}"
-echo "[robodojo-env] LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-}"
