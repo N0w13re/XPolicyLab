@@ -8,9 +8,11 @@ instead hands out one task at a time to whichever GPU is actually free, and
 walks a priority list that can span several policies.
 
 It coexists with a running sweep: a GPU counts as free only when no
-`eval_client/main.py --device_id <gpu>` process has been seen on it for
-several consecutive polls, which also covers the 1-3 minute reset gap between
-two episode batches of the same task.
+`python -u src/eval_client/main.py --device_id <gpu>` process has been seen
+on it for several consecutive polls, which also covers the 1-3 minute reset
+gap between two episode batches of the same task. A looser `eval_client`
+substring match is not used: diagnostic `pgrep -f` and agent shells that
+embed that string would otherwise pin a GPU as busy.
 
 Completion is judged the way `scripts/internal/summarize_result.py` judges it:
 the newest timestamp directory of a task must hold the task's full episode
@@ -247,7 +249,9 @@ def isaac_clients() -> tuple[set[str], set[tuple[str, str]]]:
     gpus: set[str] = set()
     running: set[tuple[str, str]] = set()
     for line in out.splitlines():
-        if "eval_client/main.py" not in line:
+        # Require the real client argv. A `pgrep -f eval_client/main.py --device_id N`
+        # or an agent shell that embeds that string otherwise marks GPU N busy.
+        if "python -u src/eval_client/main.py" not in line:
             continue
         gpu = re.search(r"--device_id (\d+)", line)
         if gpu:

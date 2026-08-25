@@ -9,7 +9,7 @@ recorded single forward passes and never entered the simulator.
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
 | Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (`2026-08-25_07-41-06_smoke` sweep plus Traj retries) | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | 6 cards; partial `_result.json` on 5 tasks (0/42 cells; 0 binary success so far) | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | 7 cards; partial `_result.json` on 5 tasks (0/42 cells; 0 binary success so far) | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; venv has msgpack-numpy/pydantic, `last.ckpt` + local Qwen3-VL processor on disk | not started |
 
 Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
@@ -33,7 +33,8 @@ camera fail mp4s present): `imitate_sorting_sequence` **17/50** (51 mp4),
 `pour_by_language` **10/50** (30 mp4), `fasten_screws` **10/50** (30 mp4),
 `play_stacking_toy` **10/50** (30 mp4, second horizon just reset ~3/1200),
 `classify_objects_by_language` **10/50** (30 mp4). `play_tic_tac_toe` first
-horizon ~824/1100 (no result yet). Compare still ignores G05 until 50 episodes
+horizon ~824/1100 (no result yet). GPU6 launched G05 `classify_objects` at
+17:35 CST after the idle-match fix. Compare still ignores G05 until 50 episodes
 per cell. Forward JSON is not this evidence.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
@@ -67,6 +68,11 @@ properties make it safe to run next to a live sweep:
   newer timestamp would hide the sweep's `_result.json`. That race happened once
   (GPU7 vs GPU4 on `push_T_random`, stamp `2026-08-25_16-16-14`); the duplicate
   tree was removed before it wrote a result.
+- Idle detection matches `python -u src/eval_client/main.py --device_id N` only.
+  A looser `eval_client` substring made GPU6 look busy after `stack_blocks`
+  finished, because diagnostic `pgrep -f` / agent shells embed that string. The
+  scheduler was restarted at 17:33 CST (pid in `/tmp/elastic-sched.pid`);
+  existing Isaac clients were left running. GPU6 then took G05 `classify_objects`.
 
 Completion is judged exactly as `summarize_result.py` judges it: the newest timestamp
 directory must hold the task's full `_task.yml` budget. That comparison is
