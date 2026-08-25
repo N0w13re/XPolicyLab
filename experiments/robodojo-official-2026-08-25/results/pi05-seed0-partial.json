@@ -2,7 +2,7 @@
   "policies": {
     "Pi_05": {
       "delta": -6.91,
-      "episodes": 750,
+      "episodes": 800,
       "incomplete_tasks": [
         "arrange_largest_number",
         "deposit_coin",
@@ -14,7 +14,6 @@
         "make_toast",
         "match_and_pick_from_conveyor",
         "pack_objects_into_box",
-        "pick_from_conveyor_by_image",
         "play_Xylophone",
         "play_tic_tac_toe",
         "plug_in_charger",
@@ -41,7 +40,7 @@
           "successes": 0
         },
         "arrange_largest_number_random": {
-          "episodes": 20,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -119,13 +118,19 @@
           "successes": 0
         },
         "pick_from_conveyor_by_image": {
-          "episodes": 40,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
         "play_stacking_toy": {
           "episodes": 50,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "pour_balls_into_vase": {
+          "episodes": 10,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -143,13 +148,13 @@
           "successes": 0
         },
         "press_by_number": {
-          "episodes": 20,
+          "episodes": 30,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
         "push_T": {
-          "episodes": 10,
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -191,7 +196,7 @@
           "successes": 0
         },
         "swap_blocks": {
-          "episodes": 30,
+          "episodes": 40,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -203,8 +208,8 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 15,
-      "score": 0.66,
+      "reported_tasks_complete": 16,
+      "score": 0.61875,
       "success_rate": 0.0
     }
   },
