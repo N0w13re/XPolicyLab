@@ -143,6 +143,12 @@ against the recorded `[106.3, 81.7, 72.8]` / **33.5** — same distribution, ver
 `results/render-diagnosis/cam_head_train_before_after.png` (recorded, before,
 after) and `render_fix_verified.json`.
 
+The 8-card re-run itself was spot-checked at 18:53 CST on a live
+`imitate_sorting_sequence` fail video: `mean_rgb` `[111.8, 87.0, 77.7]`,
+channel spread **34.1** (`results/render-diagnosis/rerun_live_color.json`).
+First post-fix `_result.json` is that task's first 10/50 batch (0 success so
+far; not yet a reported cell).
+
 ### Consequence: everything before the fix was discarded
 
 All eight cards were stopped at 18:07 CST — sweep pid 216753, the elastic
