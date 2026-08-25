@@ -29,8 +29,11 @@ import requests
 
 HF_BASE = "https://huggingface.co/datasets/RoboDojo-Benchmark/RoboDojo/resolve/main"
 
-# Everything the arx_x5 simulation benchmark touches. Traj/ and the other embodiments are
-# multi-TB and are not needed to evaluate policies.
+# Everything the arx_x5 simulation benchmark touches. The repo also carries data/ and ckpt/
+# trees totalling ~6.7 TB of training data and other policies' weights; none of that is
+# needed to evaluate. Assets/Traj holds the scripted support-arm trajectories that
+# imitate_sorting_sequence replays, and is easy to miss because tasks that need it fail late,
+# after a full simulator startup.
 DEFAULT_PREFIXES = (
     "Assets/Robots/",
     "Assets/Eval_Layout/RoboDojo/arx_x5/",
@@ -39,6 +42,7 @@ DEFAULT_PREFIXES = (
     "Assets/Background/",
     "Assets/Room/",
     "Assets/Sensor/",
+    "Assets/Traj/RoboDojo/",
 )
 
 
