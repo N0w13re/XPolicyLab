@@ -12,25 +12,32 @@ recorded single forward passes and never entered the simulator.
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued after Pi_05 on GPUs 2–7 while Traj still uses 0/1 (`scripts/chain_robodojo_remaining.sh`) | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued after G05 | not started |
 
-Pi_05 seed 0 snapshot (partial): see `results/pi05-seed0-partial.json` (19/42 reported
-cells, 950 episodes, SR 0.00% vs official 6.91% — not a reproduction verdict). A
-reported-task cell is counted only at 50 episodes.
+Pi_05 seed 0 snapshot (partial, 2026-08-25 13:47 CST): see
+`results/pi05-seed0-partial.json` (20/42 reported cells, 1000 episodes, SR 0.00% /
+score 0.50 vs official 6.91% — not a reproduction verdict). A reported-task cell is
+counted only at 50 episodes. `pour_balls_into_vase` finished 50/50 with 0 successes;
+GPU 7 then started `hang_mugs_random`.
+
+In-flight Isaac clients (policy + sim co-located): GPU0 `make_kong` (Traj retry, 10
+episodes on disk, stepping ~391/600), GPU1 `imitate_sorting_sequence` (9 episodes,
+~132/1600), GPU2 `match_and_pick_from_conveyor` (30 episodes, 2 successes, three
+camera `.tmp.mp4` streams writing), GPU3 `sort_nesting_dolls_by_size`, GPU4
+`pack_objects_into_box_random`, GPU5 `pack_objects_into_box`, GPU6
+`put_bottles_into_dustbin`, GPU7 `hang_mugs_random`. Sweep pid 216753 still alive;
+`scripts/chain_robodojo_remaining.sh` (tmux `eval-chain-g05-xiaomi`) is waiting on it.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
 sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now. Closed-loop
-retry: imitate on GPU 1 (videos under `eval_result/.../imitate_sorting_sequence/.../_stream/`),
-`make_kong` on idle GPU 0, `play_tic_tac_toe` starts on GPU 1 after imitate exits
-(`scripts/coord_pi05_traj_retry.sh`). `robodojo.sh eval --eval-num native` does not
-export `EVAL_NUM`; the Isaac client still reads 50 episodes from `_task.yml` /
+retry: imitate on GPU 1, `make_kong` on GPU 0, `play_tic_tac_toe` starts on GPU 1 after
+imitate exits (`scripts/coord_pi05_traj_retry.sh`). `robodojo.sh eval --eval-num native`
+does not export `EVAL_NUM`; the Isaac client still reads 50 episodes from `_task.yml` /
 `process_config` when the env var is unset, which is the official standalone budget.
 
-The latest `_result.json` files currently contain one closed-loop success
-(`match_and_pick_from_conveyor` 1/10 while that task is still running). Most finished
-cells are 0/50, which is still compatible with an overall 6.91% once the remaining
-tasks fill in. Camera ffmpeg streams are writing for imitate and make_kong.
+Most finished cells are 0/50, which is still compatible with an overall 6.91% once the
+remaining tasks fill in. Traj retries have 30 ffmpeg streams each under `_stream/`.
 
 G05 and Xiaomi closed-loop sweeps have not started; their policy servers do load on this
-host (`results/g05-forward-gpu1.json`, `results/xiaomi-forward-gpu1.json`, both `"status": "passed"`).
+host (`results/g05-forward-gpu1.json`, `results/xiaomi-forward-gpu1.json`, both `"status": "passed"`). Forward JSON is not closed-loop evidence.
 
 The per-task logs and videos stay in the RoboDojo checkout under `smoke_results/<run_id>/` and `eval_result/`, which are far too large to commit. Scheduler stdout is `logs/<policy>-seed<seed>.log`.
 

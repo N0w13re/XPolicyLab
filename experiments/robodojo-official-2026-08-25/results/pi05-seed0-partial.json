@@ -2,7 +2,7 @@
   "policies": {
     "Pi_05": {
       "delta": -6.91,
-      "episodes": 950,
+      "episodes": 1000,
       "incomplete_tasks": [
         "arrange_largest_number",
         "deposit_coin",
@@ -16,7 +16,6 @@
         "play_Xylophone",
         "play_tic_tac_toe",
         "plug_in_charger",
-        "pour_balls_into_vase",
         "pour_liquid_into_cup",
         "push_T",
         "put_bottles_into_dustbin",
@@ -84,6 +83,12 @@
           "success_rate": 0.0,
           "successes": 0
         },
+        "imitate_sorting_sequence": {
+          "episodes": 9,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "insert_key": {
           "episodes": 50,
           "score": 0.6,
@@ -93,6 +98,12 @@
         "insert_tubes": {
           "episodes": 50,
           "score": 3.6000000000000005,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "make_kong": {
+          "episodes": 10,
+          "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -109,9 +120,9 @@
           "successes": 0
         },
         "match_and_pick_from_conveyor": {
-          "episodes": 20,
-          "score": 10.0,
-          "success_rate": 10.0,
+          "episodes": 30,
+          "score": 6.666666666666667,
+          "success_rate": 6.666666666666667,
           "successes": 2
         },
         "organize_table": {
@@ -120,8 +131,14 @@
           "success_rate": 0.0,
           "successes": 0
         },
-        "pack_objects_into_box_random": {
+        "pack_objects_into_box": {
           "episodes": 10,
+          "score": 2.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "pack_objects_into_box_random": {
+          "episodes": 15,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -139,7 +156,7 @@
           "successes": 0
         },
         "pour_balls_into_vase": {
-          "episodes": 30,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -164,6 +181,18 @@
         },
         "push_T": {
           "episodes": 25,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "put_bottles_into_dustbin": {
+          "episodes": 10,
+          "score": 26.5,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "sort_nesting_dolls_by_size": {
+          "episodes": 10,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -217,8 +246,8 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 19,
-      "score": 0.5210526315789473,
+      "reported_tasks_complete": 20,
+      "score": 0.49500000000000005,
       "success_rate": 0.0
     }
   },
