@@ -49,9 +49,21 @@
       ],
       "official_success_rate": 14.88,
       "per_task": {
+        "fasten_screws": {
+          "episodes": 10,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "imitate_sorting_sequence": {
-          "episodes": 8,
-          "score": 0.625,
+          "episodes": 17,
+          "score": 0.29411764705882354,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "play_stacking_toy": {
+          "episodes": 10,
+          "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -250,7 +262,7 @@
           "successes": 0
         },
         "play_tic_tac_toe": {
-          "episodes": 10,
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
