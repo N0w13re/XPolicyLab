@@ -29,6 +29,12 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="Optional .mdl file to bind, forcing a textured material upload.",
     )
+    parser.add_argument(
+        "--rt-subframes",
+        type=int,
+        default=1,
+        help="Subframes per step. Raise it to let async material loads settle.",
+    )
     return parser.parse_args()
 
 
@@ -84,11 +90,22 @@ def main() -> int:
     annotator = rep.AnnotatorRegistry.get_annotator("rgb")
     annotator.attach([render_product])
 
+    import numpy as np
+
     for i in range(args.frames):
-        rep.orchestrator.step(rt_subframes=1)
+        rep.orchestrator.step(rt_subframes=args.rt_subframes)
         data = annotator.get_data()
         shape = getattr(data, "shape", None)
-        print(f"[repro] frame {i} rgb={shape}", flush=True)
+        # Per-channel means separate two failure modes that both "render fine":
+        # a fully grey frame (R==G==B) means material albedo never reached the
+        # renderer, which a shape-only check cannot see.
+        stats = ""
+        rgb = np.asarray(data)
+        if rgb.ndim == 3 and rgb.shape[-1] >= 3:
+            means = rgb[..., :3].reshape(-1, 3).mean(0)
+            spread = float(means.max() - means.min())
+            stats = f" mean_rgb={means.round(2).tolist()} channel_spread={spread:.2f}"
+        print(f"[repro] frame {i} rgb={shape}{stats}", flush=True)
 
     print("[repro] RENDER_OK", flush=True)
     app.close()

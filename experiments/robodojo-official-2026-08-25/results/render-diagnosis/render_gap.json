@@ -1,0 +1,26 @@
+{
+  "task": "stack_bowls",
+  "instruction": "Stack the three bowls together.",
+  "train_recorded": {
+    "mean_rgb": [
+      106.28,
+      81.65,
+      72.8
+    ],
+    "channel_spread": 33.49,
+    "luma_mean": 86.91,
+    "frac_below_5": 0.054
+  },
+  "ours_rendered": {
+    "mean_rgb": [
+      48.55,
+      48.45,
+      48.66
+    ],
+    "channel_spread": 0.21,
+    "luma_mean": 48.56,
+    "frac_below_5": 0.276
+  },
+  "finding": "Rendered frames carry no material albedo: the three channels are identical, the mahogany table shows no wood grain and the white bowls render black. The policy therefore sees a greyscale, untextured scene while the checkpoint was trained on colour.",
+  "open_loop_check": "pi05-openloop-stack_bowls-f122.json (MAE 0.0239 vs hold 0.5215)"
+}

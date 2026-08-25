@@ -1,0 +1,64 @@
+{
+  "accelerator": {
+    "backend": "gpu",
+    "devices": [
+      "cuda:0"
+    ],
+    "selected_device": "cuda"
+  },
+  "checkpoint": "RoboDojo-sim-arx_x5-joint-0",
+  "episode": "/mnt/bn/robotics-data-mx/wenbo/XPolicyLab/experiments/robodojo-baseline-2026-08-23/data/episode_0000000.hdf5",
+  "frame": 122,
+  "inference_seconds": 25.733400931581855,
+  "instruction": "Stack the three bowls together.",
+  "interpretation": "Metrics compare one sampled policy trajectory with one recorded expert trajectory; they validate numerical semantics and scale, not exact trajectory reproduction or benchmark success.",
+  "load_seconds": 27.16452345997095,
+  "metrics": {
+    "packed_joint_action": {
+      "hold_mae": 0.5215068485346689,
+      "mae": 0.023905784600922613,
+      "max_abs": 0.15116870403289795,
+      "prediction_first": [
+        0.10416491329669952,
+        0.40720051527023315,
+        0.37725532054901123,
+        -0.032584428787231445,
+        0.22495761513710022,
+        -0.017521508038043976,
+        0.9989335536956787,
+        0.2345229983329773,
+        1.7676666975021362,
+        1.4949346780776978,
+        -0.7494975924491882,
+        -0.2795345187187195,
+        -0.24101963639259338,
+        0.9384545683860779
+      ],
+      "rmse": 0.03711575870295058,
+      "shape": [
+        50,
+        14
+      ],
+      "target_first": [
+        0.14144879579544067,
+        0.44188475608825684,
+        0.36875104904174805,
+        -0.01386476680636406,
+        0.27661657333374023,
+        -0.013134434819221497,
+        1.0,
+        0.2303973138332367,
+        1.7620611190795898,
+        1.4854668378829956,
+        -0.7446454167366028,
+        -0.2766028940677643,
+        -0.23549215495586395,
+        0.9409809708595276
+      ]
+    }
+  },
+  "policy": "Pi_05",
+  "prediction_steps": 50,
+  "status": "passed",
+  "validation": "real_training_sample_prediction_vs_ground_truth"
+}

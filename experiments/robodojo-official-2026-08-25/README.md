@@ -95,6 +95,40 @@ closed-loop evidence.
 
 The per-task logs and videos stay in the RoboDojo checkout under `smoke_results/<run_id>/` and `eval_result/`, which are far too large to commit. Scheduler stdout is `logs/<policy>-seed<seed>.log`.
 
+## The seed-0 numbers above are invalid: rendering has no material albedo
+
+Pi_05 seed 0 landed at **1.07%** against an official **6.91%**, and the gap is not
+sampling noise. It is a rendering defect on this host, so every closed-loop number
+recorded before it is fixed is measured against the wrong observation distribution
+and has to be re-run.
+
+Evidence in `results/render-diagnosis/`:
+
+- `cam_head_train_vs_rendered.png` — official recorded frame beside ours for the
+  same task. The mahogany table has no wood grain, the white bowls render black,
+  and only the already-black-and-white robot looks unchanged.
+- `render_gap.json` — the recorded frame has `mean_rgb` `[106.3, 81.7, 72.8]`
+  (channel spread **33.5**); ours has `[48.6, 48.5, 48.7]` (spread **0.21**).
+  Three identical channels means no albedo reached the renderer, and mean luma is
+  half the recorded value with 27.6% of pixels near black.
+- `pi05-openloop-stack_bowls-f122.json` — fed an official *recorded* frame, the
+  same checkpoint predicts the next 50 joint targets at **MAE 0.0239 rad**, versus
+  **0.5215** for a stay-still baseline. The adapter, checkpoint, norm stats, state
+  packing, CHW image layout and 25 Hz control rate are therefore all correct; only
+  the pixels the simulator produces are wrong.
+
+This also explains the per-task pattern. `stack_bowls` still reaches 36% because
+bowl silhouettes survive in greyscale, while every task that needs colour, texture
+or glyphs is exactly 0: `classify_objects`, `*_by_language`, `solve_equation`,
+`press_by_number`, `arrange_largest_number`.
+
+Ruled out so far: textures are real files, not LFS pointers
+(`Mahogany_Planks_BaseColor.png` is 5.7 MB); the MDL compiles with only C302
+implicit-conversion warnings; and `--/rtx/materialDb/syncLoads=true`
+`--/rtx/hydra/materialSyncLoads=true` with 16 subframes does not restore colour.
+`scripts/robodojo_render_smoke.py` now prints per-channel means, so a bad render
+reproduces in ~20 s instead of needing a full episode.
+
 ## Official numbers to reproduce
 
 Overall simulation success rate from the RoboDojo leaderboard:
