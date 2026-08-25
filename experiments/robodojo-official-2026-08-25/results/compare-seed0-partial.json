@@ -67,8 +67,14 @@
           "success_rate": 0.0,
           "successes": 0
         },
-        "imitate_sorting_sequence": {
+        "fasten_screws": {
           "episodes": 10,
+          "score": 4.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "imitate_sorting_sequence": {
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
