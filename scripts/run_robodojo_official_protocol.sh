@@ -38,6 +38,16 @@ mkdir -p "${log_dir}"
 echo "[protocol] seeds=${seeds} policies=${policies} gpus=${gpu_ids}"
 echo "[protocol] logs -> ${log_dir}"
 
+# A sweep reports per-task PASS/FAIL in the markdown summary it announces on stdout. Tasks
+# can fail for reasons that are fixed by the time the sweep ends -- a missing asset, a
+# transient simulator crash -- so retry them once rather than leaving holes in the table.
+failed_tasks_from_log() {
+  local log="$1" summary
+  summary="$(sed -n 's/^\[smoke_all_tasks\] markdown=//p' "${log}" | tail -1)"
+  [[ -n "${summary}" && -f "${summary}" ]] || return 0
+  awk -F'|' '$2 ~ /FAIL/ {gsub(/[ `]/, "", $3); print $3}' "${summary}" | paste -sd,
+}
+
 IFS=',' read -r -a seed_list <<< "${seeds//[[:space:]]/,}"
 IFS=',' read -r -a policy_list <<< "${policies}"
 
@@ -60,6 +70,21 @@ for seed in "${seed_list[@]}"; do
     rc=$?
     set -e
     echo "[protocol] ${policy} seed=${seed} rc=${rc} elapsed=$(( ($(date +%s) - started) / 60 ))min"
+
+    retry="$(failed_tasks_from_log "${log}")"
+    if [[ -n "${retry}" ]]; then
+      echo "[protocol] retrying failed tasks: ${retry}"
+      set +e
+      bash "${XPL_ROOT}/scripts/run_robodojo_sim_eval.sh" benchmark "${policy}" \
+        --eval-num native \
+        --seed "${seed}" \
+        --only "${retry}" \
+        --policy-gpu-ids "${gpu_ids}" \
+        --env-gpu-ids "${gpu_ids}" \
+        "${extra[@]}" > "${log%.log}-retry.log" 2>&1
+      echo "[protocol] retry rc=$?"
+      set -e
+    fi
   done
 done
 
