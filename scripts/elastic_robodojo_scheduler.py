@@ -200,24 +200,36 @@ def parse_sweep_runs(path: Path) -> dict[str, list[str]]:
 
 
 def sweep_reserved(
-    groups: dict[str, list[str]], runs: dict[str, list[str]]
+    groups: dict[str, list[str]],
+    runs: dict[str, list[str]],
+    incomplete: set[str] | None = None,
 ) -> tuple[set[str], set[str]]:
-    """Tasks the live sweep will still start, and GPUs whose shard is not done.
+    """Tasks the live sweep still owns, and GPUs whose shard is not done.
 
-    A shard is done only after every task in its list has a RUN record. Until
-    then the worker will launch the rest itself, including during the 1-3
-    minute gap between two tasks when the GPU looks idle. Those GPUs must not
-    receive elastic jobs, and those not-yet-RUN tasks must not be stolen onto
-    another card.
+    A shard is done only after every task in its list has a RUN record *and*
+    the last launched task has filled its episode budget. Until then:
+
+    - leftover (not-yet-RUN) tasks must not be stolen onto another card
+    - the last RUN on a shard may still be executing after leftover is empty;
+      stealing it races the sweep and produces two Isaac clients for one task
+    - those GPUs must not receive elastic jobs in the 1-3 minute gap between
+      two of the shard's own tasks
     """
     reserved: set[str] = set()
     active_gpus: set[str] = set()
+    incomplete = incomplete or set()
     for gpu, tasks in groups.items():
-        launched = set(runs.get(gpu, []))
+        launched_list = runs.get(gpu, [])
+        launched = set(launched_list)
         leftover = [t for t in tasks if t not in launched]
         if leftover:
             active_gpus.add(gpu)
             reserved.update(leftover)
+        if launched_list:
+            last = launched_list[-1]
+            if last in incomplete:
+                reserved.add(last)
+                active_gpus.add(gpu)
     return reserved, active_gpus
 
 
@@ -336,7 +348,15 @@ def main() -> int:
         busy, elsewhere = isaac_clients()
         groups = parse_sweep_groups(sweep_log)
         runs = parse_sweep_runs(sweep_log)
-        reserved_tasks, active_sweep_gpus = sweep_reserved(groups, runs)
+        incomplete_pi = {
+            task
+            for task in order
+            if episodes_on_disk(
+                robodojo_root, task, "Pi_05", args.env_cfg, args.seed, args.ckpt, "joint"
+            )
+            < budgets.get(task, 50)
+        }
+        reserved_tasks, active_sweep_gpus = sweep_reserved(groups, runs, incomplete_pi)
 
         pending: list[tuple[str, str]] = []
         per_policy_remaining: dict[str, int] = {}

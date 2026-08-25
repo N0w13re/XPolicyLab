@@ -38,8 +38,14 @@ card's static shard drains:
 python3 /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/elastic_robodojo_scheduler.py \
   --policies Pi_05,G05,Xiaomi_Robotics_1 --gpus 0,1,2,3,4,5,6,7 --seed 0 \
   --kill-pid 216753 --kill-pid-policy Pi_05 \
-  --sweep-log /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/experiments/robodojo-official-2026-08-25/logs/Pi_05-seed0.log
+  --sweep-log /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/experiments/robodojo-official-2026-08-25/logs/Pi_05-seed0.log \
+  --max-attempts 3
 ```
+
+Pid is recorded in `/tmp/elastic-sched.pid`. After a restart the process forgets
+in-flight elastic jobs, but it will not relaunch a `(policy, task)` that already
+has a live `eval_client`. A shard's last `RUN` stays reserved until that task's
+`_task.yml` budget is on disk, so a free GPU cannot steal it.
 
 `--kill-pid` releases the static sweep once Pi_05's table is complete, so a straggler
 shard cannot hold six cards hostage. `--dry-run` prints the remaining task count per
