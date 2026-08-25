@@ -13,21 +13,27 @@ recorded single forward passes and never entered the simulator.
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued behind G05 in the same scheduler | not started |
 
 Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
-pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~6.6 h so far).
-Snapshot at 14:15 CST: `results/pi05-seed0-partial.json` (**21/42** reported cells,
-1050 episodes, **SR 0.29%** / score 0.76 vs official 6.91%, Δ −6.62 — not a
+pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~6.7 h so far).
+Snapshot at 14:24 CST: `results/pi05-seed0-partial.json` (**23/42** reported cells,
+1150 episodes, **SR 0.26%** / score 0.72 vs official 6.91%, Δ −6.65 — not a
 reproduction verdict). A reported-task cell is counted only at 50 episodes.
+New complete paired cells since 14:15: `pack_objects_into_box` and
+`sort_nesting_dolls_by_size` (25+25 each). G05 and Xiaomi have not entered
+closed loop yet.
 
 The first complete cell with closed-loop successes is
 `match_and_pick_from_conveyor` **3/50** (6%), with 150 finalized camera videos
 (`episode_*_cam_{head,left_wrist,right_wrist}_{success,fail}.mp4`). Still-running
-`put_bottles_into_dustbin` is 2/30.
+`put_bottles_into_dustbin` is **4/40** (10% so far; videos 120).
 
-In-flight Isaac clients: GPU0 `make_kong` (Traj, 29/50), GPU1
-`imitate_sorting_sequence` (19/50), GPU2 `sweep_blocks` (just started after
-match_and_pick; elastic scheduler did not steal the card), GPU3
-`sort_nesting_dolls_by_size`, GPU4 `stack_bowls_random`, GPU5
-`pack_objects_into_box`, GPU6 `put_bottles_into_dustbin`, GPU7 `hang_mugs_random`.
+In-flight Isaac clients at 14:24 CST: GPU0 `make_kong` (Traj, 29/50), GPU1
+`imitate_sorting_sequence` (19/50), GPU2 `sweep_blocks` (no `_result.json` yet;
+elastic scheduler did not steal the card after `match_and_pick`), GPU3
+`store_laptop_and_headphones_random` (after `sort_nesting_dolls_by_size` 25/25),
+GPU4 `stack_bowls_random`, GPU5 `pack_objects_into_box` (25/25 written; client
+still live), GPU6 `put_bottles_into_dustbin`, GPU7 `hang_mugs_random` (10/25).
+`play_tic_tac_toe` is still the only stealable Pi_05 cell; it starts on GPU0
+after `make_kong` idles for three scheduler polls.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
 sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now and the

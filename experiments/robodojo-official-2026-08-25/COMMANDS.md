@@ -37,7 +37,8 @@ card's static shard drains:
 ```bash
 python3 /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/elastic_robodojo_scheduler.py \
   --policies Pi_05,G05,Xiaomi_Robotics_1 --gpus 0,1,2,3,4,5,6,7 --seed 0 \
-  --kill-pid 216753 --kill-pid-policy Pi_05
+  --kill-pid 216753 --kill-pid-policy Pi_05 \
+  --sweep-log /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/experiments/robodojo-official-2026-08-25/logs/Pi_05-seed0.log
 ```
 
 `--kill-pid` releases the static sweep once Pi_05's table is complete, so a straggler
