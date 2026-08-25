@@ -9,7 +9,7 @@ recorded single forward passes and never entered the simulator.
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
 | Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (`2026-08-25_07-41-06_smoke` sweep plus Traj retries) | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | overlapping GPU1–3/7 (imitate, play_tic, fasten_screws, pour) | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | overlapping GPU1–3/7; first `_result.json` on `imitate_sorting_sequence` (8/50, 0 success, 24 fail mp4) | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; venv has msgpack-numpy/pydantic, `last.ckpt` + local Qwen3-VL processor on disk | not started |
 
 Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
@@ -31,10 +31,13 @@ G05 closed-loop was blocked by two adapter/host issues, both now fixed on this
 machine: (1) official `.hydra/config.yaml` points `hf_processor_path` at a
 trainer-host directory; sidecar remap now prefers `run_dir/hf_processor/tokenizer.json`;
 (2) G05 `.venv` lacked `msgpack-numpy` and `pydantic` for the XPolicyLab websocket
-server. After those fixes: GPU1 `imitate_sorting_sequence` ~1239/1600 with 30 ffmpeg
-streams; GPU7 `pour_by_language` stepping ~143/800; GPU2 `play_tic_tac_toe` ~39/1100;
-GPU3 `fasten_screws` reached environment reset (tokenizer sidecar OK). G05
-`_result.json` is not written yet. All eight GPUs have a live Isaac `eval_client`.
+server. After those fixes GPU1 finished the first 10-env horizon of
+`imitate_sorting_sequence` (1600/1600) and wrote closed-loop
+`_result.json` + 24 `*_fail.mp4` cameras for episodes 0–7 (0/8 success so far;
+episodes 8–9 still flushing; client still running toward 50). Compare does not
+count the cell until 50 episodes. GPU7 `pour_by_language` ~184/800; GPU2
+`play_tic_tac_toe` ~82/1100; GPU3 `fasten_screws` ~27/1900. All eight GPUs have
+a live Isaac `eval_client`. Forward JSON is not this evidence.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
 sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now and the
