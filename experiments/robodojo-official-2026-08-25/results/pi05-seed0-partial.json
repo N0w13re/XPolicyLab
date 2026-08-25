@@ -84,8 +84,8 @@
           "successes": 3
         },
         "fold_clothes_random": {
-          "episodes": 15,
-          "score": 12.000000000000002,
+          "episodes": 20,
+          "score": 10.0,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -198,7 +198,7 @@
           "successes": 0
         },
         "pour_liquid_into_cup_random": {
-          "episodes": 19,
+          "episodes": 24,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
