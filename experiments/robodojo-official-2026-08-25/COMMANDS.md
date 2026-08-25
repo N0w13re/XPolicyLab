@@ -30,35 +30,29 @@ bash /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/run_robodojo_official_pro
   --seeds 0 --policies Pi_05,G05,Xiaomi_Robotics_1 --gpu-ids 0,1,2,3,4,5,6,7
 ```
 
-Retry the three Traj-backed tasks on an idle GPU (assets must already be on disk):
+Keep all eight cards busy across the three policies. This is the scheduler actually
+driving the run; it coexists with a live sweep and takes over each card as that
+card's static shard drains:
 
 ```bash
-GPU=1 bash /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/retry_pi05_traj_tasks.sh
+python3 /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/elastic_robodojo_scheduler.py \
+  --policies Pi_05,G05,Xiaomi_Robotics_1 --gpus 0,1,2,3,4,5,6,7 --seed 0 \
+  --kill-pid 216753 --kill-pid-policy Pi_05
 ```
 
-After the in-flight Pi_05 sweep (pid 216753) and Traj coordinator
-(`/tmp/pi05-traj-all.pid`) exit, continue G05 then Xiaomi on all 8 GPUs:
+`--kill-pid` releases the static sweep once Pi_05's table is complete, so a straggler
+shard cannot hold six cards hostage. `--dry-run` prints the remaining task count per
+policy and exits, which is the quickest coverage check:
 
 ```bash
-PI05_PID=216753 TRAJ_PID_FILE=/tmp/pi05-traj-all.pid \
-  bash /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/chain_robodojo_remaining.sh
+python3 /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/elastic_robodojo_scheduler.py --dry-run
 ```
 
-Parallel Traj retry (imitate already running on GPU 1; make_kong then
-`play_tic_tac_toe` on GPU 0 so play does not wait for imitate's 1600-step horizon):
+One task on one card, for a manual retry (assets must already be on disk):
 
 ```bash
-IMITATE_PID=<robodojo.sh eval pid> RETRY_PARENT=<retry_pi05_traj_tasks.sh pid> \
-  TRAJ_PID_FILE=/tmp/pi05-traj-all.pid \
-  bash /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/coord_pi05_traj_retry.sh
-```
-
-If that coordinator was started with the old "play after imitate on GPU 1" order,
-overlap play onto GPU 0 as soon as make_kong exits:
-
-```bash
-MAKE_PID=<make_kong pid> IMITATE_PID=<imitate pid> OLD_COORD=<coord pid> \
-  bash /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/coord_pi05_traj_play_gpu0.sh
+bash /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/run_robodojo_sim_eval.sh eval Pi_05 \
+  --task play_tic_tac_toe --eval-num native --seed 0 --policy-gpu 0 --env-gpu 0
 ```
 
 This seed-0 Pi_05 sweep is the one launched at 2026-08-25 07:41:

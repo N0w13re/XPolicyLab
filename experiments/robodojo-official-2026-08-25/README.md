@@ -8,9 +8,9 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (`2026-08-25_07-41-06_smoke`; Traj retry in parallel) | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued after Pi_05 on GPUs 2–7 while Traj still uses 0/1 (`scripts/chain_robodojo_remaining.sh`) | not started |
-| Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued after G05 | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (`2026-08-25_07-41-06_smoke` sweep plus Traj retries) | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05 in `scripts/elastic_robodojo_scheduler.py` | not started |
+| Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued behind G05 in the same scheduler | not started |
 
 Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
 pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~6.2 h so far).
@@ -23,23 +23,46 @@ Closed-loop successes on disk so far (partial tasks, not yet in the 20-cell aver
 `match_and_pick_from_conveyor` 2/30, `put_bottles_into_dustbin` 1/20 (Isaac
 `_stream/*.tmp.mp4` still growing).
 
-In-flight Isaac clients (policy + sim co-located): GPU0 `make_kong` (Traj retry, 10
-episodes on disk, ~512/600 of the current 10-env batch), GPU1
-`imitate_sorting_sequence` (9 episodes), GPU2 `match_and_pick_from_conveyor`, GPU3
+In-flight Isaac clients (policy + sim co-located): GPU0 `make_kong` (Traj retry), GPU1
+`imitate_sorting_sequence`, GPU2 `match_and_pick_from_conveyor`, GPU3
 `sort_nesting_dolls_by_size`, GPU4 `pack_objects_into_box_random`, GPU5
 `pack_objects_into_box`, GPU6 `put_bottles_into_dustbin`, GPU7 `hang_mugs_random`.
-`scripts/chain_robodojo_remaining.sh` (tmux `eval-chain-g05-xiaomi`) is waiting on
-the sweep pid.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
-sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now. Closed-loop
-retry: imitate on GPU 1; `make_kong` on GPU 0; `play_tic_tac_toe` starts on GPU 0 as
-soon as make_kong exits (`scripts/coord_pi05_traj_play_gpu0.sh`, pidfile
-`/tmp/pi05-traj-all.pid`) so it overlaps imitate instead of waiting for horizon 1600.
-The previous coordinator (`coord_pi05_traj_retry.sh` pid 1453120) is SIGSTOP'd so it
-cannot launch a second play job on GPU 1. `robodojo.sh eval --eval-num native`
-does not export `EVAL_NUM`; the Isaac client still reads 50 episodes from `_task.yml` /
+sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now and the
+three are being re-run closed-loop. `robodojo.sh eval --eval-num native` does not
+export `EVAL_NUM`; the Isaac client still reads 50 episodes from `_task.yml` /
 `process_config` when the env var is unset, which is the official standalone budget.
+
+### Why a task-level scheduler replaced the static chain
+
+`smoke_all_tasks.sh` shards tasks once, up front, from embedded runtime weights.
+Measured against those weights the shards diverged badly: by 14:00 CST the GPU0 and
+GPU1 shards had already drained (both cards were busy only with the Traj retries)
+while the GPU2 shard still had ~145 episodes and GPU6 ~180 — eight more hours on two
+cards while six others emptied. The previous plan then waited for that straggler
+before starting G05 at all.
+
+`scripts/elastic_robodojo_scheduler.py` hands out one task at a time to whichever
+card is actually idle, walking a priority list across all three policies. Two
+properties make it safe to run next to a live sweep:
+
+- A card counts as free only after several consecutive polls with no
+  `eval_client/main.py --device_id <gpu>` process, which also rides out the 1–3
+  minute reset gap between episode batches of one task.
+- A task already running anywhere (matched on `--task_name` plus `--policy_name`) is
+  never launched a second time.
+
+Completion is judged exactly as `summarize_result.py` judges it: the newest timestamp
+directory must hold the task's full `_task.yml` budget. That comparison is
+lexicographic, and the sweep's directories are pinned to its
+`2026-08-25_07-41-06_smoke_<task>` run id, so a task the scheduler starts now sorts
+above them and a later sweep re-run cannot demote a filled cell. Once every Pi_05
+task is complete the scheduler releases sweep pid 216753, handing all eight cards to
+G05 and then Xiaomi.
+
+Superseded and removed: `chain_robodojo_remaining.sh`, `coord_pi05_traj_retry.sh`,
+`coord_pi05_traj_play_gpu0.sh`, `retry_pi05_traj_tasks.sh`.
 
 Most finished cells are 0/50, which is still compatible with an overall 6.91% once the
 remaining tasks fill in. Traj retries have 30 ffmpeg streams each under `_stream/`.
