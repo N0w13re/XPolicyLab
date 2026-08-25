@@ -14,14 +14,13 @@ recorded single forward passes and never entered the simulator.
 
 Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
 pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~9.0 h so far).
-Snapshot at 16:38 CST: `results/pi05-seed0-partial.json` (**37/42** reported cells,
-1850 episodes, **SR 1.19%** / score 2.47 vs official 6.91%, Δ −5.72 — not a
-reproduction verdict). Newly closed: `general_pickup` **1/50**,
-`stack_blocks_by_language` **0/50** (150 mp4). `fold_clothes` pair: **4/25** +
-**0/25**. `stack_bowls` pair: **9/25** + **0/25**. Five cells still open:
-`deposit_coin`, `hang_mugs`, `play_tic_tac_toe`, `push_T` pair, `stack_blocks` pair
-(`stack_blocks` is leftover on sweep GPU6 after `deposit_coin`; `stack_blocks_random`
-already 0/25).
+Snapshot at 16:54 CST: `results/pi05-seed0-partial.json` (**39/42** reported cells,
+1950 episodes, **SR 1.13%** / score 2.34 vs official 6.91%, Δ −5.78 — not a
+reproduction verdict). Newly closed: `deposit_coin` **0/50** (150 mp4), `push_T`
+pair **0/25+0/25** (150 mp4), `general_pickup` **1/50**, `stack_blocks_by_language`
+**0/50**. `fold_clothes` pair: **4/25** + **0/25**. `stack_bowls` pair: **9/25** +
+**0/25**. Three cells still open: `hang_mugs`, `play_tic_tac_toe`, `stack_blocks`
+(sweep GPU6 already `RUN`, Isaac starting).
 
 Closed-loop binary successes on completed cells: `put_bottles_into_dustbin` **5/50**,
 `match_and_pick_from_conveyor` **3/50**, `stack_bowls` **9/25**, `fold_clothes` **4/25**,

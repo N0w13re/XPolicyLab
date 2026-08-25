@@ -61,13 +61,11 @@
       "success_rate": NaN
     },
     "Pi_05": {
-      "delta": -5.720810810810811,
-      "episodes": 1850,
+      "delta": -5.781794871794872,
+      "episodes": 1950,
       "incomplete_tasks": [
-        "deposit_coin",
         "hang_mugs",
         "play_tic_tac_toe",
-        "push_T",
         "stack_blocks"
       ],
       "official_success_rate": 6.91,
@@ -115,7 +113,7 @@
           "successes": 0
         },
         "deposit_coin": {
-          "episodes": 30,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -295,7 +293,7 @@
           "successes": 0
         },
         "push_T_random": {
-          "episodes": 15,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -391,9 +389,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 37,
-      "score": 2.4702702702702704,
-      "success_rate": 1.1891891891891893
+      "reported_tasks_complete": 39,
+      "score": 2.3435897435897437,
+      "success_rate": 1.1282051282051282
     }
   },
   "seed": 0
