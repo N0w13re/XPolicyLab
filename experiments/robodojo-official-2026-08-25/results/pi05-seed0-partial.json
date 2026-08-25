@@ -73,6 +73,12 @@
           "success_rate": 0.0,
           "successes": 0
         },
+        "play_tic_tac_toe": {
+          "episodes": 10,
+          "score": 2.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "pour_by_language": {
           "episodes": 10,
           "score": 0.0,

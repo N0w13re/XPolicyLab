@@ -33,7 +33,7 @@ camera fail mp4s present): `imitate_sorting_sequence` **17/50** (51 mp4),
 `pour_by_language` **10/50** (30 mp4), `fasten_screws` **10/50** (30 mp4),
 `play_stacking_toy` **10/50** (30 mp4, second horizon just reset ~3/1200),
 `classify_objects_by_language` **10/50** (30 mp4). `play_tic_tac_toe` first
-horizon ~824/1100 (no result yet). GPU6 launched G05 `classify_objects` at
+horizon wrote **10/50** `_result.json` (0 success). GPU6 launched G05 `classify_objects` at
 17:35 CST after the idle-match fix. Compare still ignores G05 until 50 episodes
 per cell. Forward JSON is not this evidence.
 
