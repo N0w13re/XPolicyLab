@@ -13,17 +13,16 @@ recorded single forward passes and never entered the simulator.
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued behind G05 in the same scheduler | not started |
 
 Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
-pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~8.4 h so far).
-Snapshot at 16:05 CST: `results/pi05-seed0-partial.json` (**32/42** reported cells,
-1600 episodes, **SR 0.50%** / score 1.53 vs official 6.91%, Δ −6.41 — not a
-reproduction verdict). Traj `imitate_sorting_sequence` finished **0/50**. GPU1
-then became free and the elastic scheduler started overlapping G05.
+pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~8.5 h so far).
+Snapshot at 16:10 CST: `results/pi05-seed0-partial.json` (**33/42** reported cells,
+1650 episodes, **SR 1.03%** / score 2.19 vs official 6.91%, Δ −5.88 — not a
+reproduction verdict). `stack_bowls` pair filled: **9/25** on the base task
+(36%, 75 mp4) + **0/25** random → 9/50 in the reported cell. GPU5 moved on to
+`hang_mugs` (policy server up, Isaac starting).
 
-Closed-loop cells with binary successes so far:
-`put_bottles_into_dustbin` **5/50**, `match_and_pick_from_conveyor` **3/50**,
-and still-filling `stack_bowls` **7/20 (35%)** plus `fold_clothes` **3/20 (15%)**.
-Those last two are the first non-trivial in-progress rates; their reported cells
-complete only at 25+25.
+Closed-loop binary successes: `put_bottles_into_dustbin` **5/50**,
+`match_and_pick_from_conveyor` **3/50**, `stack_bowls` **9/25**, and still-filling
+`fold_clothes` **3/20 (15%)**. Traj `imitate_sorting_sequence` **0/50** for Pi_05.
 
 G05 closed-loop was blocked by two adapter/host issues, both now fixed on this
 machine: (1) official `.hydra/config.yaml` points `hf_processor_path` at a
