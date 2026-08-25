@@ -1,8 +1,8 @@
 {
   "policies": {
     "Pi_05": {
-      "delta": -6.91,
-      "episodes": 1000,
+      "delta": -6.6242857142857146,
+      "episodes": 1050,
       "incomplete_tasks": [
         "arrange_largest_number",
         "deposit_coin",
@@ -11,7 +11,6 @@
         "hang_mugs",
         "imitate_sorting_sequence",
         "make_kong",
-        "match_and_pick_from_conveyor",
         "pack_objects_into_box",
         "play_Xylophone",
         "play_tic_tac_toe",
@@ -126,9 +125,9 @@
           "successes": 0
         },
         "match_and_pick_from_conveyor": {
-          "episodes": 40,
-          "score": 7.5,
-          "success_rate": 7.5,
+          "episodes": 50,
+          "score": 6.0,
+          "success_rate": 6.0,
           "successes": 3
         },
         "organize_table": {
@@ -144,7 +143,7 @@
           "successes": 0
         },
         "pack_objects_into_box_random": {
-          "episodes": 20,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -252,9 +251,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 20,
-      "score": 0.49500000000000005,
-      "success_rate": 0.0
+      "reported_tasks_complete": 21,
+      "score": 0.7571428571428572,
+      "success_rate": 0.2857142857142857
     }
   },
   "seed": 0

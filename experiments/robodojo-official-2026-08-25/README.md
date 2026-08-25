@@ -13,19 +13,20 @@ recorded single forward passes and never entered the simulator.
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued behind G05 in the same scheduler | not started |
 
 Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
-pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~6.2 h so far).
-Snapshot at 13:52 CST: `results/pi05-seed0-partial.json` (20/42 reported cells, 1000
-episodes, SR 0.00% / score 0.50 vs official 6.91% — not a reproduction verdict). A
-reported-task cell is counted only at 50 episodes. `pour_balls_into_vase` finished
-50/50 with 0 successes; GPU 7 then started `hang_mugs_random`.
+pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~6.6 h so far).
+Snapshot at 14:15 CST: `results/pi05-seed0-partial.json` (**21/42** reported cells,
+1050 episodes, **SR 0.29%** / score 0.76 vs official 6.91%, Δ −6.62 — not a
+reproduction verdict). A reported-task cell is counted only at 50 episodes.
 
-Closed-loop successes on disk so far (partial tasks, not yet in the 20-cell average):
-`match_and_pick_from_conveyor` 2/30, `put_bottles_into_dustbin` 1/20 (Isaac
-`_stream/*.tmp.mp4` still growing).
+The first complete cell with closed-loop successes is
+`match_and_pick_from_conveyor` **3/50** (6%), with 150 finalized camera videos
+(`episode_*_cam_{head,left_wrist,right_wrist}_{success,fail}.mp4`). Still-running
+`put_bottles_into_dustbin` is 2/30.
 
-In-flight Isaac clients (policy + sim co-located): GPU0 `make_kong` (Traj retry), GPU1
-`imitate_sorting_sequence`, GPU2 `match_and_pick_from_conveyor`, GPU3
-`sort_nesting_dolls_by_size`, GPU4 `pack_objects_into_box_random`, GPU5
+In-flight Isaac clients: GPU0 `make_kong` (Traj, 29/50), GPU1
+`imitate_sorting_sequence` (19/50), GPU2 `sweep_blocks` (just started after
+match_and_pick; elastic scheduler did not steal the card), GPU3
+`sort_nesting_dolls_by_size`, GPU4 `stack_bowls_random`, GPU5
 `pack_objects_into_box`, GPU6 `put_bottles_into_dustbin`, GPU7 `hang_mugs_random`.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
