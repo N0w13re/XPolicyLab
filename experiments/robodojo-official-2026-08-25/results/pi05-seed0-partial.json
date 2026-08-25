@@ -1,16 +1,15 @@
 {
   "policies": {
     "Pi_05": {
-      "delta": -5.71,
-      "episodes": 1750,
+      "delta": -5.743333333333333,
+      "episodes": 1800,
       "incomplete_tasks": [
         "deposit_coin",
         "general_pickup",
         "hang_mugs",
         "play_tic_tac_toe",
         "push_T",
-        "stack_blocks",
-        "stack_blocks_by_language"
+        "stack_blocks"
       ],
       "official_success_rate": 6.91,
       "per_task": {
@@ -57,7 +56,7 @@
           "successes": 0
         },
         "deposit_coin": {
-          "episodes": 10,
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -93,10 +92,16 @@
           "successes": 0
         },
         "general_pickup": {
-          "episodes": 30,
-          "score": 3.3333333333333335,
-          "success_rate": 3.3333333333333335,
+          "episodes": 40,
+          "score": 2.5,
+          "success_rate": 2.5,
           "successes": 1
+        },
+        "hang_mugs": {
+          "episodes": 10,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
         },
         "hang_mugs_random": {
           "episodes": 25,
@@ -231,7 +236,7 @@
           "successes": 0
         },
         "push_T_random": {
-          "episodes": 5,
+          "episodes": 10,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -261,7 +266,7 @@
           "successes": 0
         },
         "stack_blocks_by_language": {
-          "episodes": 40,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -327,9 +332,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 35,
-      "score": 2.5542857142857143,
-      "success_rate": 1.2
+      "reported_tasks_complete": 36,
+      "score": 2.4833333333333334,
+      "success_rate": 1.1666666666666667
     }
   },
   "seed": 0

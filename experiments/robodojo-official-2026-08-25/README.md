@@ -9,32 +9,31 @@ recorded single forward passes and never entered the simulator.
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
 | Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (`2026-08-25_07-41-06_smoke` sweep plus Traj retries) | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | overlapping on GPU1 after Pi_05 shard drain (tokenizer sidecar + ws deps fixed) | not started |
-| Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued behind G05 in the same scheduler | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | overlapping: GPU1 `imitate_sorting_sequence`, GPU7 `pour_by_language` | not started |
+| Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; venv has msgpack-numpy/pydantic, `last.ckpt` + local Qwen3-VL processor on disk | not started |
 
 Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
-pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~8.8 h so far).
-Snapshot at 16:27 CST: `results/pi05-seed0-partial.json` (**35/42** reported cells,
-1750 episodes, **SR 1.20%** / score 2.55 vs official 6.91%, Δ −5.71 — not a
-reproduction verdict; the remaining 7 cells can still move the mean). `fold_clothes`
-pair filled: **4/25** on the base task (16%) + **0/25** random → 4/50. `stack_bowls`
-pair: **9/25** (36%) + **0/25** random → 9/50.
+pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~8.9 h so far).
+Snapshot at 16:34 CST: `results/pi05-seed0-partial.json` (**36/42** reported cells,
+1800 episodes, **SR 1.17%** / score 2.48 vs official 6.91%, Δ −5.74 — not a
+reproduction verdict). Newly closed: `stack_blocks_by_language` **0/50** with 150
+camera mp4s. `fold_clothes` pair: **4/25** + **0/25**. `stack_bowls` pair: **9/25** +
+**0/25**. Six cells still open: `deposit_coin`, `general_pickup`, `hang_mugs`,
+`play_tic_tac_toe`, `push_T` pair, `stack_blocks` pair.
 
 Closed-loop binary successes on completed cells: `put_bottles_into_dustbin` **5/50**,
 `match_and_pick_from_conveyor` **3/50**, `stack_bowls` **9/25**, `fold_clothes` **4/25**.
-Still filling: `general_pickup` 1/30, `play_tic_tac_toe` 0/10 (GPU0, ~244/1100),
-`hang_mugs` (GPU5, no `_result.json` yet), `deposit_coin` 0/10, `push_T` pair
-(`push_T` 0/25 done, `push_T_random` 0/5 on GPU4), `stack_blocks_by_language` 0/40.
 
 G05 closed-loop was blocked by two adapter/host issues, both now fixed on this
 machine: (1) official `.hydra/config.yaml` points `hf_processor_path` at a
 trainer-host directory; sidecar remap now prefers `run_dir/hf_processor/tokenizer.json`;
 (2) G05 `.venv` lacked `msgpack-numpy` and `pydantic` for the XPolicyLab websocket
 server. After those fixes, GPU1 has a live G05 Isaac `eval_client` on
-`imitate_sorting_sequence` (pid 2202868, started ~16:07 CST) with 30 ffmpeg camera
-streams and env steps ~686/1600. That is closed-loop, not Forward. G05
-`_result.json` is not written yet. GPU7 was given G05 `pour_by_language` after the
-scheduler stopped stealing the sweep's in-flight last-RUN task.
+`imitate_sorting_sequence` (pid 2202868) with 30 ffmpeg streams, stepping past
+~989/1600. GPU7 `pour_by_language` reached `Completed setting up the environment` /
+`Resetting all environments` (scene USD warnings only; tokenizer path is fine).
+G05 `_result.json` is not written yet. GPU2 just drained `stack_blocks_by_language`
+and is in the scheduler's 3-poll idle window before the next G05 task.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
 sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now and the
