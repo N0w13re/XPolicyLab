@@ -1,0 +1,10 @@
+{
+  "path": "/mnt/bn/robotics-data-mx/wenbo/RoboDojo-eval/eval_result/RoboDojo/imitate_sorting_sequence/Pi_05/arx_x5/0_ckpt_name=sim,action_type=joint/2026-08-25_18-33-05_smoke_imitate_sorting_sequence/episode_0000009_cam_head_fail.mp4",
+  "mean_rgb": [
+    111.75,
+    86.97,
+    77.65
+  ],
+  "channel_spread": 34.1,
+  "luma": 92.12
+}
