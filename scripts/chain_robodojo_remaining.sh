@@ -10,7 +10,7 @@ set -euo pipefail
 XPL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOGDIR="${LOGDIR:-${XPL_ROOT}/experiments/robodojo-official-2026-08-25/logs}"
 PI05_PID="${PI05_PID:-216753}"
-TRAJ_PID_FILE="${TRAJ_PID_FILE:-/tmp/pi05-traj-gpu1.pid}"
+TRAJ_PID_FILE="${TRAJ_PID_FILE:-/tmp/pi05-traj-all.pid}"
 GPU_IDS="${GPU_IDS:-0,1,2,3,4,5,6,7}"
 POLICIES="${POLICIES:-G05,Xiaomi_Robotics_1}"
 

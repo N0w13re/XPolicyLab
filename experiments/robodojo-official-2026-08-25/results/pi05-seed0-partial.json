@@ -2,7 +2,7 @@
   "policies": {
     "Pi_05": {
       "delta": -6.91,
-      "episodes": 800,
+      "episodes": 900,
       "incomplete_tasks": [
         "arrange_largest_number",
         "deposit_coin",
@@ -11,7 +11,6 @@
         "hang_mugs",
         "imitate_sorting_sequence",
         "make_kong",
-        "make_toast",
         "match_and_pick_from_conveyor",
         "pack_objects_into_box",
         "play_Xylophone",
@@ -28,7 +27,6 @@
         "stack_blocks_by_language",
         "stack_bowls",
         "store_laptop_and_headphones",
-        "swap_blocks",
         "sweep_blocks"
       ],
       "official_success_rate": 6.91,
@@ -100,7 +98,7 @@
           "successes": 0
         },
         "make_toast": {
-          "episodes": 20,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -111,9 +109,21 @@
           "success_rate": 0.0,
           "successes": 0
         },
+        "match_and_pick_from_conveyor": {
+          "episodes": 10,
+          "score": 10.0,
+          "success_rate": 10.0,
+          "successes": 1
+        },
         "organize_table": {
           "episodes": 50,
           "score": 4.5,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "pack_objects_into_box_random": {
+          "episodes": 5,
+          "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -130,7 +140,7 @@
           "successes": 0
         },
         "pour_balls_into_vase": {
-          "episodes": 10,
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -148,13 +158,13 @@
           "successes": 0
         },
         "press_by_number": {
-          "episodes": 30,
+          "episodes": 40,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
         "push_T": {
-          "episodes": 20,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -196,7 +206,7 @@
           "successes": 0
         },
         "swap_blocks": {
-          "episodes": 40,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -208,8 +218,8 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 16,
-      "score": 0.61875,
+      "reported_tasks_complete": 18,
+      "score": 0.55,
       "success_rate": 0.0
     }
   },

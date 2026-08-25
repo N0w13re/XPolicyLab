@@ -8,15 +8,21 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (8-GPU sweep `2026-08-25_07-41-06_smoke`; Traj trio retry on GPU 1) | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (`2026-08-25_07-41-06_smoke`; Traj retry in parallel) | not started |
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued after Pi_05 via `scripts/chain_robodojo_remaining.sh` | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued after G05 | not started |
 
-Pi_05 seed 0 snapshot (partial): see `results/pi05-seed0-partial.json`. A reported-task
-cell is counted only at 50 episodes, so a mid-sweep SR of 0% is not a reproduction
-verdict. `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the
-first sweep because `Assets/Traj` was still an LFS pointer; those files are present now
-and the three tasks are re-run on GPU 1 (`logs/Pi_05-seed0-traj-retry.log`).
+Pi_05 seed 0 snapshot (partial): see `results/pi05-seed0-partial.json` (18/42 reported
+cells, 900 episodes, SR 0.00% vs official 6.91% — not a reproduction verdict). A
+reported-task cell is counted only at 50 episodes.
+
+`imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
+sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now. Closed-loop
+retry: imitate on GPU 1 (videos under `eval_result/.../imitate_sorting_sequence/.../_stream/`),
+`make_kong` on idle GPU 0, `play_tic_tac_toe` starts on GPU 1 after imitate exits
+(`scripts/coord_pi05_traj_retry.sh`). `robodojo.sh eval --eval-num native` does not
+export `EVAL_NUM`; the Isaac client still reads 50 episodes from `_task.yml` /
+`process_config` when the env var is unset, which is the official standalone budget.
 
 G05 and Xiaomi closed-loop sweeps have not started; their policy servers do load on this
 host (`results/g05-forward-gpu1.json`, `results/xiaomi-forward-gpu1.json`, both `"status": "passed"`).
