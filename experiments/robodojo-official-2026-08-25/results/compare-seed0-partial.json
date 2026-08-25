@@ -49,6 +49,18 @@
       ],
       "official_success_rate": 6.91,
       "per_task": {
+        "build_tower": {
+          "episodes": 10,
+          "score": 1.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "classify_objects": {
+          "episodes": 10,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "classify_objects_by_language": {
           "episodes": 10,
           "score": 0.0,
@@ -56,6 +68,12 @@
           "successes": 0
         },
         "imitate_sorting_sequence": {
+          "episodes": 10,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "play_stacking_toy": {
           "episodes": 10,
           "score": 0.0,
           "success_rate": 0.0,
