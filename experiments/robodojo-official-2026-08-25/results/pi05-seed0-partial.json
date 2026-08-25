@@ -109,10 +109,10 @@
           "successes": 0
         },
         "match_and_pick_from_conveyor": {
-          "episodes": 10,
+          "episodes": 20,
           "score": 10.0,
           "success_rate": 10.0,
-          "successes": 1
+          "successes": 2
         },
         "organize_table": {
           "episodes": 50,
@@ -121,7 +121,7 @@
           "successes": 0
         },
         "pack_objects_into_box_random": {
-          "episodes": 5,
+          "episodes": 10,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
