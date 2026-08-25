@@ -186,10 +186,10 @@
           "successes": 0
         },
         "put_bottles_into_dustbin": {
-          "episodes": 10,
-          "score": 26.5,
-          "success_rate": 0.0,
-          "successes": 0
+          "episodes": 20,
+          "score": 28.250000000000004,
+          "success_rate": 5.0,
+          "successes": 1
         },
         "sort_nesting_dolls_by_size": {
           "episodes": 10,

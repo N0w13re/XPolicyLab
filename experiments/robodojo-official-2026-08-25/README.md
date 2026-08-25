@@ -12,19 +12,24 @@ recorded single forward passes and never entered the simulator.
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued after Pi_05 on GPUs 2–7 while Traj still uses 0/1 (`scripts/chain_robodojo_remaining.sh`) | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued after G05 | not started |
 
-Pi_05 seed 0 snapshot (partial, 2026-08-25 13:47 CST): see
-`results/pi05-seed0-partial.json` (20/42 reported cells, 1000 episodes, SR 0.00% /
-score 0.50 vs official 6.91% — not a reproduction verdict). A reported-task cell is
-counted only at 50 episodes. `pour_balls_into_vase` finished 50/50 with 0 successes;
-GPU 7 then started `hang_mugs_random`.
+Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
+pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~6.2 h so far).
+Snapshot at 13:52 CST: `results/pi05-seed0-partial.json` (20/42 reported cells, 1000
+episodes, SR 0.00% / score 0.50 vs official 6.91% — not a reproduction verdict). A
+reported-task cell is counted only at 50 episodes. `pour_balls_into_vase` finished
+50/50 with 0 successes; GPU 7 then started `hang_mugs_random`.
+
+Closed-loop successes on disk so far (partial tasks, not yet in the 20-cell average):
+`match_and_pick_from_conveyor` 2/30, `put_bottles_into_dustbin` 1/20 (Isaac
+`_stream/*.tmp.mp4` still growing).
 
 In-flight Isaac clients (policy + sim co-located): GPU0 `make_kong` (Traj retry, 10
-episodes on disk, stepping ~391/600), GPU1 `imitate_sorting_sequence` (9 episodes,
-~132/1600), GPU2 `match_and_pick_from_conveyor` (30 episodes, 2 successes, three
-camera `.tmp.mp4` streams writing), GPU3 `sort_nesting_dolls_by_size`, GPU4
-`pack_objects_into_box_random`, GPU5 `pack_objects_into_box`, GPU6
-`put_bottles_into_dustbin`, GPU7 `hang_mugs_random`. Sweep pid 216753 still alive;
-`scripts/chain_robodojo_remaining.sh` (tmux `eval-chain-g05-xiaomi`) is waiting on it.
+episodes on disk, ~512/600 of the current 10-env batch), GPU1
+`imitate_sorting_sequence` (9 episodes), GPU2 `match_and_pick_from_conveyor`, GPU3
+`sort_nesting_dolls_by_size`, GPU4 `pack_objects_into_box_random`, GPU5
+`pack_objects_into_box`, GPU6 `put_bottles_into_dustbin`, GPU7 `hang_mugs_random`.
+`scripts/chain_robodojo_remaining.sh` (tmux `eval-chain-g05-xiaomi`) is waiting on
+the sweep pid.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
 sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now. Closed-loop
