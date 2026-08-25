@@ -119,7 +119,7 @@ class Model(ModelTemplate):
 
         self._build_obs_dict = build_obs_dict
         self._build_obs_accepts_buffers = _call_accepts_history_buffers(build_obs_dict)
-        device = "cuda"
+        device = str(model_cfg.get("device") or "cuda")
         self.policy, self.processor = setup(cfg, device=device)
         self.discrete_action = bool(
             getattr(self.policy, "discrete_action", cfg.model.model_arch.discrete_action)
@@ -183,7 +183,11 @@ class Model(ModelTemplate):
         if not path.is_dir():
             raise FileNotFoundError(f"G0.5 checkpoint path not found: {path}")
 
-        candidates = [path / "last.pt"]
+        candidates = [
+            path / "last.pt",
+            # Released RoboDojo G0.5 weights ship as this unsuffixed file, not step_*.pt.
+            path / "checkpoints" / "checkpoint",
+        ]
         candidates.extend(sorted((path / "checkpoints").glob("step_*.pt"), key=_step_sort_key))
         candidates.extend(sorted(path.glob("**/step_*.pt"), key=_step_sort_key))
         candidates.extend(path.glob("model_state_dict.pt"))

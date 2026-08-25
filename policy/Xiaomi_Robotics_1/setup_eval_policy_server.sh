@@ -22,16 +22,27 @@ yaml_file="${ROOT_DIR}/XPolicyLab/policy/${policy_name}/deploy.yml"
 
 echo "[SERVER] policy=${policy_name}, task=${task_name}, port=${policy_server_port}"
 
-CONDA_BASE="$(conda info --base)"
-source "${CONDA_BASE}/etc/profile.d/conda.sh"
-conda activate "${policy_conda_env}"
+# Accept a conda env name, a venv directory, or a python binary. This host has the
+# official weights inside xr1/.venv and no `mibot` conda env.
+if [[ -x "${policy_conda_env}/bin/python" ]]; then
+    PYTHON_BIN="${policy_conda_env}/bin/python"
+elif [[ -x "${policy_conda_env}" ]]; then
+    PYTHON_BIN="${policy_conda_env}"
+else
+    CONDA_BASE="$(conda info --base)"
+    # shellcheck source=/dev/null
+    source "${CONDA_BASE}/etc/profile.d/conda.sh"
+    conda activate "${policy_conda_env}"
+    PYTHON_BIN="$(command -v python)"
+fi
+echo "[SERVER] python=${PYTHON_BIN}"
 
 export PYTHONPATH="${XR1_ROOT}:${PYTHONPATH:-}"
 
 exec env \
     PYTHONWARNINGS=ignore::UserWarning \
     CUDA_VISIBLE_DEVICES="${policy_gpu_id}" \
-    python "${ROOT_DIR}/XPolicyLab/setup_policy_server.py" \
+    "${PYTHON_BIN}" "${ROOT_DIR}/XPolicyLab/setup_policy_server.py" \
         --config_path "${yaml_file}" \
         --overrides \
             port="${policy_server_port}" \
