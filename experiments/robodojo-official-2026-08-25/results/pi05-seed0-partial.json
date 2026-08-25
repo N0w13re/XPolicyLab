@@ -90,7 +90,7 @@
           "successes": 0
         },
         "imitate_sorting_sequence": {
-          "episodes": 29,
+          "episodes": 39,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -156,7 +156,7 @@
           "successes": 0
         },
         "play_Xylophone": {
-          "episodes": 30,
+          "episodes": 40,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -234,8 +234,8 @@
           "successes": 0
         },
         "stack_bowls_random": {
-          "episodes": 20,
-          "score": 4.5,
+          "episodes": 25,
+          "score": 4.2,
           "success_rate": 0.0,
           "successes": 0
         },

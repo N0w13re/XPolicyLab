@@ -27,11 +27,14 @@ after `make_kong` exited and three idle polls; Isaac logged
 `Completed setting up the environment` and is resetting (pid 1907958). That is
 closed-loop Traj eval, not Forward.
 
-In-flight Isaac clients at 15:09 CST: GPU0 `play_tic_tac_toe`, GPU1
-`imitate_sorting_sequence` (29/50), GPU2 `sweep_blocks`, GPU3
-`store_laptop_and_headphones_random`, GPU4 `stack_bowls_random`, GPU5
-`arrange_largest_number`, GPU6 `play_Xylophone`, GPU7 `solve_equation`.
-sweep_gpus remain 2–7; no G05 steal.
+In-flight Isaac clients at 15:13 CST: GPU0 `play_tic_tac_toe` (step ~80/1100),
+GPU1 `imitate_sorting_sequence` (39/50), GPU2 `plug_in_charger` (sweep continued
+after `sweep_blocks` 25/25; elastic did not steal the idle gap), GPU3
+`store_laptop_and_headphones_random` (20/25), GPU4 `stack_bowls_random` (25/25
+written; client still live — native budget may be 50), GPU5
+`arrange_largest_number` (20/25), GPU6 `play_Xylophone` (40/50), GPU7
+`solve_equation` (20/50). One `eval_client` per GPU. `plug_in_charger` is
+already `RUN` by the sweep so it is no longer reserved; that is not a steal.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
 sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now and the
