@@ -91,3 +91,13 @@ done
 echo "[protocol] aggregating"
 ( cd "${ROBODOJO_ROOT}" && python3 scripts/internal/summarize_result.py )
 echo "[protocol] summary -> ${ROBODOJO_ROOT}/eval_result/RoboDojo/_summary.md"
+
+result_dir="$(cd "${log_dir}/.." && pwd)/results"
+mkdir -p "${result_dir}"
+for seed in "${seed_list[@]}"; do
+  [[ -z "${seed}" ]] && continue
+  python3 "${XPL_ROOT}/scripts/compare_robodojo_to_official.py" \
+    --eval-root "${ROBODOJO_ROOT}" \
+    --seed "${seed}" \
+    --json-out "${result_dir}/compare-seed${seed}.json"
+done

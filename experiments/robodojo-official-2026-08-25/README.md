@@ -8,13 +8,13 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued | not started |
-| Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (8-GPU sweep `2026-08-25_07-41-06_smoke`) | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued after Pi_05 | not started |
+| Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued after G05 | not started |
 
-Results land in `results/` as they complete. `logs/<policy>-seed<seed>.log` holds the
-scheduler output; the per-task logs and videos stay in the RoboDojo checkout under
-`smoke_results/<run_id>/` and `eval_result/`, which are far too large to commit.
+Pi_05 seed 0 snapshot (partial, 15 of 42 reported tasks complete): overall SR 0.00% vs official 6.91%. That delta is not a reproduction verdict — most remaining tasks, and the three Traj-dependent failures (`imitate_sorting_sequence`, `make_kong`, `play_tic_tac_toe`), are still out of the table. See `results/pi05-seed0-partial.json`.
+
+The per-task logs and videos stay in the RoboDojo checkout under `smoke_results/<run_id>/` and `eval_result/`, which are far too large to commit. Scheduler stdout is `logs/<policy>-seed<seed>.log`.
 
 ## Official numbers to reproduce
 

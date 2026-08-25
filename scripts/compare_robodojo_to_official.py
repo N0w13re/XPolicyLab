@@ -143,6 +143,15 @@ def main() -> int:
         official = OFFICIAL_SR.get(policy)
         delta = sr - official if official is not None and n_ep else None
         rows.append((policy, len(complete), n_ep, sr, score, official, delta))
+        per_task = {}
+        for name, entries in sorted(per_policy[policy].items()):
+            suc = sum(1 for s, _ in entries if s)
+            per_task[name] = {
+                "episodes": len(entries),
+                "successes": suc,
+                "success_rate": suc / len(entries) * 100 if entries else None,
+                "score": sum(sc for _, sc in entries) / len(entries) * 100 if entries else None,
+            }
         report[policy] = {
             "reported_tasks_complete": len(complete),
             "episodes": n_ep,
@@ -151,6 +160,7 @@ def main() -> int:
             "official_success_rate": official,
             "delta": delta,
             "incomplete_tasks": sorted(incomplete),
+            "per_task": per_task,
         }
 
     width = max(len(r[0]) for r in rows)
