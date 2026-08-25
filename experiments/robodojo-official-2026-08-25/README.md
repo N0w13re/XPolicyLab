@@ -8,40 +8,33 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (`2026-08-25_07-41-06_smoke` sweep plus Traj retries) | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | 7 cards; partial `_result.json` on 5 tasks (0/42 cells; 0 binary success so far) | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | re-running from zero on 8 cards since 18:33 CST | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05; adapter and venv issues already fixed | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; venv has msgpack-numpy/pydantic, `last.ckpt` + local Qwen3-VL processor on disk | not started |
 
-Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
-pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~9.7 h so far).
-Snapshot at 17:25 CST: `results/pi05-seed0-partial.json` (**41/42** reported cells,
-2050 episodes, **SR 1.07%** / score 2.28 vs official 6.91%, Δ −5.84). One cell
-still open: `play_tic_tac_toe` (GPU0, **20/50**, 0 success, 60 mp4; next 10-env
-batch at ~80/1100). `stack_blocks` pair closed: base **0/25** + random **0/25**,
-75 camera mp4s on the base stamp `2026-08-25_07-41-06_smoke_stack_blocks`.
+**No seed-0 table exists right now.** The first attempt ran 07:41-18:07 CST and
+reached 41/42 cells for Pi_05 at **SR 1.07%** against an official 6.91%, plus six
+partial G05 cells. All of it was rendered without material albedo and has been
+discarded; see the next section. `compare_robodojo_to_official.py` correctly
+reports no results until the re-run fills cells again.
 
-Closed-loop binary successes on completed cells: `put_bottles_into_dustbin` **5/50**,
-`match_and_pick_from_conveyor` **3/50**, `stack_bowls` **9/25**, `fold_clothes` **4/25**,
-`general_pickup` **1/50**.
+What that discarded attempt still establishes, because it is a property of the
+harness rather than of the renderer: the full 54-task protocol completes on this
+host in about 10.5 h on 8 cards, the paired `X`/`X_random` merge and the
+50-episode `--eval-num native` budget behave as `summarize_result.py` expects, and
+both G05 blockers are genuinely fixed - (1) the official `.hydra/config.yaml`
+points `hf_processor_path` at a trainer-host directory, so the sidecar remap now
+prefers `run_dir/hf_processor/tokenizer.json`, and (2) G05's `.venv` lacked
+`msgpack-numpy` and `pydantic` for the XPolicyLab websocket server. G05 reached
+six tasks with closed-loop `_result.json` files before the stop, so it should not
+need debugging again on the re-run.
 
-G05 closed-loop was blocked by two adapter/host issues, both now fixed on this
-machine: (1) official `.hydra/config.yaml` points `hf_processor_path` at a
-trainer-host directory; sidecar remap now prefers `run_dir/hf_processor/tokenizer.json`;
-(2) G05 `.venv` lacked `msgpack-numpy` and `pydantic` for the XPolicyLab websocket
-server. After those fixes, on-disk closed-loop `_result.json` (all 0 success,
-camera fail mp4s present): `imitate_sorting_sequence` **17/50** (51 mp4),
-`pour_by_language` **10/50** (30 mp4), `fasten_screws` **10/50** (30 mp4),
-`play_stacking_toy` **10/50** (30 mp4, second horizon just reset ~3/1200),
-`classify_objects_by_language` **10/50** (30 mp4). `play_tic_tac_toe` first
-horizon wrote **10/50** `_result.json` (0 success). GPU6 launched G05 `classify_objects` at
-17:35 CST after the idle-match fix. Compare still ignores G05 until 50 episodes
-per cell. Forward JSON is not this evidence.
-
-`imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
-sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now and the
-three are being re-run closed-loop. `robodojo.sh eval --eval-num native` does not
-export `EVAL_NUM`; the Isaac client still reads 50 episodes from `_task.yml` /
-`process_config` when the env var is unset, which is the official standalone budget.
+`imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed on the very
+first sweep because `Assets/Traj` was still an LFS pointer. Those files are on disk
+now and all three ran closed-loop afterwards. `robodojo.sh eval --eval-num native`
+does not export `EVAL_NUM`; the Isaac client still reads 50 episodes from
+`_task.yml` / `process_config` when the env var is unset, which is the official
+standalone budget.
 
 ### Why a task-level scheduler replaced the static chain
 
@@ -141,15 +134,41 @@ subframes does not help, so this is not an async-load race.
 `scripts/robodojo_render_smoke.py` now prints whole-frame and centre-crop
 per-channel means, so this reproduces in ~20 s without a full episode.
 
-### Consequence
+### Verified in a real episode
 
-All eight cards were stopped at 18:07 CST: sweep pid 216753, the elastic
-scheduler, and every Isaac client and policy server. Everything they had produced
-was measured through the grey renderer, so Pi_05's 41/42 table and G05's six
-partial cells are void as reproduction evidence and are kept only as the
-before-fix reference. Re-runs write newer timestamp directories, and
-`compare_robodojo_to_official.py` reads the newest stamp per task, so the stale
-trees are superseded rather than mixed in.
+A 2-episode `stack_bowls` run with the fix (stamp `2026-08-25_18-09-33`, 1/2
+successes) put `cam_head` at `[120.5, 90.3, 78.4]`, channel spread **42.1**,
+against the recorded `[106.3, 81.7, 72.8]` / **33.5** — same distribution, versus
+`[48.6, 48.5, 48.7]` / **0.21** before. See
+`results/render-diagnosis/cam_head_train_before_after.png` (recorded, before,
+after) and `render_fix_verified.json`.
+
+### Consequence: everything before the fix was discarded
+
+All eight cards were stopped at 18:07 CST — sweep pid 216753, the elastic
+scheduler, and every Isaac client and policy server. Pi_05's 41/42 table and
+G05's six partial cells were measured through the grey renderer, so they are void
+as reproduction evidence.
+
+Those 66 stamp directories (7.1 GB) were moved out of `eval_result/` to
+`eval_result_pre_renderfix/` in the RoboDojo checkout. Leaving them in place was
+not safe: `compare_robodojo_to_official.py` reads the newest stamp per task, so
+any task whose re-run failed would silently fall back to its grey-renderer result
+and report a filled cell. `compare` now reports no results at all, which is the
+correct starting point.
+
+Restarted at 18:33 CST with the fixed renderer, both on all eight cards:
+
+| | pid file | log |
+| --- | --- | --- |
+| Pi_05 seed-0 sweep | `/tmp/pi05-sweep-renderfix.pid` (2700145) | `logs/Pi_05-seed0-renderfix.log` |
+| Elastic scheduler | `/tmp/elastic-sched.pid` | `logs/elastic-scheduler.log` |
+
+Pre-fix logs are kept as `logs/Pi_05-seed0.log` and
+`logs/elastic-scheduler-prerenderfix.log`. `logs/Pi_05-seed0-renderfix-badshard.log`
+is a discarded false start: `--policy-gpu-ids 0-7` is not parsed as a range, so it
+serialised all 54 tasks onto one worker. The working form is
+`--policy-gpu-ids 0,1,2,3,4,5,6,7`.
 
 ## Official numbers to reproduce
 
