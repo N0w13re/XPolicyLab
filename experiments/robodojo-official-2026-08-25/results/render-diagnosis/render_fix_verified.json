@@ -1,0 +1,33 @@
+{
+  "train_recorded": {
+    "mean_rgb": [
+      106.28,
+      81.65,
+      72.8
+    ],
+    "channel_spread": 33.49,
+    "luma": 86.91,
+    "frac_below_5": 0.054
+  },
+  "before_fix": {
+    "mean_rgb": [
+      48.55,
+      48.45,
+      48.66
+    ],
+    "channel_spread": 0.21,
+    "luma": 48.56,
+    "frac_below_5": 0.276
+  },
+  "after_fix": {
+    "mean_rgb": [
+      120.52,
+      90.28,
+      78.43
+    ],
+    "channel_spread": 42.09,
+    "luma": 96.41,
+    "frac_below_5": 0.0406
+  },
+  "note": "Left to right in cam_head_train_before_after.png: official recorded frame, our render with texture streaming on, our render with it off."
+}
