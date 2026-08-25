@@ -29,8 +29,11 @@ G05 closed-loop was blocked by two adapter/host issues, both now fixed on this
 machine: (1) official `.hydra/config.yaml` points `hf_processor_path` at a
 trainer-host directory; sidecar remap now prefers `run_dir/hf_processor/tokenizer.json`;
 (2) G05 `.venv` lacked `msgpack-numpy` and `pydantic` for the XPolicyLab websocket
-server. After the tokenizer fix the checkpoint loads; the next GPU1 launch should
-open the WS port. Xiaomi `.venv` got the same WS packages preemptively.
+server. After the tokenizer and WS-dep fixes, GPU1 has a live G05 Isaac
+`eval_client` on `imitate_sorting_sequence` (pid 2202868, started ~16:07 CST)
+plus the G05 policy server; the log reached `Completed setting up the
+environment` / `Resetting all environments`. That is closed-loop, not Forward.
+G05 `_result.json` is not written yet.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
 sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now and the
