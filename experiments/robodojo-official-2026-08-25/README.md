@@ -122,12 +122,34 @@ bowl silhouettes survive in greyscale, while every task that needs colour, textu
 or glyphs is exactly 0: `classify_objects`, `*_by_language`, `solve_equation`,
 `press_by_number`, `arrange_largest_number`.
 
-Ruled out so far: textures are real files, not LFS pointers
-(`Mahogany_Planks_BaseColor.png` is 5.7 MB); the MDL compiles with only C302
-implicit-conversion warnings; and `--/rtx/materialDb/syncLoads=true`
-`--/rtx/hydra/materialSyncLoads=true` with 16 subframes does not restore colour.
-`scripts/robodojo_render_smoke.py` now prints per-channel means, so a bad render
-reproduces in ~20 s instead of needing a full episode.
+### Cause and fix
+
+Texture streaming. `--/rtx-transient/resourcemanager/enableTextureStreaming=false`
+restores albedo, and it is now part of `ROBODOJO_KIT_ARGS` in
+`scripts/robodojo_sim_env.sh`. On the mahogany smoke case the centre crop goes
+from `[46, 46, 46]` (spread **0.00**) to `[110, 71, 56]` (spread **54.1**), which
+is the brown the BaseColor texture actually contains.
+
+The failure is silent, which is why it survived the earlier render bisect: MDL
+materials compile, the textures are real files on disk (`Mahogany_Planks_BaseColor.png`
+is 5.7 MB, not an LFS pointer), Kit logs nothing above a C302 implicit-conversion
+warning, and `RENDER_OK` still prints. Only the pixels are wrong. The earlier
+render smoke checked frame shape, not content, so it passed throughout.
+`--/rtx/materialDb/syncLoads=true` `--/rtx/hydra/materialSyncLoads=true` with 16
+subframes does not help, so this is not an async-load race.
+
+`scripts/robodojo_render_smoke.py` now prints whole-frame and centre-crop
+per-channel means, so this reproduces in ~20 s without a full episode.
+
+### Consequence
+
+All eight cards were stopped at 18:07 CST: sweep pid 216753, the elastic
+scheduler, and every Isaac client and policy server. Everything they had produced
+was measured through the grey renderer, so Pi_05's 41/42 table and G05's six
+partial cells are void as reproduction evidence and are kept only as the
+before-fix reference. Re-runs write newer timestamp directories, and
+`compare_robodojo_to_official.py` reads the newest stamp per task, so the stale
+trees are superseded rather than mixed in.
 
 ## Official numbers to reproduce
 

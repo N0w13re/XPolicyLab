@@ -104,7 +104,16 @@ def main() -> int:
         if rgb.ndim == 3 and rgb.shape[-1] >= 3:
             means = rgb[..., :3].reshape(-1, 3).mean(0)
             spread = float(means.max() - means.min())
-            stats = f" mean_rgb={means.round(2).tolist()} channel_spread={spread:.2f}"
+            # A bright background dilutes the whole-frame spread, so also report the
+            # centre crop, which is where the textured prim actually is.
+            h, w = rgb.shape[:2]
+            crop = rgb[h // 2 - h // 8 : h // 2 + h // 8, w // 2 - w // 8 : w // 2 + w // 8, :3]
+            cmeans = crop.reshape(-1, 3).mean(0)
+            cspread = float(cmeans.max() - cmeans.min())
+            stats = (
+                f" mean_rgb={means.round(2).tolist()} channel_spread={spread:.2f}"
+                f" centre_rgb={cmeans.round(2).tolist()} centre_spread={cspread:.2f}"
+            )
         print(f"[repro] frame {i} rgb={shape}{stats}", flush=True)
 
     print("[repro] RENDER_OK", flush=True)

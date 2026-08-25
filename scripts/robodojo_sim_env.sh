@@ -119,7 +119,14 @@ HOOK
 fi
 
 # --- 3. Kit settings ----------------------------------------------------------------------
-export ROBODOJO_KIT_ARGS="${ROBODOJO_KIT_ARGS:-} --/rtx/verifyDriverVersion/enabled=false --/ngx/enabled=false"
+# Texture streaming must stay off. With it on, this driver silently fails every texture
+# upload instead of erroring: MDL materials compile, the textures are on disk, and Kit
+# prints nothing, but the renderer produces frames with no albedo at all -- three
+# identical channels, a mahogany table with no grain, white bowls rendered black. That
+# distribution shift alone dropped Pi_05 from the published 6.91% to 1.07%. Verify with
+# `scripts/robodojo_render_smoke.py --material .../Mahogany_Planks.mdl`, which prints
+# centre_spread ~54 when albedo survives and 0.00 when it does not.
+export ROBODOJO_KIT_ARGS="${ROBODOJO_KIT_ARGS:-} --/rtx/verifyDriverVersion/enabled=false --/ngx/enabled=false --/rtx-transient/resourcemanager/enableTextureStreaming=false"
 export OMNI_KIT_ACCEPT_EULA=YES
 
 # eval_policy.sh must forward ROBODOJO_KIT_ARGS to the Kit kernel. Upstream hardcodes an
