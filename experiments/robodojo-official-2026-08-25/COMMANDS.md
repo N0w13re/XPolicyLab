@@ -30,6 +30,19 @@ bash /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/run_robodojo_official_pro
   --seeds 0 --policies Pi_05,G05,Xiaomi_Robotics_1 --gpu-ids 0,1,2,3,4,5,6,7
 ```
 
+Retry the three Traj-backed tasks on an idle GPU (assets must already be on disk):
+
+```bash
+GPU=1 bash /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/retry_pi05_traj_tasks.sh
+```
+
+After the in-flight Pi_05 sweep (pid 216753) and that Traj retry exit, continue G05 then
+Xiaomi on all 8 GPUs:
+
+```bash
+PI05_PID=216753 bash /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/chain_robodojo_remaining.sh
+```
+
 This seed-0 Pi_05 sweep is the one launched at 2026-08-25 07:41:
 
 ```bash

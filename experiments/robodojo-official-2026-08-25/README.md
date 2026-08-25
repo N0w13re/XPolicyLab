@@ -8,11 +8,18 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (8-GPU sweep `2026-08-25_07-41-06_smoke`) | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued after Pi_05 | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (8-GPU sweep `2026-08-25_07-41-06_smoke`; Traj trio retry on GPU 1) | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued after Pi_05 via `scripts/chain_robodojo_remaining.sh` | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued after G05 | not started |
 
-Pi_05 seed 0 snapshot (partial, 15 of 42 reported tasks complete): overall SR 0.00% vs official 6.91%. That delta is not a reproduction verdict — most remaining tasks, and the three Traj-dependent failures (`imitate_sorting_sequence`, `make_kong`, `play_tic_tac_toe`), are still out of the table. See `results/pi05-seed0-partial.json`.
+Pi_05 seed 0 snapshot (partial): see `results/pi05-seed0-partial.json`. A reported-task
+cell is counted only at 50 episodes, so a mid-sweep SR of 0% is not a reproduction
+verdict. `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the
+first sweep because `Assets/Traj` was still an LFS pointer; those files are present now
+and the three tasks are re-run on GPU 1 (`logs/Pi_05-seed0-traj-retry.log`).
+
+G05 and Xiaomi closed-loop sweeps have not started; their policy servers do load on this
+host (`results/g05-forward-gpu1.json`, `results/xiaomi-forward-gpu1.json`, both `"status": "passed"`).
 
 The per-task logs and videos stay in the RoboDojo checkout under `smoke_results/<run_id>/` and `eval_result/`, which are far too large to commit. Scheduler stdout is `logs/<policy>-seed<seed>.log`.
 
