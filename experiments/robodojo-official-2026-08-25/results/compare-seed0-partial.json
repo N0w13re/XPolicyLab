@@ -56,7 +56,7 @@
           "successes": 0
         },
         "classify_objects": {
-          "episodes": 10,
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -80,7 +80,7 @@
           "successes": 0
         },
         "play_stacking_toy": {
-          "episodes": 10,
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
