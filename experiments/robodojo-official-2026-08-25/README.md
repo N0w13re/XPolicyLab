@@ -9,18 +9,17 @@ recorded single forward passes and never entered the simulator.
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
 | Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (`2026-08-25_07-41-06_smoke` sweep plus Traj retries) | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | overlapping GPU1–3/7; first `_result.json` on `imitate_sorting_sequence` (8/50, 0 success, 24 fail mp4) | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | 6 cards (imitate/play_tic/fasten/stacking_toy/classify/pour); imitate 8/50 `_result.json` | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; venv has msgpack-numpy/pydantic, `last.ckpt` + local Qwen3-VL processor on disk | not started |
 
 Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
 pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~9.0 h so far).
-Snapshot at 16:54 CST: `results/pi05-seed0-partial.json` (**39/42** reported cells,
-1950 episodes, **SR 1.13%** / score 2.34 vs official 6.91%, Δ −5.78 — not a
-reproduction verdict). Newly closed: `deposit_coin` **0/50** (150 mp4), `push_T`
-pair **0/25+0/25** (150 mp4), `general_pickup` **1/50**, `stack_blocks_by_language`
-**0/50**. `fold_clothes` pair: **4/25** + **0/25**. `stack_bowls` pair: **9/25** +
-**0/25**. Three cells still open: `hang_mugs`, `play_tic_tac_toe`, `stack_blocks`
-(sweep GPU6 already `RUN`, Isaac starting).
+Snapshot at 16:58 CST: `results/pi05-seed0-partial.json` (**40/42** reported cells,
+2000 episodes, **SR 1.10%** / score 2.29 vs official 6.91%, Δ −5.81 — not a
+reproduction verdict). Newly closed: `hang_mugs` pair **0/25+0/25** (150 mp4),
+`deposit_coin` **0/50**, `push_T` pair **0/25+0/25**. Two cells still open:
+`play_tic_tac_toe` (GPU0) and `stack_blocks` (GPU6). G05 `classify_objects_by_language`
+took GPU5.
 
 Closed-loop binary successes on completed cells: `put_bottles_into_dustbin` **5/50**,
 `match_and_pick_from_conveyor` **3/50**, `stack_bowls` **9/25**, `fold_clothes` **4/25**,

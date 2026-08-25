@@ -54,6 +54,12 @@
           "score": 0.625,
           "success_rate": 0.0,
           "successes": 0
+        },
+        "pour_by_language": {
+          "episodes": 10,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
         }
       },
       "reported_tasks_complete": 0,
@@ -318,6 +324,12 @@
         "sort_nesting_dolls_by_size_random": {
           "episodes": 25,
           "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "stack_blocks": {
+          "episodes": 20,
+          "score": 2.25,
           "success_rate": 0.0,
           "successes": 0
         },
