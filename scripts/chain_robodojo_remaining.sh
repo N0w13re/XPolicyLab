@@ -89,6 +89,10 @@ fi
 wait_pid "$(head -1 "${TRAJ_PID_FILE}" 2>/dev/null || true)" "Pi_05 Traj retry"
 
 run_benchmark Xiaomi_Robotics_1 "${GPU_IDS}" "${LOGDIR}/Xiaomi_Robotics_1-seed0.log"
+XIAOMI_RETRY="$(failed_tasks_from_log "${LOGDIR}/Xiaomi_Robotics_1-seed0.log" || true)"
+if [[ -n "${XIAOMI_RETRY}" ]]; then
+  run_benchmark Xiaomi_Robotics_1 "${GPU_IDS}" "${LOGDIR}/Xiaomi_Robotics_1-seed0-retry.log" --only "${XIAOMI_RETRY}"
+fi
 
 echo "[chain] aggregating"
 ROBODOJO_ROOT="${ROBODOJO_ROOT:-$(cd "${XPL_ROOT}/.." && pwd)/RoboDojo-eval}"

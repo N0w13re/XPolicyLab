@@ -2,7 +2,7 @@
   "policies": {
     "Pi_05": {
       "delta": -6.91,
-      "episodes": 900,
+      "episodes": 950,
       "incomplete_tasks": [
         "arrange_largest_number",
         "deposit_coin",
@@ -18,7 +18,6 @@
         "plug_in_charger",
         "pour_balls_into_vase",
         "pour_liquid_into_cup",
-        "press_by_number",
         "push_T",
         "put_bottles_into_dustbin",
         "solve_equation",
@@ -140,7 +139,7 @@
           "successes": 0
         },
         "pour_balls_into_vase": {
-          "episodes": 20,
+          "episodes": 30,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -158,7 +157,7 @@
           "successes": 0
         },
         "press_by_number": {
-          "episodes": 40,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -218,8 +217,8 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 18,
-      "score": 0.55,
+      "reported_tasks_complete": 19,
+      "score": 0.5210526315789473,
       "success_rate": 0.0
     }
   },

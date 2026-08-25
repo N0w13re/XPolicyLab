@@ -12,8 +12,8 @@ recorded single forward passes and never entered the simulator.
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued after Pi_05 on GPUs 2–7 while Traj still uses 0/1 (`scripts/chain_robodojo_remaining.sh`) | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued after G05 | not started |
 
-Pi_05 seed 0 snapshot (partial): see `results/pi05-seed0-partial.json` (18/42 reported
-cells, 900 episodes, SR 0.00% vs official 6.91% — not a reproduction verdict). A
+Pi_05 seed 0 snapshot (partial): see `results/pi05-seed0-partial.json` (19/42 reported
+cells, 950 episodes, SR 0.00% vs official 6.91% — not a reproduction verdict). A
 reported-task cell is counted only at 50 episodes.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
