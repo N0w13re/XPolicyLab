@@ -9,31 +9,28 @@ recorded single forward passes and never entered the simulator.
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
 | Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (`2026-08-25_07-41-06_smoke` sweep plus Traj retries) | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05 in `scripts/elastic_robodojo_scheduler.py` | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | overlapping on GPU1 after Pi_05 shard drain (tokenizer sidecar + ws deps fixed) | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued behind G05 in the same scheduler | not started |
 
 Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
-pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~7.9 h so far).
-Snapshot at 15:33 CST: `results/pi05-seed0-partial.json` (**28/42** reported cells,
-1400 episodes, **SR 0.57%** / score 1.70 vs official 6.91%, Δ −6.34 — not a
-reproduction verdict). New complete cells since 15:09: `play_Xylophone` **0/50**
-(150 mp4) and `arrange_largest_number` 25+25. G05 and Xiaomi have not entered
-closed loop yet.
+pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~8.4 h so far).
+Snapshot at 16:05 CST: `results/pi05-seed0-partial.json` (**32/42** reported cells,
+1600 episodes, **SR 0.50%** / score 1.53 vs official 6.91%, Δ −6.41 — not a
+reproduction verdict). Traj `imitate_sorting_sequence` finished **0/50**. GPU1
+then became free and the elastic scheduler started overlapping G05.
 
-Closed-loop cells with successes (each 150 camera mp4s):
-`match_and_pick_from_conveyor` **3/50** (6%) and `put_bottles_into_dustbin`
-**5/50** (10%). Traj retry `make_kong` finished **0/50** with 150 camera mp4s.
+Closed-loop cells with binary successes so far:
+`put_bottles_into_dustbin` **5/50**, `match_and_pick_from_conveyor` **3/50**,
+and still-filling `stack_bowls` **7/20 (35%)** plus `fold_clothes` **3/20 (15%)**.
+Those last two are the first non-trivial in-progress rates; their reported cells
+complete only at 25+25.
 
-Elastic scheduler launched `Pi_05/play_tic_tac_toe` on GPU0 at **15:05:17 CST**;
-Isaac is stepping (~horizon 1100). That is closed-loop Traj eval, not Forward.
-
-In-flight Isaac clients at 15:33 CST: GPU0 `play_tic_tac_toe`, GPU1
-`imitate_sorting_sequence` (39/50), GPU2 `plug_in_charger` (20/50), GPU3
-`store_laptop_and_headphones` (after random 25/25), GPU4
-`pour_liquid_into_cup_random` (5/25), GPU5 `stack_bowls` (replacing the earlier
-2-episode smoke stamp), GPU6 `fold_clothes_random` (after `play_Xylophone`),
-GPU7 `solve_equation` (40/50). One `eval_client` per GPU; sweep_gpus 2–7 not
-stolen.
+G05 closed-loop was blocked by two adapter/host issues, both now fixed on this
+machine: (1) official `.hydra/config.yaml` points `hf_processor_path` at a
+trainer-host directory; sidecar remap now prefers `run_dir/hf_processor/tokenizer.json`;
+(2) G05 `.venv` lacked `msgpack-numpy` and `pydantic` for the XPolicyLab websocket
+server. After the tokenizer fix the checkpoint loads; the next GPU1 launch should
+open the WS port. Xiaomi `.venv` got the same WS packages preemptively.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
 sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now and the

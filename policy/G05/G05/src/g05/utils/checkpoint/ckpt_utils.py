@@ -60,22 +60,29 @@ def copy_hf_processor_files(src: str | Path, dst: str | Path) -> None:
 
 
 def _apply_hf_processor_sidecar(cfg: DictConfig, run_dir: Path):
-    """Map HF processor path to run_dir/hf_processor/ when present and null pretrained_model_path.
+    """Prefer run_dir/hf_processor over trainer-host paths in saved Hydra configs.
+
+    Official RoboDojo G05 checkpoints ship tokenizer.json next to the weights, but
+    `.hydra/config.yaml` often has pretrained_model_path already null and
+    hf_processor_path still pointing at the training machine. Remap whenever the
+    sidecar exists, not only when pretrained_model_path is set.
 
     Modified config keys:
       - model.model_arch.hf_processor_path
       - model.model_arch.pretrained_model_path          (set to null)
       - model.processor.tokenizer_params.pretrained_model_name_or_path  (if present)
-
-    Returns whether a local sidecar was found. If not found, falls back to
-    hf_processor_path <- original pretrained_model_path.
     """
     local_hf = Path(run_dir) / "hf_processor"
-    has_local = local_hf.exists()
-
+    has_local = (local_hf / "tokenizer.json").is_file()
     pretrained_path = cfg.model.model_arch.get("pretrained_model_path", None)
-    if pretrained_path is not None:
-        cfg.model.model_arch.hf_processor_path = str(local_hf) if has_local else pretrained_path
+
+    if has_local:
+        cfg.model.model_arch.hf_processor_path = str(local_hf)
+        if pretrained_path is not None:
+            cfg.model.model_arch.pretrained_model_path = None
+        logger.info(f"HF processor sidecar -> {local_hf}")
+    elif pretrained_path is not None:
+        cfg.model.model_arch.hf_processor_path = pretrained_path
         cfg.model.model_arch.pretrained_model_path = None
 
     if has_local and OmegaConf.select(cfg, "model.processor.tokenizer_params") is not None:
