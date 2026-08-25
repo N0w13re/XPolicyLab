@@ -1,11 +1,10 @@
 {
   "policies": {
     "Pi_05": {
-      "delta": -5.743333333333333,
-      "episodes": 1800,
+      "delta": -5.720810810810811,
+      "episodes": 1850,
       "incomplete_tasks": [
         "deposit_coin",
-        "general_pickup",
         "hang_mugs",
         "play_tic_tac_toe",
         "push_T",
@@ -92,9 +91,9 @@
           "successes": 0
         },
         "general_pickup": {
-          "episodes": 40,
-          "score": 2.5,
-          "success_rate": 2.5,
+          "episodes": 50,
+          "score": 2.0,
+          "success_rate": 2.0,
           "successes": 1
         },
         "hang_mugs": {
@@ -332,9 +331,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 36,
-      "score": 2.4833333333333334,
-      "success_rate": 1.1666666666666667
+      "reported_tasks_complete": 37,
+      "score": 2.4702702702702704,
+      "success_rate": 1.1891891891891893
     }
   },
   "seed": 0
