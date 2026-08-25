@@ -61,10 +61,9 @@
       "success_rate": NaN
     },
     "Pi_05": {
-      "delta": -5.781794871794872,
-      "episodes": 1950,
+      "delta": -5.8100000000000005,
+      "episodes": 2000,
       "incomplete_tasks": [
-        "hang_mugs",
         "play_tic_tac_toe",
         "stack_blocks"
       ],
@@ -155,7 +154,7 @@
           "successes": 1
         },
         "hang_mugs": {
-          "episodes": 20,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -389,9 +388,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 39,
-      "score": 2.3435897435897437,
-      "success_rate": 1.1282051282051282
+      "reported_tasks_complete": 40,
+      "score": 2.285,
+      "success_rate": 1.0999999999999999
     }
   },
   "seed": 0
