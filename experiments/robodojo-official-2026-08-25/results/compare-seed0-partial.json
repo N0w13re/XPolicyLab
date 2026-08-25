@@ -49,6 +49,12 @@
       ],
       "official_success_rate": 6.91,
       "per_task": {
+        "classify_objects_by_language": {
+          "episodes": 10,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "imitate_sorting_sequence": {
           "episodes": 10,
           "score": 0.0,
