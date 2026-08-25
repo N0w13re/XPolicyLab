@@ -3,7 +3,8 @@
 # in-flight imitate_sorting_sequence job on GPU 1.
 #
 # GPU 0 is idle (its smoke_all_tasks shard already finished). make_kong runs
-# there immediately. play_tic_tac_toe starts on GPU 1 only after imitate exits.
+# there immediately; play_tic_tac_toe follows on GPU 0 so it overlaps imitate
+# (horizon 1600 on GPU 1) instead of waiting for it.
 set -euo pipefail
 
 XPL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -35,15 +36,15 @@ fi
 
 run_task make_kong 0 &
 MAKE_PID=$!
+wait "${MAKE_PID}" || true
+
+run_task play_tic_tac_toe 0 &
+PLAY_PID=$!
 
 echo "[traj-coord] waiting for imitate pid ${IMITATE_PID}"
 while kill -0 "${IMITATE_PID}" 2>/dev/null; do sleep 30; done
 echo "[traj-coord] imitate exited at $(date -Is)"
 
-run_task play_tic_tac_toe 1 &
-PLAY_PID=$!
-
-wait "${MAKE_PID}" || true
 wait "${PLAY_PID}" || true
 
 # Drop the stopped sequential loop; imitate is already finished.

@@ -44,12 +44,21 @@ PI05_PID=216753 TRAJ_PID_FILE=/tmp/pi05-traj-all.pid \
   bash /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/chain_robodojo_remaining.sh
 ```
 
-Parallel Traj retry (imitate already running on GPU 1; make_kong on GPU 0):
+Parallel Traj retry (imitate already running on GPU 1; make_kong then
+`play_tic_tac_toe` on GPU 0 so play does not wait for imitate's 1600-step horizon):
 
 ```bash
 IMITATE_PID=<robodojo.sh eval pid> RETRY_PARENT=<retry_pi05_traj_tasks.sh pid> \
   TRAJ_PID_FILE=/tmp/pi05-traj-all.pid \
   bash /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/coord_pi05_traj_retry.sh
+```
+
+If that coordinator was started with the old "play after imitate on GPU 1" order,
+overlap play onto GPU 0 as soon as make_kong exits:
+
+```bash
+MAKE_PID=<make_kong pid> IMITATE_PID=<imitate pid> OLD_COORD=<coord pid> \
+  bash /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/coord_pi05_traj_play_gpu0.sh
 ```
 
 This seed-0 Pi_05 sweep is the one launched at 2026-08-25 07:41:

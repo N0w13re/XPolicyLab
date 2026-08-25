@@ -33,8 +33,11 @@ the sweep pid.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
 sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now. Closed-loop
-retry: imitate on GPU 1, `make_kong` on GPU 0, `play_tic_tac_toe` starts on GPU 1 after
-imitate exits (`scripts/coord_pi05_traj_retry.sh`). `robodojo.sh eval --eval-num native`
+retry: imitate on GPU 1; `make_kong` on GPU 0; `play_tic_tac_toe` starts on GPU 0 as
+soon as make_kong exits (`scripts/coord_pi05_traj_play_gpu0.sh`, pidfile
+`/tmp/pi05-traj-all.pid`) so it overlaps imitate instead of waiting for horizon 1600.
+The previous coordinator (`coord_pi05_traj_retry.sh` pid 1453120) is SIGSTOP'd so it
+cannot launch a second play job on GPU 1. `robodojo.sh eval --eval-num native`
 does not export `EVAL_NUM`; the Isaac client still reads 50 episodes from `_task.yml` /
 `process_config` when the env var is unset, which is the official standalone budget.
 
