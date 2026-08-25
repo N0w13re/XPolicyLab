@@ -49,6 +49,12 @@
       ],
       "official_success_rate": 14.88,
       "per_task": {
+        "classify_objects_by_language": {
+          "episodes": 10,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "fasten_screws": {
           "episodes": 10,
           "score": 0.0,
@@ -79,11 +85,10 @@
       "success_rate": NaN
     },
     "Pi_05": {
-      "delta": -5.8100000000000005,
-      "episodes": 2000,
+      "delta": -5.836829268292683,
+      "episodes": 2050,
       "incomplete_tasks": [
-        "play_tic_tac_toe",
-        "stack_blocks"
+        "play_tic_tac_toe"
       ],
       "official_success_rate": 6.91,
       "per_task": {
@@ -340,8 +345,8 @@
           "successes": 0
         },
         "stack_blocks": {
-          "episodes": 20,
-          "score": 2.25,
+          "episodes": 25,
+          "score": 4.2,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -412,9 +417,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 40,
-      "score": 2.285,
-      "success_rate": 1.0999999999999999
+      "reported_tasks_complete": 41,
+      "score": 2.2804878048780486,
+      "success_rate": 1.0731707317073171
     }
   },
   "seed": 0

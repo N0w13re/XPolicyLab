@@ -9,17 +9,16 @@ recorded single forward passes and never entered the simulator.
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
 | Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (`2026-08-25_07-41-06_smoke` sweep plus Traj retries) | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | 6 cards; partial `_result.json` on 4 tasks (0/42 cells; 0 binary success so far) | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | 6 cards; partial `_result.json` on 5 tasks (0/42 cells; 0 binary success so far) | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; venv has msgpack-numpy/pydantic, `last.ckpt` + local Qwen3-VL processor on disk | not started |
 
 Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
 pid 216753, run id `2026-08-25_07-41-06_smoke`) and is still running (~9.7 h so far).
-Snapshot at 17:22 CST: `results/pi05-seed0-partial.json` (**40/42** reported cells,
-2000 episodes, **SR 1.10%** / score 2.29 vs official 6.91%, Δ −5.81). Two cells
+Snapshot at 17:25 CST: `results/pi05-seed0-partial.json` (**41/42** reported cells,
+2050 episodes, **SR 1.07%** / score 2.28 vs official 6.91%, Δ −5.84). One cell
 still open: `play_tic_tac_toe` (GPU0, **20/50**, 0 success, 60 mp4; next 10-env
-batch at ~80/1100) and `stack_blocks` (GPU6, **20/25**, 0 success, 60 mp4; last
-sweep RUN at ~521/550 — do not steal this card). Filling `stack_blocks` to 25
-closes the pair (`stack_blocks_random` already 0/25) → 41/42.
+batch at ~80/1100). `stack_blocks` pair closed: base **0/25** + random **0/25**,
+75 camera mp4s on the base stamp `2026-08-25_07-41-06_smoke_stack_blocks`.
 
 Closed-loop binary successes on completed cells: `put_bottles_into_dustbin` **5/50**,
 `match_and_pick_from_conveyor` **3/50**, `stack_bowls` **9/25**, `fold_clothes` **4/25**,
@@ -32,11 +31,10 @@ trainer-host directory; sidecar remap now prefers `run_dir/hf_processor/tokenize
 server. After those fixes, on-disk closed-loop `_result.json` (all 0 success,
 camera fail mp4s present): `imitate_sorting_sequence` **17/50** (51 mp4),
 `pour_by_language` **10/50** (30 mp4), `fasten_screws` **10/50** (30 mp4),
-`play_stacking_toy` **10/50** (30 mp4, second horizon just reset ~3/1200).
-`play_tic_tac_toe` first horizon ~824/1100 (no result yet);
-`classify_objects_by_language` first horizon **1100/1100** (writing videos).
-Compare still ignores G05 until 50 episodes per cell. Forward JSON is not this
-evidence.
+`play_stacking_toy` **10/50** (30 mp4, second horizon just reset ~3/1200),
+`classify_objects_by_language` **10/50** (30 mp4). `play_tic_tac_toe` first
+horizon ~824/1100 (no result yet). Compare still ignores G05 until 50 episodes
+per cell. Forward JSON is not this evidence.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
 sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now and the
