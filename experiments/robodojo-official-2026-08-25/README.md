@@ -35,8 +35,9 @@ server. After those fixes GPU1 finished the first 10-env horizon of
 `_result.json` + 24 `*_fail.mp4` cameras for episodes 0–7 (0/8 success so far;
 episodes 8–9 still flushing; client still running toward 50). Compare does not
 count the cell until 50 episodes. GPU7 `pour_by_language` ~184/800; GPU2
-`play_tic_tac_toe` ~82/1100; GPU3 `fasten_screws` ~27/1900. All eight GPUs have
-a live Isaac `eval_client`. Forward JSON is not this evidence.
+`play_tic_tac_toe` ~82/1100; GPU3 `fasten_screws` ~27/1900. GPU4 launched G05
+`play_stacking_toy` after `push_T` pair closed. All eight GPUs should have a live
+Isaac client again. Forward JSON is not this evidence.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
 sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now and the
