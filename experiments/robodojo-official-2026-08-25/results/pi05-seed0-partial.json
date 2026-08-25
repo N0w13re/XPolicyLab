@@ -1,8 +1,8 @@
 {
   "policies": {
     "Pi_05": {
-      "delta": -6.41,
-      "episodes": 1600,
+      "delta": -5.87969696969697,
+      "episodes": 1650,
       "incomplete_tasks": [
         "deposit_coin",
         "fold_clothes",
@@ -12,8 +12,7 @@
         "pour_liquid_into_cup",
         "push_T",
         "stack_blocks",
-        "stack_blocks_by_language",
-        "stack_bowls"
+        "stack_blocks_by_language"
       ],
       "official_success_rate": 6.91,
       "per_task": {
@@ -240,7 +239,7 @@
           "successes": 0
         },
         "stack_blocks_by_language": {
-          "episodes": 10,
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -252,10 +251,10 @@
           "successes": 0
         },
         "stack_bowls": {
-          "episodes": 20,
-          "score": 41.0,
-          "success_rate": 35.0,
-          "successes": 7
+          "episodes": 25,
+          "score": 42.6,
+          "success_rate": 36.0,
+          "successes": 9
         },
         "stack_bowls_random": {
           "episodes": 25,
@@ -306,9 +305,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 32,
-      "score": 1.5250000000000001,
-      "success_rate": 0.5
+      "reported_tasks_complete": 33,
+      "score": 2.187878787878788,
+      "success_rate": 1.0303030303030303
     }
   },
   "seed": 0
