@@ -73,6 +73,14 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--log-dir", type=Path, default=None)
     parser.add_argument(
+        "--sweep-log",
+        type=Path,
+        default=None,
+        help="smoke_all_tasks stdout for the live sweep. Tasks still in an "
+        "unfinished shard are not stolen, and those GPUs are not reused "
+        "between that shard's tasks.",
+    )
+    parser.add_argument(
         "--kill-pid",
         type=int,
         action="append",
@@ -167,6 +175,52 @@ def episodes_on_disk(
     return len(data.get("details") or {})
 
 
+def parse_sweep_groups(path: Path) -> dict[str, list[str]]:
+    """GPU id -> task list from `[smoke_all_tasks] group=` lines."""
+    groups: dict[str, list[str]] = {}
+    if not path.is_file():
+        return groups
+    for line in path.read_text(errors="replace").splitlines():
+        m = re.search(r"group=\d+ policy_gpu=(\d+) env_gpu=\d+ load=\S+ tasks=(\S+)", line)
+        if m:
+            groups[m.group(1)] = [t for t in m.group(2).split(",") if t]
+    return groups
+
+
+def parse_sweep_runs(path: Path) -> dict[str, list[str]]:
+    """GPU id -> tasks that shard has already launched, in order."""
+    runs: dict[str, list[str]] = {}
+    if not path.is_file():
+        return runs
+    for line in path.read_text(errors="replace").splitlines():
+        m = re.search(r"RUN (\S+) \(policy_gpu=(\d+), env_gpu=\d+\)", line)
+        if m:
+            runs.setdefault(m.group(2), []).append(m.group(1))
+    return runs
+
+
+def sweep_reserved(
+    groups: dict[str, list[str]], runs: dict[str, list[str]]
+) -> tuple[set[str], set[str]]:
+    """Tasks the live sweep will still start, and GPUs whose shard is not done.
+
+    A shard is done only after every task in its list has a RUN record. Until
+    then the worker will launch the rest itself, including during the 1-3
+    minute gap between two tasks when the GPU looks idle. Those GPUs must not
+    receive elastic jobs, and those not-yet-RUN tasks must not be stolen onto
+    another card.
+    """
+    reserved: set[str] = set()
+    active_gpus: set[str] = set()
+    for gpu, tasks in groups.items():
+        launched = set(runs.get(gpu, []))
+        leftover = [t for t in tasks if t not in launched]
+        if leftover:
+            active_gpus.add(gpu)
+            reserved.update(leftover)
+    return reserved, active_gpus
+
+
 def isaac_clients() -> tuple[set[str], set[tuple[str, str]]]:
     """Live Isaac eval clients: the GPUs they hold and the (policy, task) pairs.
 
@@ -240,6 +294,9 @@ def main() -> int:
         XPL_ROOT / "experiments" / "robodojo-official-2026-08-25" / "logs" / "elastic"
     )
     log_dir.mkdir(parents=True, exist_ok=True)
+    sweep_log = args.sweep_log or (
+        XPL_ROOT / "experiments" / "robodojo-official-2026-08-25" / "logs" / "Pi_05-seed0.log"
+    )
 
     budgets = task_budgets(robodojo_root)
     tasks = runnable_tasks(robodojo_root)
@@ -277,6 +334,9 @@ def main() -> int:
                 log(f"giving up on {job.policy}/{job.task} after {attempts[key]} attempts")
 
         busy, elsewhere = isaac_clients()
+        groups = parse_sweep_groups(sweep_log)
+        runs = parse_sweep_runs(sweep_log)
+        reserved_tasks, active_sweep_gpus = sweep_reserved(groups, runs)
 
         pending: list[tuple[str, str]] = []
         per_policy_remaining: dict[str, int] = {}
@@ -297,7 +357,8 @@ def main() -> int:
                     continue
                 remaining += 1
                 if key in elsewhere:
-                    # The sweep (or a manual retry) already owns this task.
+                    continue
+                if policy == "Pi_05" and task in reserved_tasks:
                     continue
                 pending.append(key)
             per_policy_remaining[policy] = remaining
@@ -313,7 +374,7 @@ def main() -> int:
                         log(f"could not kill {pid}: {exc}")
                 killed_sweep = True
 
-        if not pending and not jobs:
+        if not jobs and all(count == 0 for count in per_policy_remaining.values()):
             log("all policies complete")
             return 0
 
@@ -329,6 +390,8 @@ def main() -> int:
                 break
             if gpu in busy or gpu in {j.gpu for j in jobs}:
                 continue
+            if gpu in active_sweep_gpus:
+                continue
             if idle_streak[gpu] < args.free_polls:
                 continue
             policy, task = pending.pop(0)
@@ -341,7 +404,11 @@ def main() -> int:
                 time.sleep(5)
 
         summary = ", ".join(f"{p}:{per_policy_remaining.get(p, 0)}" for p in policies)
-        log(f"remaining {summary} | running {len(jobs)} | busy_gpus={sorted(busy)}")
+        log(
+            f"remaining {summary} | running {len(jobs)} | "
+            f"busy_gpus={sorted(busy)} | sweep_gpus={sorted(active_sweep_gpus)} | "
+            f"stealable={len(pending)}"
+        )
         if args.dry_run:
             return 0
         time.sleep(args.poll_seconds)
