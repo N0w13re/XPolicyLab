@@ -1,8 +1,8 @@
 {
   "policies": {
     "Pi_05": {
-      "delta": -6.649130434782609,
-      "episodes": 1150,
+      "delta": -6.243333333333333,
+      "episodes": 1200,
       "incomplete_tasks": [
         "arrange_largest_number",
         "deposit_coin",
@@ -16,7 +16,6 @@
         "plug_in_charger",
         "pour_liquid_into_cup",
         "push_T",
-        "put_bottles_into_dustbin",
         "solve_equation",
         "stack_blocks",
         "stack_blocks_by_language",
@@ -81,7 +80,7 @@
           "successes": 0
         },
         "hang_mugs_random": {
-          "episodes": 10,
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -105,7 +104,7 @@
           "successes": 0
         },
         "make_kong": {
-          "episodes": 29,
+          "episodes": 39,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -189,10 +188,10 @@
           "successes": 0
         },
         "put_bottles_into_dustbin": {
-          "episodes": 40,
-          "score": 31.625000000000004,
+          "episodes": 50,
+          "score": 30.9,
           "success_rate": 10.0,
-          "successes": 4
+          "successes": 5
         },
         "sort_nesting_dolls_by_size": {
           "episodes": 25,
@@ -219,7 +218,13 @@
           "successes": 0
         },
         "stack_bowls_random": {
-          "episodes": 1,
+          "episodes": 5,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "store_laptop_and_headphones_random": {
+          "episodes": 5,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -242,6 +247,12 @@
           "success_rate": 0.0,
           "successes": 0
         },
+        "sweep_blocks": {
+          "episodes": 10,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "sweep_blocks_random": {
           "episodes": 25,
           "score": 0.0,
@@ -249,9 +260,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 23,
-      "score": 0.717391304347826,
-      "success_rate": 0.26086956521739135
+      "reported_tasks_complete": 24,
+      "score": 1.975,
+      "success_rate": 0.6666666666666667
     }
   },
   "seed": 0
