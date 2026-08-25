@@ -9,7 +9,7 @@ recorded single forward passes and never entered the simulator.
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
 | Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (`2026-08-25_07-41-06_smoke`; Traj retry in parallel) | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued after Pi_05 via `scripts/chain_robodojo_remaining.sh` | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued after Pi_05 on GPUs 2–7 while Traj still uses 0/1 (`scripts/chain_robodojo_remaining.sh`) | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued after G05 | not started |
 
 Pi_05 seed 0 snapshot (partial): see `results/pi05-seed0-partial.json` (18/42 reported
@@ -23,6 +23,11 @@ retry: imitate on GPU 1 (videos under `eval_result/.../imitate_sorting_sequence/
 (`scripts/coord_pi05_traj_retry.sh`). `robodojo.sh eval --eval-num native` does not
 export `EVAL_NUM`; the Isaac client still reads 50 episodes from `_task.yml` /
 `process_config` when the env var is unset, which is the official standalone budget.
+
+The latest `_result.json` files currently contain one closed-loop success
+(`match_and_pick_from_conveyor` 1/10 while that task is still running). Most finished
+cells are 0/50, which is still compatible with an overall 6.91% once the remaining
+tasks fill in. Camera ffmpeg streams are writing for imitate and make_kong.
 
 G05 and Xiaomi closed-loop sweeps have not started; their policy servers do load on this
 host (`results/g05-forward-gpu1.json`, `results/xiaomi-forward-gpu1.json`, both `"status": "passed"`).

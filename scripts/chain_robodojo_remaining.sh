@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
-# Wait for the in-flight Pi_05 seed-0 sweep (and optional Traj retry) then continue
-# the official protocol for G05 and Xiaomi_Robotics_1 on the same GPUs.
-#
-# The first Pi_05 sweep started before Assets/Traj finished downloading. Those three
-# tasks are retried separately on an idle GPU; this sequencer waits for that PID
-# file so it does not launch a second Isaac Sim on the same card.
+# After the in-flight Pi_05 seed-0 sweep: retry non-Traj failures, start G05 on
+# GPUs that Traj is not using, wait for Traj, then Xiaomi on all 8 cards.
 set -euo pipefail
 
 XPL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -12,11 +8,13 @@ LOGDIR="${LOGDIR:-${XPL_ROOT}/experiments/robodojo-official-2026-08-25/logs}"
 PI05_PID="${PI05_PID:-216753}"
 TRAJ_PID_FILE="${TRAJ_PID_FILE:-/tmp/pi05-traj-all.pid}"
 GPU_IDS="${GPU_IDS:-0,1,2,3,4,5,6,7}"
-POLICIES="${POLICIES:-G05,Xiaomi_Robotics_1}"
+TRAJ_GPUS="${TRAJ_GPUS:-0,1}"
+TRAJ_TASKS="imitate_sorting_sequence,make_kong,play_tic_tac_toe"
 
 wait_pid() {
   local pid="$1" label="$2"
-  [[ -n "${pid}" ]] || return 0
+  pid="$(echo "${pid}" | awk '{print $1}')"
+  [[ -n "${pid}" && "${pid}" =~ ^[0-9]+$ ]] || return 0
   if ! kill -0 "${pid}" 2>/dev/null; then
     echo "[chain] ${label} pid ${pid} already exited"
     return 0
@@ -26,11 +24,20 @@ wait_pid() {
   echo "[chain] ${label} finished at $(date -Is)"
 }
 
-wait_pid "${PI05_PID}" "Pi_05 seed0 sweep"
+traj_alive() {
+  [[ -f "${TRAJ_PID_FILE}" ]] || return 1
+  local pid
+  pid="$(head -1 "${TRAJ_PID_FILE}" | awk '{print $1}')"
+  [[ "${pid}" =~ ^[0-9]+$ ]] && kill -0 "${pid}" 2>/dev/null
+}
 
-if [[ -f "${TRAJ_PID_FILE}" ]]; then
-  wait_pid "$(cat "${TRAJ_PID_FILE}")" "Pi_05 Traj retry"
-fi
+free_gpus_while_traj() {
+  if traj_alive; then
+    echo "${GPU_IDS}" | tr ',' '\n' | grep -vxE "$(echo "${TRAJ_GPUS}" | tr ',' '|')" | paste -sd,
+  else
+    echo "${GPU_IDS}"
+  fi
+}
 
 failed_tasks_from_log() {
   local log="$1" summary
@@ -39,20 +46,54 @@ failed_tasks_from_log() {
   awk -F'|' '$2 ~ /FAIL/ {gsub(/[ `]/, "", $3); print $3}' "${summary}" | paste -sd,
 }
 
-RETRY="$(failed_tasks_from_log "${LOGDIR}/Pi_05-seed0.log" || true)"
-# Traj trio is handled by the GPU-1 retry; skip them if they already have a later result.
-echo "[chain] Pi_05 markdown FAIL tasks: ${RETRY:-none}"
-if [[ -n "${RETRY}" ]]; then
+strip_traj_tasks() {
+  local failed="$1"
+  python3 - "${failed}" "${TRAJ_TASKS}" <<'PY'
+import sys
+failed = [t for t in sys.argv[1].split(",") if t]
+skip = set(sys.argv[2].split(","))
+print(",".join(t for t in failed if t not in skip))
+PY
+}
+
+run_benchmark() {
+  local policy="$1" gpus="$2" logfile="$3"
+  shift 3
+  echo "[chain] ${policy} gpus=${gpus} extra=$* log=${logfile}"
   set +e
-  bash "${XPL_ROOT}/scripts/run_robodojo_sim_eval.sh" benchmark Pi_05 \
-    --eval-num native --seed 0 --only "${RETRY}" \
-    --policy-gpu-ids "${GPU_IDS}" --env-gpu-ids "${GPU_IDS}" \
-    > "${LOGDIR}/Pi_05-seed0-retry.log" 2>&1
-  echo "[chain] Pi_05 retry rc=$?"
+  bash "${XPL_ROOT}/scripts/run_robodojo_sim_eval.sh" benchmark "${policy}" \
+    --eval-num native --seed 0 \
+    --policy-gpu-ids "${gpus}" --env-gpu-ids "${gpus}" \
+    "$@" > "${logfile}" 2>&1
+  echo "[chain] ${policy} rc=$? gpus=${gpus} at $(date -Is)"
   set -e
+}
+
+wait_pid "${PI05_PID}" "Pi_05 seed0 sweep"
+
+RETRY="$(failed_tasks_from_log "${LOGDIR}/Pi_05-seed0.log" || true)"
+RETRY="$(strip_traj_tasks "${RETRY:-}")"
+echo "[chain] Pi_05 FAIL excluding Traj trio: ${RETRY:-none}"
+if [[ -n "${RETRY}" ]]; then
+  run_benchmark Pi_05 "$(free_gpus_while_traj)" "${LOGDIR}/Pi_05-seed0-retry.log" --only "${RETRY}"
 fi
 
-bash "${XPL_ROOT}/scripts/run_robodojo_official_protocol.sh" \
-  --seeds 0 --policies "${POLICIES}" --gpu-ids "${GPU_IDS}" \
-  --log-dir "${LOGDIR}"
+G05_GPUS="$(free_gpus_while_traj)"
+echo "[chain] starting G05 on ${G05_GPUS} (Traj still using ${TRAJ_GPUS} if coordinator is alive)"
+run_benchmark G05 "${G05_GPUS}" "${LOGDIR}/G05-seed0.log"
+G05_RETRY="$(failed_tasks_from_log "${LOGDIR}/G05-seed0.log" || true)"
+if [[ -n "${G05_RETRY}" ]]; then
+  run_benchmark G05 "$(free_gpus_while_traj)" "${LOGDIR}/G05-seed0-retry.log" --only "${G05_RETRY}"
+fi
+
+wait_pid "$(head -1 "${TRAJ_PID_FILE}" 2>/dev/null || true)" "Pi_05 Traj retry"
+
+run_benchmark Xiaomi_Robotics_1 "${GPU_IDS}" "${LOGDIR}/Xiaomi_Robotics_1-seed0.log"
+
+echo "[chain] aggregating"
+ROBODOJO_ROOT="${ROBODOJO_ROOT:-$(cd "${XPL_ROOT}/.." && pwd)/RoboDojo-eval}"
+( cd "${ROBODOJO_ROOT}" && python3 scripts/internal/summarize_result.py ) || true
+python3 "${XPL_ROOT}/scripts/compare_robodojo_to_official.py" \
+  --eval-root "${ROBODOJO_ROOT}" --seed 0 \
+  --json-out "${LOGDIR}/../results/compare-seed0.json"
 echo "[chain] all done at $(date -Is)"
