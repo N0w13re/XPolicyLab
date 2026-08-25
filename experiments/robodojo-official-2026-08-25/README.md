@@ -9,7 +9,7 @@ recorded single forward passes and never entered the simulator.
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
 | Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | running (`2026-08-25_07-41-06_smoke` sweep plus Traj retries) | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | overlapping GPU1/2/7 (imitate, play_tic_tac_toe, pour) | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | overlapping GPU1–3/7 (imitate, play_tic, fasten_screws, pour) | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; venv has msgpack-numpy/pydantic, `last.ckpt` + local Qwen3-VL processor on disk | not started |
 
 Pi_05 seed 0 native sweep started **2026-08-25 07:41:02 CST** (`robodojo.sh benchmark`
@@ -19,7 +19,9 @@ Snapshot at 16:38 CST: `results/pi05-seed0-partial.json` (**37/42** reported cel
 reproduction verdict). Newly closed: `general_pickup` **1/50**,
 `stack_blocks_by_language` **0/50** (150 mp4). `fold_clothes` pair: **4/25** +
 **0/25**. `stack_bowls` pair: **9/25** + **0/25**. Five cells still open:
-`deposit_coin`, `hang_mugs`, `play_tic_tac_toe`, `push_T` pair, `stack_blocks` pair.
+`deposit_coin`, `hang_mugs`, `play_tic_tac_toe`, `push_T` pair, `stack_blocks` pair
+(`stack_blocks` is leftover on sweep GPU6 after `deposit_coin`; `stack_blocks_random`
+already 0/25).
 
 Closed-loop binary successes on completed cells: `put_bottles_into_dustbin` **5/50**,
 `match_and_pick_from_conveyor` **3/50**, `stack_bowls` **9/25**, `fold_clothes` **4/25**,
@@ -30,10 +32,9 @@ machine: (1) official `.hydra/config.yaml` points `hf_processor_path` at a
 trainer-host directory; sidecar remap now prefers `run_dir/hf_processor/tokenizer.json`;
 (2) G05 `.venv` lacked `msgpack-numpy` and `pydantic` for the XPolicyLab websocket
 server. After those fixes: GPU1 `imitate_sorting_sequence` ~1239/1600 with 30 ffmpeg
-streams; GPU7 `pour_by_language` stepping ~73/800; GPU2 `play_tic_tac_toe` reached
-environment reset. G05 `_result.json` is not written yet. GPU3 launched G05
-`fasten_screws` at 16:40:05 CST. Four G05 jobs now overlap the five remaining
-Pi_05 cells.
+streams; GPU7 `pour_by_language` stepping ~143/800; GPU2 `play_tic_tac_toe` ~39/1100;
+GPU3 `fasten_screws` reached environment reset (tokenizer sidecar OK). G05
+`_result.json` is not written yet. All eight GPUs have a live Isaac `eval_client`.
 
 `imitate_sorting_sequence`, `make_kong`, and `play_tic_tac_toe` failed in the first
 sweep because `Assets/Traj` was still an LFS pointer. Files are on disk now and the
