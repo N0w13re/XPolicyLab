@@ -52,6 +52,10 @@ properties make it safe to run next to a live sweep:
   minute reset gap between episode batches of one task.
 - A task already running anywhere (matched on `--task_name` plus `--policy_name`) is
   never launched a second time.
+- Tasks the live sweep has not yet `RUN` on an unfinished shard stay reserved, and
+  those shard GPUs (currently 2–7) are not given elastic jobs between two of that
+  shard's own tasks. GPU 0 and 1 are already past their shards, so the first
+  stealable Pi_05 cell is `play_tic_tac_toe`.
 
 Completion is judged exactly as `summarize_result.py` judges it: the newest timestamp
 directory must hold the task's full `_task.yml` budget. That comparison is
