@@ -1,18 +1,18 @@
 {
-  "as_of": "2026-08-27T02:50+08",
+  "as_of": "2026-08-27T03:20+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 20,
+  "official_cells_complete": 21,
   "official_cells_total": 42,
-  "partial_table_sr_percent": 11.10,
-  "in_progress_sr_percent": 11.86,
-  "in_progress_episodes": "136/1147",
-  "throughput_ep_per_h": 145.6,
-  "elapsed_h": 7.88,
-  "pi05_remain_ep_est": 953,
-  "pi05_remain_h_est": 6.5,
+  "partial_table_sr_percent": 10.57,
+  "in_progress_sr_percent": 12.25,
+  "in_progress_episodes": "155/1265",
+  "throughput_ep_per_h": 150.4,
+  "elapsed_h": 8.38,
+  "pi05_remain_ep_est": 835,
+  "pi05_remain_h_est": 5.6,
   "completed_cells": {
     "build_tower": "29/50",
     "classify_objects": "9/50",
@@ -33,24 +33,25 @@
     "make_kong": "28/50",
     "sort_nesting_dolls_by_size": "4/50",
     "match_and_pick_from_conveyor": "13/50",
-    "pour_balls_into_vase": "8/50"
+    "pour_balls_into_vase": "8/50",
+    "fill_egg_holder": "0/50"
   },
-  "wrist_pour_balls_ep49_YMAX": {"head": 248, "left_wrist": 170, "right_wrist": 207},
+  "wrist_fill_egg_ep49_YMAX": {"head": 253, "left_wrist": 253, "right_wrist": 255},
   "running": {
-    "gpu0": "fill_egg_holder",
-    "gpu1": "pour_liquid_into_cup",
+    "gpu0": "sweep_blocks_random",
+    "gpu1": "insert_tubes",
     "gpu2": "sweep_blocks",
     "gpu3": "store_laptop_and_headphones_random",
     "gpu4": "pack_objects_into_box_random",
-    "gpu5": "pack_objects_into_box",
+    "gpu5": "arrange_largest_number",
     "gpu6": "put_bottles_into_dustbin",
     "gpu7": "hang_mugs_random"
   },
   "next_cells_likely": {
-    "fill_egg_holder": "0/37 of 50",
-    "put_bottles_into_dustbin": "20/25 at 80%",
-    "pack_objects_into_box": "paired 1/20 + random 0/10"
+    "put_bottles_into_dustbin": "36/45 at 80%",
+    "pack_objects_into_box": "paired 1/25 + random 0/20",
+    "pour_liquid_into_cup": "5/25 half already full"
   },
   "pids": {"sweep": 3281259, "elastic": 3950295},
-  "note": "Partial 11.10% is mean of 20 completed cells; do not delta vs official 6.91 until 42/42. G05/Xiaomi not started."
+  "note": "Partial 10.57% is mean of 21 completed cells; do not delta vs official 6.91 until 42/42. G05/Xiaomi not started."
 }
