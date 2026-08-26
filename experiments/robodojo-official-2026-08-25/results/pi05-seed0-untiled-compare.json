@@ -3,9 +3,9 @@
     "G05": {
       "delta": null,
       "episodes": 0,
-      "in_progress_episodes": 23,
-      "in_progress_success_rate": 8.695652173913043,
-      "in_progress_successes": 2,
+      "in_progress_episodes": 28,
+      "in_progress_success_rate": 10.714285714285714,
+      "in_progress_successes": 3,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -52,6 +52,12 @@
       ],
       "official_success_rate": 14.88,
       "per_task": {
+        "fasten_screws": {
+          "episodes": 5,
+          "score": 32.0,
+          "success_rate": 20.0,
+          "successes": 1
+        },
         "imitate_sorting_sequence": {
           "episodes": 8,
           "score": 2.5,
