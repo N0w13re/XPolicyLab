@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T20:35+08",
+  "as_of": "2026-08-26T20:42+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -15,16 +15,16 @@
   },
   "partial_results": {
     "build_tower": "22/35",
-    "classify_objects": "4/25",
+    "classify_objects": "4/30",
     "classify_objects_by_language": "0/30",
     "fasten_screws": "0/20",
     "imitate_sorting_sequence": "0/9",
     "play_stacking_toy": "0/30",
-    "play_tic_tac_toe": "0/9",
+    "play_tic_tac_toe": "1/14",
     "pour_by_language": "0/15"
   },
-  "partial_episodes": "26/173",
-  "partial_sr_percent": 15.03,
+  "partial_episodes": "27/183",
+  "partial_sr_percent": 14.75,
   "running": {
     "gpu0": {
       "task": "imitate_sorting_sequence",
@@ -65,8 +65,8 @@
     "sweep": 3281259,
     "elastic": 3282394
   },
-  "eta_max_shard_remaining_h": 10.81,
-  "eta_three_policies_h": 32.4,
+  "eta_max_shard_remaining_h": 10.67,
+  "eta_three_policies_h": 32.0,
   "eta_note": "smoke_all_tasks weights at num_envs=10, scaled x2 for num_envs=5; untiled overhead not included",
   "official_pi05_paper_table1": {
     "source": "arxiv 2607.04434v3 Table 1, frozen 2026-07-03",
