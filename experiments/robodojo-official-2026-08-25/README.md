@@ -8,11 +8,11 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **19/42**. New: `sort_nesting_dolls_by_size` 4/50 (4/25+0/25, YMAX 252/251/253) and `match_and_pick_from_conveyor` 13/50 (YMAX 251/234/255). Partial mean 10.84%; in-progress 123/1093 at 11.25%. | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **20/42**. New: `pour_balls_into_vase` 8/50 (wrists YMAX 248/170/207). Partial mean 11.10%; in-progress 136/1147 at 11.86%. GPU7 now `hang_mugs_random`. | not started |
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05; adapter and venv issues already fixed | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); elastic now gates native cells behind `stack_bowls --eval-num 2` closed-loop | not started |
 
-The seed-0 table is **19/42** as of 02:29 CST Aug 27. Do not compare that nineteen-cell mean (10.84%) to the published 6.91% until 42/42. Eight Isaac clients with untiled cameras. Measured ~145 ep/h over 7.5 h (~7 h left on Pi_05 at that rate). GPU1 `play_tic_tac_toe` can sit at 0% util between 5-env flushes because the horizon is 1400 steps. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
+The seed-0 table is **20/42** as of 02:50 CST Aug 27. Do not compare that twenty-cell mean (11.10%) to the published 6.91% until 42/42. Eight Isaac clients with untiled cameras; `pour_balls_into_vase` ep49 wrists colorful (YMAX 248/170/207). Measured ~145 ep/h over 7.9 h (~6.5 h left on Pi_05 at that rate). GPU1 `play_tic_tac_toe` can sit at 0% util between 5-env flushes because the horizon is 1400 steps. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
 quarantined because their wrist-camera observations were blank; see below. The first
 attempt ran 07:41-18:07 CST and
 reached 41/42 cells for Pi_05 at **SR 1.07%** against an official 6.91%, plus six
