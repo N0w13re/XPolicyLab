@@ -1,24 +1,92 @@
 {
   "policies": {
+    "G05": {
+      "delta": null,
+      "episodes": 0,
+      "in_progress_episodes": 4,
+      "in_progress_success_rate": 0.0,
+      "in_progress_successes": 0,
+      "incomplete_tasks": [
+        "align_blocks",
+        "arrange_largest_number",
+        "build_tower",
+        "classify_objects",
+        "classify_objects_by_language",
+        "cover_blocks",
+        "deposit_coin",
+        "fasten_screws",
+        "fill_egg_holder",
+        "fill_pen_holder",
+        "fold_clothes",
+        "general_pickup",
+        "hang_mugs",
+        "imitate_sorting_sequence",
+        "insert_key",
+        "insert_tubes",
+        "make_kong",
+        "make_toast",
+        "match_and_pick_from_conveyor",
+        "organize_table",
+        "pack_objects_into_box",
+        "pick_from_conveyor_by_image",
+        "play_Xylophone",
+        "play_stacking_toy",
+        "play_tic_tac_toe",
+        "plug_in_charger",
+        "pour_balls_into_vase",
+        "pour_by_language",
+        "pour_liquid_into_cup",
+        "press_by_number",
+        "push_T",
+        "put_bottles_into_dustbin",
+        "solve_equation",
+        "sort_nesting_dolls_by_size",
+        "stack_blocks",
+        "stack_blocks_by_language",
+        "stack_bowls",
+        "store_laptop_and_headphones",
+        "store_tools_in_toolbox",
+        "swap_T",
+        "swap_blocks",
+        "sweep_blocks"
+      ],
+      "official_success_rate": 14.88,
+      "per_task": {
+        "imitate_sorting_sequence": {
+          "episodes": 4,
+          "score": 3.75,
+          "success_rate": 0.0,
+          "successes": 0
+        }
+      },
+      "reported_tasks_complete": 0,
+      "score": NaN,
+      "success_rate": NaN,
+      "table_complete": false
+    },
     "Pi_05": {
       "delta": null,
-      "episodes": 1650,
-      "in_progress_episodes": 1820,
-      "in_progress_success_rate": 11.31868131868132,
-      "in_progress_successes": 206,
+      "episodes": 1750,
+      "in_progress_episodes": 1885,
+      "in_progress_success_rate": 11.03448275862069,
+      "in_progress_successes": 208,
       "incomplete_tasks": [
         "align_blocks",
         "deposit_coin",
-        "fold_clothes",
         "hang_mugs",
         "insert_key",
-        "pour_liquid_into_cup",
         "push_T",
         "stack_blocks",
         "swap_T"
       ],
       "official_success_rate": 6.91,
       "per_task": {
+        "align_blocks": {
+          "episodes": 15,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "arrange_largest_number": {
           "episodes": 25,
           "score": 9.6,
@@ -55,6 +123,12 @@
           "success_rate": 20.0,
           "successes": 10
         },
+        "deposit_coin": {
+          "episodes": 5,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "fasten_screws": {
           "episodes": 50,
           "score": 14.800000000000002,
@@ -74,16 +148,16 @@
           "successes": 2
         },
         "fold_clothes": {
-          "episodes": 20,
-          "score": 62.0,
-          "success_rate": 55.00000000000001,
+          "episodes": 25,
+          "score": 51.2,
+          "success_rate": 44.0,
           "successes": 11
         },
         "fold_clothes_random": {
-          "episodes": 20,
-          "score": 33.0,
-          "success_rate": 20.0,
-          "successes": 4
+          "episodes": 25,
+          "score": 34.4,
+          "success_rate": 24.0,
+          "successes": 6
         },
         "general_pickup": {
           "episodes": 50,
@@ -92,8 +166,8 @@
           "successes": 8
         },
         "hang_mugs": {
-          "episodes": 10,
-          "score": 9.0,
+          "episodes": 20,
+          "score": 10.25,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -110,8 +184,8 @@
           "successes": 0
         },
         "insert_key": {
-          "episodes": 25,
-          "score": 12.6,
+          "episodes": 45,
+          "score": 12.666666666666668,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -212,7 +286,7 @@
           "successes": 5
         },
         "pour_liquid_into_cup_random": {
-          "episodes": 20,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -308,9 +382,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 33,
-      "score": 16.73030303030303,
-      "success_rate": 11.272727272727273,
+      "reported_tasks_complete": 35,
+      "score": 17.282857142857143,
+      "success_rate": 11.885714285714286,
       "table_complete": false
     }
   },

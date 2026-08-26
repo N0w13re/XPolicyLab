@@ -1,18 +1,18 @@
 {
-  "as_of": "2026-08-27T05:25+08",
+  "as_of": "2026-08-27T05:42+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 33,
+  "official_cells_complete": 35,
   "official_cells_total": 42,
-  "partial_table_sr_percent": 11.27,
-  "in_progress_sr_percent": 11.32,
-  "in_progress_episodes": "206/1820",
-  "throughput_ep_per_h": 174.2,
-  "elapsed_h": 10.45,
-  "pi05_remain_ep_est": 280,
-  "pi05_remain_h_est": 1.6,
+  "partial_table_sr_percent": 11.89,
+  "in_progress_sr_percent": 11.03,
+  "in_progress_episodes": "208/1885",
+  "throughput_ep_per_h": 175.7,
+  "elapsed_h": 10.73,
+  "pi05_remain_ep_est": 215,
+  "pi05_remain_h_est": 1.2,
   "completed_cells": {
     "build_tower": "29/50",
     "classify_objects": "9/50",
@@ -46,40 +46,43 @@
     "stack_bowls": "19/50",
     "general_pickup": "8/50",
     "stack_blocks_by_language": "0/50",
-    "sweep_blocks": "0/50"
+    "sweep_blocks": "0/50",
+    "pour_liquid_into_cup": "5/50",
+    "fold_clothes": "17/50"
   },
-  "wrist_sweep_blocks_random_ep24_YMAX": {"head": 245, "left_wrist": 253, "right_wrist": 241},
+  "wrist_pour_liquid_random_ep24_YMAX": {"head": 255, "left_wrist": 254, "right_wrist": 252},
+  "wrist_fold_clothes_random_ep24_YMAX": {"head": 253, "left_wrist": 255, "right_wrist": 255},
+  "wrist_g05_imitate_ep3_YMAX": {"head": 255, "left_wrist": 255, "right_wrist": 254},
   "running": {
     "gpu0": "Pi_05/align_blocks",
     "gpu1": "Pi_05/insert_key",
     "gpu2": "G05/pour_by_language",
     "gpu3": "G05/imitate_sorting_sequence",
-    "gpu4": "Pi_05/pour_liquid_into_cup_random",
+    "gpu4": "Pi_05/push_T_random",
     "gpu5": "Pi_05/hang_mugs",
-    "gpu6": "Pi_05/fold_clothes_random",
-    "gpu7": "Pi_05/fold_clothes"
+    "gpu6": "Pi_05/deposit_coin",
+    "gpu7": "G05/play_tic_tac_toe"
   },
   "next_cells_likely": {
-    "insert_key": "0/25 of 50",
-    "pour_liquid_into_cup": "5/25 plus random 0/20",
-    "fold_clothes": "11/20 plus random 4/20"
+    "insert_key": "0/45 of 50",
+    "hang_mugs": "0/20 plus random 0/25",
+    "align_blocks": "0/15 of 25"
   },
   "incomplete_official_cells": [
     "align_blocks",
     "deposit_coin",
-    "fold_clothes",
     "hang_mugs",
     "insert_key",
-    "pour_liquid_into_cup",
     "push_T",
     "stack_blocks",
     "swap_T"
   ],
   "g05": {
     "official_cells": 0,
-    "running_tasks": ["imitate_sorting_sequence", "pour_by_language"],
-    "result_json_flushed": false
+    "in_progress_episodes": "0/4",
+    "running_tasks": ["imitate_sorting_sequence", "pour_by_language", "play_tic_tac_toe"],
+    "result_json_flushed": true
   },
   "pids": {"sweep": 3281259, "elastic": 3950295},
-  "note": "Partial 11.27% is mean of 33 completed Pi_05 cells; do not delta vs official 6.91 until 42/42. G05 overlap on GPU2/GPU3. Xiaomi still gated."
+  "note": "Partial 11.89% is mean of 35 completed Pi_05 cells; do not delta vs official 6.91 until 42/42. G05 closed-loop evidence exists. Xiaomi still gated."
 }
