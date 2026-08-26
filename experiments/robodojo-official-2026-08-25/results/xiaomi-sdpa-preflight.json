@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T19:35+08",
+  "as_of": "2026-08-26T19:47+08",
   "checkpoint_root": "/mnt/bn/robotics-data-mx/wenbo/XPolicyLab/policy/Xiaomi_Robotics_1/checkpoints/RoboDojo-sim-arx_x5-ee-0",
   "config_py": true,
   "last_ckpt": true,
@@ -7,5 +7,16 @@
   "attn_implementation": "sdpa",
   "sdpa_fallback_in_xr1_py": true,
   "resolve_checkpoint_root": "ok",
+  "from_config_cpu": {
+    "ok": true,
+    "attn": "sdpa",
+    "elapsed_s": 197.1,
+    "cuda_available": false,
+    "note": "Reproduces the stack_bowls ckptfix crash (FA2 ImportError) with the post-fix _from_config path; no GPU used."
+  },
+  "prior_closed_loop_blockers": [
+    "elastic logs: checkpoints/sim missing (fixed by resolve_checkpoint_root)",
+    "logs/verify/xiaomi-stack_bowls-ckptfix.log: FA2 required (fixed by SDPA fallback)"
+  ],
   "closed_loop_smoke": "pending (8 GPUs busy with Pi_05; run stack_bowls eval-num 2 before Xiaomi handoff)"
 }
