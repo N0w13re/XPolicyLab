@@ -1,12 +1,12 @@
 {
-  "as_of": "2026-08-26T23:38+08",
+  "as_of": "2026-08-27T00:08+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 8,
+  "official_cells_complete": 9,
   "official_cells_total": 42,
-  "partial_table_sr_percent": 10.75,
+  "partial_table_sr_percent": 10.0,
   "completed_cells": {
     "build_tower": "29/50",
     "classify_objects": "9/50",
@@ -15,19 +15,21 @@
     "fasten_screws": "3/50",
     "pour_by_language": "0/50",
     "store_tools_in_toolbox": "0/50",
-    "fill_pen_holder": "2/50"
+    "fill_pen_holder": "2/50",
+    "organize_table": "2/50"
   },
-  "in_progress_episodes": "46/539",
-  "wrist_fill_pen_holder_ep49_YMAX": {"head": 251.0, "left_wrist": 245.8, "right_wrist": 247.0},
+  "in_progress_episodes": "50/604",
+  "wrist_organize_table_ep49_YMAX": {"head": 254.9, "left_wrist": 255.0, "right_wrist": 255.0},
   "running": {
     "gpu0": "imitate_sorting_sequence",
     "gpu1": "play_tic_tac_toe",
     "gpu2": "arrange_largest_number_random",
     "gpu3": "sort_nesting_dolls_by_size_random",
-    "gpu4": "organize_table",
+    "gpu4": "pick_from_conveyor_by_image",
     "gpu5": "make_toast",
     "gpu6": "make_toast_random",
     "gpu7": "cover_blocks"
   },
+  "next_cells_likely": {"play_tic_tac_toe": "1/44"},
   "pids": {"sweep": 3281259, "elastic": 3950295}
 }

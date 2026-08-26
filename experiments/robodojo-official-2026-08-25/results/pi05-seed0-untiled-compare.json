@@ -2,10 +2,10 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 450,
-      "in_progress_episodes": 604,
-      "in_progress_success_rate": 8.27814569536424,
-      "in_progress_successes": 50,
+      "episodes": 500,
+      "in_progress_episodes": 675,
+      "in_progress_success_rate": 7.555555555555555,
+      "in_progress_successes": 51,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -24,7 +24,6 @@
         "pack_objects_into_box",
         "pick_from_conveyor_by_image",
         "play_Xylophone",
-        "play_tic_tac_toe",
         "plug_in_charger",
         "pour_balls_into_vase",
         "pour_liquid_into_cup",
@@ -44,8 +43,8 @@
       "official_success_rate": 6.91,
       "per_task": {
         "arrange_largest_number_random": {
-          "episodes": 10,
-          "score": 1.0,
+          "episodes": 20,
+          "score": 0.5,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -68,10 +67,10 @@
           "successes": 0
         },
         "cover_blocks": {
-          "episodes": 15,
-          "score": 31.0,
-          "success_rate": 26.666666666666668,
-          "successes": 4
+          "episodes": 25,
+          "score": 24.4,
+          "success_rate": 20.0,
+          "successes": 5
         },
         "fasten_screws": {
           "episodes": 50,
@@ -86,20 +85,20 @@
           "successes": 2
         },
         "imitate_sorting_sequence": {
-          "episodes": 40,
-          "score": 1.3750000000000002,
+          "episodes": 45,
+          "score": 1.2222222222222223,
           "success_rate": 0.0,
           "successes": 0
         },
         "make_toast": {
-          "episodes": 5,
-          "score": 15.0,
+          "episodes": 10,
+          "score": 10.0,
           "success_rate": 0.0,
           "successes": 0
         },
         "make_toast_random": {
-          "episodes": 20,
-          "score": 1.25,
+          "episodes": 25,
+          "score": 1.0,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -109,6 +108,12 @@
           "success_rate": 4.0,
           "successes": 2
         },
+        "pick_from_conveyor_by_image": {
+          "episodes": 10,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "play_stacking_toy": {
           "episodes": 50,
           "score": 0.0,
@@ -116,9 +121,9 @@
           "successes": 0
         },
         "play_tic_tac_toe": {
-          "episodes": 44,
-          "score": 15.568181818181817,
-          "success_rate": 2.272727272727273,
+          "episodes": 50,
+          "score": 14.3,
+          "success_rate": 2.0,
           "successes": 1
         },
         "pour_by_language": {
@@ -127,8 +132,14 @@
           "success_rate": 0.0,
           "successes": 0
         },
+        "press_by_number": {
+          "episodes": 15,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "sort_nesting_dolls_by_size_random": {
-          "episodes": 20,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -140,9 +151,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 9,
-      "score": 19.2,
-      "success_rate": 10.0,
+      "reported_tasks_complete": 10,
+      "score": 18.709999999999997,
+      "success_rate": 9.2,
       "table_complete": false
     }
   },
