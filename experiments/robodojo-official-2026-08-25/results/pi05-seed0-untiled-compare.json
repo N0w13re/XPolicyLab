@@ -3,9 +3,9 @@
     "Pi_05": {
       "delta": null,
       "episodes": 200,
-      "in_progress_episodes": 337,
-      "in_progress_success_rate": 12.166172106824925,
-      "in_progress_successes": 41,
+      "in_progress_episodes": 352,
+      "in_progress_success_rate": 11.931818181818182,
+      "in_progress_successes": 42,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -67,10 +67,10 @@
           "successes": 0
         },
         "fasten_screws": {
-          "episodes": 35,
-          "score": 15.42857142857143,
-          "success_rate": 5.714285714285714,
-          "successes": 2
+          "episodes": 40,
+          "score": 16.0,
+          "success_rate": 7.5,
+          "successes": 3
         },
         "fill_pen_holder": {
           "episodes": 15,
@@ -79,8 +79,8 @@
           "successes": 0
         },
         "imitate_sorting_sequence": {
-          "episodes": 18,
-          "score": 0.2777777777777778,
+          "episodes": 23,
+          "score": 0.6521739130434784,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -103,7 +103,7 @@
           "successes": 1
         },
         "pour_by_language": {
-          "episodes": 30,
+          "episodes": 35,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
