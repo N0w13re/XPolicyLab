@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T21:05+08",
+  "as_of": "2026-08-26T21:07+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -25,54 +25,41 @@
   },
   "partial_episodes": "33/232",
   "partial_sr_percent": 14.22,
-  "running": {
-    "gpu0": {
-      "task": "imitate_sorting_sequence",
-      "step": "1375/1600 (env2)"
-    },
-    "gpu1": {
-      "task": "play_tic_tac_toe",
-      "step": "(reset/between)"
-    },
-    "gpu2": {
-      "task": "pour_by_language",
-      "step": "75/800 (env0)"
-    },
-    "gpu3": {
-      "task": "fasten_screws",
-      "step": "870/1900 (env0)"
-    },
-    "gpu4": {
-      "task": "play_stacking_toy",
-      "step": "19/1200 (env0)"
-    },
-    "gpu5": {
-      "task": "classify_objects_by_language",
-      "step": "154/1100 (env0)"
-    },
-    "gpu6": {
-      "task": "classify_objects",
-      "step": "(reset/between)"
-    },
-    "gpu7": {
-      "task": "build_tower",
-      "step": "600/1050 (env0)"
-    }
+  "elapsed_h": 2.17,
+  "throughput_ep_per_h": 106.9,
+  "throughput_ep_per_gpu_h": 13.36,
+  "paper_table4": {
+    "source": "arxiv 2607.04434 Table 4",
+    "hardware": "8x RTX 4090 sim (10 envs each) + separate A800 for pi0.5 inference",
+    "hetero_plus_pi05": "1.64e6 interactions in 7h07m = 64.0 interactions/s"
   },
-  "timeout_note": "Startup TimeoutError seen on several tasks; all recovered and continued stepping. request_timeout_s default 120s.",
-  "wrist_check": "live-1930.json still authoritative; no blackout regression observed",
+  "speed_note": "This host colocates Isaac+policy on 8x A800, num_envs=5, untiled 5 render products. Observed ~107 ep/h vs paper's 10-env + split-GPU setup; ETA ~10.3h remaining for Pi_05 max shard.",
+  "wrist_check_ep44_build_tower": {
+    "head": {"YMIN": 4, "YMAX": 234, "YAVG": 106.45},
+    "left_wrist": {"YMIN": 10, "YMAX": 239, "YAVG": 103.57},
+    "right_wrist": {"YMIN": 8, "YMAX": 238, "YAVG": 108.91}
+  },
+  "running": {
+    "gpu0": "imitate_sorting_sequence",
+    "gpu1": "play_tic_tac_toe",
+    "gpu2": "pour_by_language",
+    "gpu3": "fasten_screws",
+    "gpu4": "play_stacking_toy",
+    "gpu5": "classify_objects_by_language",
+    "gpu6": "classify_objects",
+    "gpu7": "build_tower"
+  },
   "pids": {
     "sweep": 3281259,
     "elastic": 3282394
   },
-  "eta_max_shard_remaining_h": 10.67,
-  "eta_three_policies_h": 32.0,
-  "eta_note": "smoke_all_tasks weights at num_envs=10, scaled x2 for num_envs=5; untiled overhead not included",
+  "eta_max_shard_remaining_h": 10.3,
+  "eta_three_policies_h": 31.0,
+  "eta_note": "smoke_all_tasks weights at num_envs=10, scaled x2 for num_envs=5; untiled overhead not included. Empirical remaining at 107 ep/h would be ~23h for 54x50 raw budget because current 8 tasks are long-horizon heavy.",
   "official_pi05_paper_table1": {
-    "source": "arxiv 2607.04434v3 Table 1, frozen 2026-07-03",
+    "source": "arxiv 2607.04434 Table 1, frozen 2026-07-03",
     "average_sr": 6.91,
     "precision_sr": 5.5,
-    "long_horizon_sr": 14.67,
-    "note": "No official per-task SR for Pi_05. build_tower is Precision; 13/20 is not the official cell."
+    "note": "No official per-task SR for Pi_05. build_tower 27/45 is not an official cell until 50 eps."
   }
 }
