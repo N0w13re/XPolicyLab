@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T20:30+08",
+  "as_of": "2026-08-26T20:35+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -16,15 +16,15 @@
   "partial_results": {
     "build_tower": "22/35",
     "classify_objects": "4/25",
-    "classify_objects_by_language": "0/25",
-    "fasten_screws": "0/15",
+    "classify_objects_by_language": "0/30",
+    "fasten_screws": "0/20",
     "imitate_sorting_sequence": "0/9",
-    "play_stacking_toy": "0/25",
+    "play_stacking_toy": "0/30",
     "play_tic_tac_toe": "0/9",
     "pour_by_language": "0/15"
   },
-  "partial_episodes": "26/158",
-  "partial_sr_percent": 16.46,
+  "partial_episodes": "26/173",
+  "partial_sr_percent": 15.03,
   "running": {
     "gpu0": {
       "task": "imitate_sorting_sequence",
