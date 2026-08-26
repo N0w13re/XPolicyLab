@@ -1,18 +1,18 @@
 {
-  "as_of": "2026-08-27T06:12+08",
+  "as_of": "2026-08-27T06:25+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 38,
+  "official_cells_complete": 39,
   "official_cells_total": 42,
-  "partial_table_sr_percent": 10.95,
-  "in_progress_sr_percent": 10.58,
-  "in_progress_episodes": "210/1985",
+  "partial_table_sr_percent": 10.77,
+  "in_progress_sr_percent": 10.47,
+  "in_progress_episodes": "210/2005",
   "throughput_ep_per_h": 176.8,
-  "elapsed_h": 11.23,
-  "pi05_remain_ep_est": 115,
-  "pi05_remain_h_est": 0.7,
+  "elapsed_h": 11.45,
+  "pi05_remain_ep_est": 95,
+  "pi05_remain_h_est": 0.55,
   "completed_cells": {
     "build_tower": "29/50",
     "classify_objects": "9/50",
@@ -51,21 +51,21 @@
     "fold_clothes": "17/50",
     "insert_key": "0/50",
     "hang_mugs": "0/50",
-    "align_blocks": "0/50"
+    "align_blocks": "0/50",
+    "deposit_coin": "2/50"
   },
-  "wrist_align_blocks_ep49_YMAX": {"head": 255, "left_wrist": 177, "right_wrist": 246},
+  "wrist_deposit_coin_ep49_YMAX": {"head": 250, "left_wrist": 238, "right_wrist": 191},
   "incomplete_official_cells": [
-    "deposit_coin",
     "push_T",
     "stack_blocks",
     "swap_T"
   ],
   "g05": {
     "official_cells": 0,
-    "in_progress_episodes": "2/23",
-    "running_tasks": ["imitate_sorting_sequence", "pour_by_language", "play_tic_tac_toe", "fasten_screws", "play_stacking_toy"],
+    "in_progress_episodes": "3/38",
+    "running_tasks": ["imitate_sorting_sequence", "pour_by_language", "play_tic_tac_toe", "fasten_screws", "play_stacking_toy", "classify_objects_by_language"],
     "play_tic_tac_toe": "2/5"
   },
   "pids": {"sweep": 3281259, "elastic": 3950295},
-  "note": "Partial 10.95% is mean of 38 completed Pi_05 cells; do not delta vs official 6.91 until 42/42. Xiaomi still gated."
+  "note": "Partial 10.77% is mean of 39 completed Pi_05 cells; do not delta vs official 6.91 until 42/42. Xiaomi still gated."
 }

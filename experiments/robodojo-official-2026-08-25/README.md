@@ -8,11 +8,11 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **38/42**. New: `align_blocks` 0/50 (YMAX 255/177/246). Partial mean 10.95%; in-progress 210/1985 at 10.58%. | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | overlapping 5 cards. Closed-loop `_result.json` on imitate 0/8, pour_by_language 0/5, play_stacking_toy 0/5, play_tic_tac_toe 2/5 (40%). fasten_screws still warming. Native `num_envs=5`. | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **39/42**. New: `deposit_coin` 2/50 (YMAX 250/238/191). Partial mean 10.77%; in-progress 210/2005 at 10.47%. | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | overlapping 6 cards. In-progress 3/38. GPU4 now `classify_objects_by_language`. Native `num_envs=5`. | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); elastic now gates native cells behind `stack_bowls --eval-num 2` closed-loop | not started |
 
-The seed-0 table is **38/42** as of 06:12 CST Aug 27. Do not compare that thirty-eight-cell mean (10.95%) to the published 6.91% until 42/42. Remaining official cells: `deposit_coin`, `push_T`, `stack_blocks`, `swap_T`. GPU0 finished `align_blocks` and is on `swap_T`. Measured ~177 ep/h over 11.2 h (~0.7 h left on Pi_05 at that rate). GPU1 `play_tic_tac_toe` can sit at 0% util between 5-env flushes because the horizon is 1400 steps. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
+The seed-0 table is **39/42** as of 06:25 CST Aug 27. Do not compare that thirty-nine-cell mean (10.77%) to the published 6.91% until 42/42. Remaining official cells: `push_T` (random 25/25, base pending), `stack_blocks` (random 25/25, base starting on GPU6), `swap_T` 5/50 on GPU0. GPU4 finished `push_T_random` and took G05 `classify_objects_by_language`. GPU1 `play_tic_tac_toe` can sit at 0% util between 5-env flushes because the horizon is 1400 steps. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
 quarantined because their wrist-camera observations were blank; see below. The first
 attempt ran 07:41-18:07 CST and
 reached 41/42 cells for Pi_05 at **SR 1.07%** against an official 6.91%, plus six
