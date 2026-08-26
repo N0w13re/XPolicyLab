@@ -1,11 +1,11 @@
 {
   "policies": {
     "Pi_05": {
-      "delta": 51.08999999999999,
+      "delta": null,
       "episodes": 50,
-      "in_progress_episodes": 252,
-      "in_progress_success_rate": 14.285714285714285,
-      "in_progress_successes": 36,
+      "in_progress_episodes": 262,
+      "in_progress_success_rate": 14.122137404580155,
+      "in_progress_successes": 37,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -64,16 +64,16 @@
           "successes": 5
         },
         "classify_objects_by_language": {
-          "episodes": 40,
-          "score": 1.5000000000000002,
+          "episodes": 45,
+          "score": 1.3333333333333335,
           "success_rate": 0.0,
           "successes": 0
         },
         "fasten_screws": {
-          "episodes": 25,
-          "score": 10.4,
-          "success_rate": 4.0,
-          "successes": 1
+          "episodes": 30,
+          "score": 16.0,
+          "success_rate": 6.666666666666667,
+          "successes": 2
         },
         "imitate_sorting_sequence": {
           "episodes": 13,
@@ -102,7 +102,8 @@
       },
       "reported_tasks_complete": 1,
       "score": 67.6,
-      "success_rate": 57.99999999999999
+      "success_rate": 57.99999999999999,
+      "table_complete": false
     }
   },
   "seed": 0

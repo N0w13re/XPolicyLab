@@ -31,6 +31,7 @@ OFFICIAL_SR = {
 SEED_RE = re.compile(r"^(\d+)_ckpt_name=")
 EPISODES_PAIRED = 25
 EPISODES_STANDALONE = 50
+OFFICIAL_CELLS = 42
 
 
 def parse_args() -> argparse.Namespace:
@@ -141,7 +142,12 @@ def main() -> int:
         sr = successes / n_ep * 100 if n_ep else float("nan")
         score = score_sum / n_ep * 100 if n_ep else float("nan")
         official = OFFICIAL_SR.get(policy)
-        delta = sr - official if official is not None and n_ep else None
+        table_complete = len(complete) >= OFFICIAL_CELLS
+        delta = (
+            sr - official
+            if official is not None and table_complete and n_ep
+            else None
+        )
         rows.append((policy, len(complete), n_ep, sr, score, official, delta))
         per_task = {}
         for name, entries in sorted(per_policy[policy].items()):
@@ -160,6 +166,7 @@ def main() -> int:
             "success_rate": sr,
             "score": score,
             "official_success_rate": official,
+            "table_complete": table_complete,
             "delta": delta,
             "incomplete_tasks": sorted(incomplete),
             "in_progress_episodes": raw_eps,
@@ -183,8 +190,11 @@ def main() -> int:
             f"{policy.ljust(width)}  {ntask:5d}  {neps:5d}  {sr:7.2f}  "
             f"{score:7.2f}  {off:>8}  {dlt:>7}"
         )
-    print("\nA reported task counts only when its full 50-episode budget is present;")
-    print("`tasks` below 42 means the sweep is still incomplete and SR is a partial average.")
+    print("\nA reported task counts only when its full 50-episode budget is present.")
+    print(
+        "`tasks` below 42 is a partial table: SR is the mean of completed cells only, "
+        "and delta vs the published overall rate is withheld."
+    )
 
     for policy in sorted(per_policy):
         info = report[policy]
