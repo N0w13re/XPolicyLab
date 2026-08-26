@@ -1,12 +1,12 @@
 {
-  "as_of": "2026-08-26T23:26+08",
+  "as_of": "2026-08-26T23:38+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 7,
+  "official_cells_complete": 8,
   "official_cells_total": 42,
-  "partial_table_sr_percent": 11.71,
+  "partial_table_sr_percent": 10.75,
   "completed_cells": {
     "build_tower": "29/50",
     "classify_objects": "9/50",
@@ -14,10 +14,11 @@
     "play_stacking_toy": "0/50",
     "fasten_screws": "3/50",
     "pour_by_language": "0/50",
-    "store_tools_in_toolbox": "0/50"
+    "store_tools_in_toolbox": "0/50",
+    "fill_pen_holder": "2/50"
   },
-  "in_progress_episodes": "45/524",
-  "wrist_store_tools_ep49_YMAX": {"head": 247.1, "left_wrist": 245.4, "right_wrist": 248.2},
+  "in_progress_episodes": "46/539",
+  "wrist_fill_pen_holder_ep49_YMAX": {"head": 251.0, "left_wrist": 245.8, "right_wrist": 247.0},
   "running": {
     "gpu0": "imitate_sorting_sequence",
     "gpu1": "play_tic_tac_toe",
@@ -26,8 +27,7 @@
     "gpu4": "organize_table",
     "gpu5": "make_toast",
     "gpu6": "make_toast_random",
-    "gpu7": "fill_pen_holder"
+    "gpu7": "cover_blocks"
   },
-  "next_cells_likely": {"fill_pen_holder": "2/45"},
   "pids": {"sweep": 3281259, "elastic": 3950295}
 }
