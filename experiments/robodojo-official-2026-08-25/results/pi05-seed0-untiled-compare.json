@@ -2,13 +2,12 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 1150,
-      "in_progress_episodes": 1290,
-      "in_progress_success_rate": 12.170542635658915,
-      "in_progress_successes": 157,
+      "episodes": 1200,
+      "in_progress_episodes": 1445,
+      "in_progress_success_rate": 11.211072664359861,
+      "in_progress_successes": 162,
       "incomplete_tasks": [
         "align_blocks",
-        "arrange_largest_number",
         "deposit_coin",
         "fold_clothes",
         "general_pickup",
@@ -30,10 +29,10 @@
       "official_success_rate": 6.91,
       "per_task": {
         "arrange_largest_number": {
-          "episodes": 10,
-          "score": 6.5,
-          "success_rate": 0.0,
-          "successes": 0
+          "episodes": 25,
+          "score": 9.6,
+          "success_rate": 4.0,
+          "successes": 1
         },
         "arrange_largest_number_random": {
           "episodes": 25,
@@ -84,8 +83,8 @@
           "successes": 2
         },
         "hang_mugs_random": {
-          "episodes": 15,
-          "score": 5.0,
+          "episodes": 25,
+          "score": 4.2,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -96,10 +95,10 @@
           "successes": 0
         },
         "insert_tubes": {
-          "episodes": 20,
-          "score": 24.0,
-          "success_rate": 5.0,
-          "successes": 1
+          "episodes": 45,
+          "score": 25.333333333333336,
+          "success_rate": 4.444444444444445,
+          "successes": 2
         },
         "make_kong": {
           "episodes": 50,
@@ -149,6 +148,12 @@
           "success_rate": 0.0,
           "successes": 0
         },
+        "play_Xylophone": {
+          "episodes": 25,
+          "score": 4.0,
+          "success_rate": 4.0,
+          "successes": 1
+        },
         "play_stacking_toy": {
           "episodes": 50,
           "score": 0.0,
@@ -160,6 +165,12 @@
           "score": 14.3,
           "success_rate": 2.0,
           "successes": 1
+        },
+        "plug_in_charger": {
+          "episodes": 30,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
         },
         "pour_balls_into_vase": {
           "episodes": 50,
@@ -191,6 +202,12 @@
           "success_rate": 76.0,
           "successes": 38
         },
+        "solve_equation": {
+          "episodes": 15,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "sort_nesting_dolls_by_size": {
           "episodes": 25,
           "score": 16.0,
@@ -202,6 +219,18 @@
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
+        },
+        "stack_bowls_random": {
+          "episodes": 10,
+          "score": 6.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "store_laptop_and_headphones": {
+          "episodes": 15,
+          "score": 24.000000000000004,
+          "success_rate": 13.333333333333334,
+          "successes": 2
         },
         "store_laptop_and_headphones_random": {
           "episodes": 25,
@@ -222,15 +251,21 @@
           "successes": 0
         },
         "sweep_blocks": {
-          "episodes": 20,
+          "episodes": 25,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "sweep_blocks_random": {
+          "episodes": 5,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 23,
-      "score": 19.047826086956523,
-      "success_rate": 13.043478260869565,
+      "reported_tasks_complete": 24,
+      "score": 18.462500000000002,
+      "success_rate": 12.583333333333332,
       "table_complete": false
     }
   },
