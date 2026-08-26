@@ -2,17 +2,16 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 350,
-      "in_progress_episodes": 529,
-      "in_progress_success_rate": 8.506616257088846,
-      "in_progress_successes": 45,
+      "episodes": 400,
+      "in_progress_episodes": 544,
+      "in_progress_success_rate": 8.455882352941178,
+      "in_progress_successes": 46,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
         "cover_blocks",
         "deposit_coin",
         "fill_egg_holder",
-        "fill_pen_holder",
         "fold_clothes",
         "general_pickup",
         "hang_mugs",
@@ -70,9 +69,9 @@
           "successes": 3
         },
         "fill_pen_holder": {
-          "episodes": 45,
-          "score": 19.555555555555557,
-          "success_rate": 4.444444444444445,
+          "episodes": 50,
+          "score": 20.6,
+          "success_rate": 4.0,
           "successes": 2
         },
         "imitate_sorting_sequence": {
@@ -88,10 +87,10 @@
           "successes": 0
         },
         "organize_table": {
-          "episodes": 34,
-          "score": 36.76470588235294,
-          "success_rate": 2.941176470588235,
-          "successes": 1
+          "episodes": 39,
+          "score": 38.46153846153847,
+          "success_rate": 5.128205128205128,
+          "successes": 2
         },
         "play_stacking_toy": {
           "episodes": 50,
@@ -112,7 +111,7 @@
           "successes": 0
         },
         "sort_nesting_dolls_by_size_random": {
-          "episodes": 10,
+          "episodes": 15,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -124,9 +123,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 7,
-      "score": 16.314285714285713,
-      "success_rate": 11.714285714285715,
+      "reported_tasks_complete": 8,
+      "score": 16.85,
+      "success_rate": 10.75,
       "table_complete": false
     }
   },
