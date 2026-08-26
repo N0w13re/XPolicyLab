@@ -2,9 +2,9 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 1100,
-      "in_progress_episodes": 1280,
-      "in_progress_success_rate": 12.265625,
+      "episodes": 1150,
+      "in_progress_episodes": 1290,
+      "in_progress_success_rate": 12.170542635658915,
       "in_progress_successes": 157,
       "incomplete_tasks": [
         "align_blocks",
@@ -15,7 +15,6 @@
         "hang_mugs",
         "insert_key",
         "insert_tubes",
-        "pack_objects_into_box",
         "play_Xylophone",
         "plug_in_charger",
         "pour_liquid_into_cup",
@@ -139,8 +138,8 @@
           "successes": 1
         },
         "pack_objects_into_box_random": {
-          "episodes": 20,
-          "score": 12.75,
+          "episodes": 25,
+          "score": 15.2,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -205,9 +204,9 @@
           "successes": 0
         },
         "store_laptop_and_headphones_random": {
-          "episodes": 20,
-          "score": 15.0,
-          "success_rate": 5.0,
+          "episodes": 25,
+          "score": 16.0,
+          "success_rate": 4.0,
           "successes": 1
         },
         "store_tools_in_toolbox": {
@@ -229,9 +228,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 22,
-      "score": 18.995454545454542,
-      "success_rate": 13.545454545454547,
+      "reported_tasks_complete": 23,
+      "score": 19.047826086956523,
+      "success_rate": 13.043478260869565,
       "table_complete": false
     }
   },
