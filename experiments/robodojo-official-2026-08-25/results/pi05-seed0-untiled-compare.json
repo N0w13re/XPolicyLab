@@ -3,9 +3,9 @@
     "G05": {
       "delta": null,
       "episodes": 0,
-      "in_progress_episodes": 9,
-      "in_progress_success_rate": 0.0,
-      "in_progress_successes": 0,
+      "in_progress_episodes": 23,
+      "in_progress_success_rate": 8.695652173913043,
+      "in_progress_successes": 2,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -53,10 +53,22 @@
       "official_success_rate": 14.88,
       "per_task": {
         "imitate_sorting_sequence": {
-          "episodes": 4,
-          "score": 3.75,
+          "episodes": 8,
+          "score": 2.5,
           "success_rate": 0.0,
           "successes": 0
+        },
+        "play_stacking_toy": {
+          "episodes": 5,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "play_tic_tac_toe": {
+          "episodes": 5,
+          "score": 75.0,
+          "success_rate": 40.0,
+          "successes": 2
         },
         "pour_by_language": {
           "episodes": 5,
@@ -72,12 +84,11 @@
     },
     "Pi_05": {
       "delta": null,
-      "episodes": 1850,
-      "in_progress_episodes": 1920,
-      "in_progress_success_rate": 10.833333333333334,
-      "in_progress_successes": 208,
+      "episodes": 1900,
+      "in_progress_episodes": 1985,
+      "in_progress_success_rate": 10.579345088161208,
+      "in_progress_successes": 210,
       "incomplete_tasks": [
-        "align_blocks",
         "deposit_coin",
         "push_T",
         "stack_blocks",
@@ -86,7 +97,7 @@
       "official_success_rate": 6.91,
       "per_task": {
         "align_blocks": {
-          "episodes": 25,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -128,10 +139,10 @@
           "successes": 10
         },
         "deposit_coin": {
-          "episodes": 15,
-          "score": 0.0,
-          "success_rate": 0.0,
-          "successes": 0
+          "episodes": 40,
+          "score": 7.5,
+          "success_rate": 5.0,
+          "successes": 2
         },
         "fasten_screws": {
           "episodes": 50,
@@ -302,7 +313,7 @@
           "successes": 0
         },
         "push_T_random": {
-          "episodes": 5,
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -392,9 +403,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 37,
-      "score": 16.864864864864863,
-      "success_rate": 11.243243243243244,
+      "reported_tasks_complete": 38,
+      "score": 16.42105263157895,
+      "success_rate": 10.947368421052632,
       "table_complete": false
     }
   },

@@ -64,7 +64,7 @@
   "g05": {
     "official_cells": 0,
     "in_progress_episodes": "0/9",
-    "running_tasks": ["imitate_sorting_sequence", "pour_by_language", "play_tic_tac_toe", "fasten_screws"]
+    "running_tasks": ["imitate_sorting_sequence", "pour_by_language", "play_tic_tac_toe", "fasten_screws", "play_stacking_toy"]
   },
   "pids": {"sweep": 3281259, "elastic": 3950295},
   "note": "Partial 11.24% is mean of 37 completed Pi_05 cells; do not delta vs official 6.91 until 42/42. Xiaomi still gated."
