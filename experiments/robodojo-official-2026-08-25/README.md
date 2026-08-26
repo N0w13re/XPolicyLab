@@ -8,15 +8,49 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | re-running from zero on 8 cards since 18:33 CST | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid three-camera rerun started 18:58 CST Aug 26 on 8 cards | not started |
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05; adapter and venv issues already fixed | not started |
-| Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; venv has msgpack-numpy/pydantic, `last.ckpt` + local Qwen3-VL processor on disk | not started |
+| Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolver fixed and SDPA fallback added for hosts without flash-attn | not started |
 
-**No seed-0 table exists right now.** The first attempt ran 07:41-18:07 CST and
+**No valid seed-0 table exists right now.** Two completed Pi_05/G05 tables were
+quarantined because their wrist-camera observations were blank; see below. The first
+attempt ran 07:41-18:07 CST and
 reached 41/42 cells for Pi_05 at **SR 1.07%** against an official 6.91%, plus six
 partial G05 cells. All of it was rendered without material albedo and has been
 discarded; see the next section. `compare_robodojo_to_official.py` correctly
 reports no results until the re-run fills cells again.
+
+### Second renderer defect: tiled wrist cameras were blind
+
+The post-albedo-fix run completed 42/42 cells for both Pi_05 and G05, but produced
+only 1.10% and 1.57% success. Those numbers are also invalid. In the exact observation
+dict sent to the policy, `cam_head` had normal mean luma around 93 while both mounted
+wrist views were effectively black (mean 1-3); one side was usually a literal all-zero
+array. `EvalEnv._stream_vision` records the same dict returned to the policy, so this is
+direct evidence of the model input rather than a video-only encoding problem.
+
+The defect depends on the camera backend:
+
+- RoboDojo's tiled path with 5 or 10 parallel envs: both wrist streams blank.
+- One env: all three views normal.
+- Five envs with one normal render product per camera: head/left/right mean luma
+  100/98/124 on the sampled episode, all with visible texture; `stack_bowls` reached
+  4/5 successes.
+- Ten envs with normal render products exhausts RTX ParameterBlock resources, so the
+  stable workaround is five envs.
+
+This matches NVIDIA's confirmed Isaac Sim 5.1 tiled-camera bugs: multi-camera tiled RGB
+can be black in RTX real-time mode and the renderer-side fix is in Isaac Sim 6.0
+([IsaacSim #367](https://github.com/isaac-sim/IsaacSim/issues/367)). Path tracing,
+raising `/rtx/viewTile/limit`, reducing from 10 to 5 while retaining tiled rendering,
+and splitting policy/simulator GPUs did not restore RoboDojo's mounted wrist views.
+The reproducible host workaround is installed by `scripts/robodojo_sim_env.sh`:
+`ROBODOJO_UNTILED_CAMERAS=1` plus `ROBODOJO_NUM_ENVS=5`.
+
+The invalid 42-cell tables and videos were moved to
+`RoboDojo-eval/eval_result_pre_untiledfix/`. Diagnostic values and the side-by-side
+camera image are under `results/wrist-diagnosis/`. The valid rerun started from an
+empty `eval_result/` at 18:58 CST Aug 26.
 
 What that discarded attempt still establishes, because it is a property of the
 harness rather than of the renderer: the full 54-task protocol completes on this

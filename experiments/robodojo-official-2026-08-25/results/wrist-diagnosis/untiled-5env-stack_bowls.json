@@ -1,0 +1,87 @@
+{
+  "run": "2026-08-26_18-38-37",
+  "result": "4/5 success",
+  "cameras": {
+    "cam_head": [
+      {
+        "file": "episode_0000000_cam_head_success.mp4",
+        "mean_luma": 100.1,
+        "channel_spread": 54.5
+      },
+      {
+        "file": "episode_0000001_cam_head_success.mp4",
+        "mean_luma": 104.3,
+        "channel_spread": 57.6
+      },
+      {
+        "file": "episode_0000002_cam_head_success.mp4",
+        "mean_luma": 105.3,
+        "channel_spread": 57.8
+      },
+      {
+        "file": "episode_0000003_cam_head_success.mp4",
+        "mean_luma": 93.8,
+        "channel_spread": 48.9
+      },
+      {
+        "file": "episode_0000004_cam_head_fail.mp4",
+        "mean_luma": 103.1,
+        "channel_spread": 55.5
+      }
+    ],
+    "cam_left_wrist": [
+      {
+        "file": "episode_0000000_cam_left_wrist_success.mp4",
+        "mean_luma": 98.3,
+        "channel_spread": 52.2
+      },
+      {
+        "file": "episode_0000001_cam_left_wrist_success.mp4",
+        "mean_luma": 117.8,
+        "channel_spread": 65.8
+      },
+      {
+        "file": "episode_0000002_cam_left_wrist_success.mp4",
+        "mean_luma": 95.1,
+        "channel_spread": 44.6
+      },
+      {
+        "file": "episode_0000003_cam_left_wrist_success.mp4",
+        "mean_luma": 71.8,
+        "channel_spread": 41.0
+      },
+      {
+        "file": "episode_0000004_cam_left_wrist_fail.mp4",
+        "mean_luma": 97.8,
+        "channel_spread": 52.0
+      }
+    ],
+    "cam_right_wrist": [
+      {
+        "file": "episode_0000000_cam_right_wrist_success.mp4",
+        "mean_luma": 123.6,
+        "channel_spread": 75.4
+      },
+      {
+        "file": "episode_0000001_cam_right_wrist_success.mp4",
+        "mean_luma": 125.1,
+        "channel_spread": 85.9
+      },
+      {
+        "file": "episode_0000002_cam_right_wrist_success.mp4",
+        "mean_luma": 112.4,
+        "channel_spread": 76.2
+      },
+      {
+        "file": "episode_0000003_cam_right_wrist_success.mp4",
+        "mean_luma": 97.9,
+        "channel_spread": 43.7
+      },
+      {
+        "file": "episode_0000004_cam_right_wrist_fail.mp4",
+        "mean_luma": 120.1,
+        "channel_spread": 80.5
+      }
+    ]
+  }
+}

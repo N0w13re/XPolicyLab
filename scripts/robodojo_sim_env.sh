@@ -129,6 +129,14 @@ fi
 export ROBODOJO_KIT_ARGS="${ROBODOJO_KIT_ARGS:-} --/rtx/verifyDriverVersion/enabled=false --/ngx/enabled=false --/rtx-transient/resourcemanager/enableTextureStreaming=false"
 export OMNI_KIT_ACCEPT_EULA=YES
 
+# Isaac Sim 5.1 / Kit 107 can return all-zero RGB for tiled cameras mounted
+# below cloned articulated robots. RoboDojo's head camera is static and stays
+# valid, but both wrist views go black for num_envs > 1. Per-camera render
+# products are correct; five parallel envs are the stable limit on this host
+# (ten exhaust RTX ParameterBlock resources).
+export ROBODOJO_UNTILED_CAMERAS="${ROBODOJO_UNTILED_CAMERAS:-1}"
+export ROBODOJO_NUM_ENVS="${ROBODOJO_NUM_ENVS:-5}"
+
 # eval_policy.sh must forward ROBODOJO_KIT_ARGS to the Kit kernel. Upstream hardcodes an
 # empty KIT_ARGS, so patch it in place when running against an unpatched checkout.
 ROBODOJO_EVAL_SH="${ROBODOJO_ROOT}/scripts/eval_policy.sh"
@@ -136,7 +144,72 @@ if [[ -f "${ROBODOJO_EVAL_SH}" ]] && ! grep -q 'ROBODOJO_KIT_ARGS' "${ROBODOJO_E
   echo "[robodojo-env] patching ${ROBODOJO_EVAL_SH} to honour ROBODOJO_KIT_ARGS"
   sed -i 's/^KIT_ARGS=""$/KIT_ARGS="${ROBODOJO_KIT_ARGS:-}"/' "${ROBODOJO_EVAL_SH}"
 fi
+if [[ -f "${ROBODOJO_EVAL_SH}" ]] && ! grep -q 'ROBODOJO_NUM_ENVS' "${ROBODOJO_EVAL_SH}"; then
+  echo "[robodojo-env] patching ${ROBODOJO_EVAL_SH} to honour ROBODOJO_NUM_ENVS"
+  python3 - "${ROBODOJO_EVAL_SH}" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+old = (
+    'num_envs="$(python3 -c "import sys,yaml;'
+    "print(yaml.safe_load(open(sys.argv[1])).get('scene',{}).get('num_envs',1))"
+    '" "$sim_cfg_file")"'
+)
+new = (
+    'num_envs="${ROBODOJO_NUM_ENVS:-$(python3 -c "import sys,yaml;'
+    "print(yaml.safe_load(open(sys.argv[1])).get('scene',{}).get('num_envs',1))"
+    '" "$sim_cfg_file")}"'
+)
+if old not in text:
+    raise SystemExit(f"Could not find num_envs assignment in {path}")
+path.write_text(text.replace(old, new, 1))
+PY
+fi
+
+# Install the untiled capture fallback and make it selectable from TaskEnv.
+ROBODOJO_CAPTURE_DIR="${ROBODOJO_ROOT}/env/camera_manager/capture"
+ROBODOJO_TASK_ENV="${ROBODOJO_ROOT}/env/environment/task_env.py"
+cp "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/robodojo_untiled_capture_manager.py" \
+  "${ROBODOJO_CAPTURE_DIR}/untiled_capture_manager.py"
+if [[ -f "${ROBODOJO_TASK_ENV}" ]] && ! grep -q 'ROBODOJO_UNTILED_CAMERAS' "${ROBODOJO_TASK_ENV}"; then
+  echo "[robodojo-env] patching ${ROBODOJO_TASK_ENV} for untiled camera fallback"
+  python3 - "${ROBODOJO_TASK_ENV}" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+text = text.replace(
+    "from typing import Any, List\n",
+    "import os\nfrom typing import Any, List\n",
+    1,
+)
+old = """        from env.camera_manager.capture.tiled_capture_manager import TiledCaptureManager
+
+        self.capture_manager = TiledCaptureManager(
+"""
+new = """        if os.environ.get("ROBODOJO_UNTILED_CAMERAS") == "1":
+            from env.camera_manager.capture.untiled_capture_manager import UntiledCaptureManager
+
+            capture_manager_cls = UntiledCaptureManager
+            print("[TaskEnv] camera workaround: per-camera render products")
+        else:
+            from env.camera_manager.capture.tiled_capture_manager import TiledCaptureManager
+
+            capture_manager_cls = TiledCaptureManager
+
+        self.capture_manager = capture_manager_cls(
+"""
+if old not in text:
+    raise SystemExit(f"Could not find TiledCaptureManager block in {path}")
+path.write_text(text.replace(old, new, 1))
+PY
+fi
 
 echo "[robodojo-env] ROBODOJO_ROOT=${ROBODOJO_ROOT}"
 echo "[robodojo-env] ROBODOJO_SIM_ENV=${ROBODOJO_SIM_ENV}"
 echo "[robodojo-env] ROBODOJO_KIT_ARGS=${ROBODOJO_KIT_ARGS}"
+echo "[robodojo-env] ROBODOJO_UNTILED_CAMERAS=${ROBODOJO_UNTILED_CAMERAS}"
+echo "[robodojo-env] ROBODOJO_NUM_ENVS=${ROBODOJO_NUM_ENVS}"
