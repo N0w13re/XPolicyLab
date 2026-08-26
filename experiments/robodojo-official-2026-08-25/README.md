@@ -8,11 +8,11 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun in progress. Official cells **1/42** (`build_tower` 29/50 = 58%, three-camera videos OK). In-progress 36/252 eps (14.29%). GPU7 moved to `fill_pen_holder`. | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun in progress (`num_envs=5`, do not switch to 10). Official cells **1/42** (`build_tower` 29/50 = 58%). GPU7 on `fill_pen_holder`. In-progress ~37/267 eps. | not started |
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05; adapter and venv issues already fixed | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); closed-loop smoke still pending until a GPU frees | not started |
 
-**No valid seed-0 table exists right now.** Snapshot at 19:35 CST: 8 Isaac clients with untiled cameras; wrist videos still colorful (`results/wrist-diagnosis/untiled-rerun-live-1930.json`). Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
+The seed-0 table is **1/42** as of 21:21 CST Aug 26; do not compare that one-cell mean (58%) to the published 6.91%. Eight Isaac clients with untiled cameras; wrist videos still colorful. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
 quarantined because their wrist-camera observations were blank; see below. The first
 attempt ran 07:41-18:07 CST and
 reached 41/42 cells for Pi_05 at **SR 1.07%** against an official 6.91%, plus six

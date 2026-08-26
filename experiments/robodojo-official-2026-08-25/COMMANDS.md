@@ -10,6 +10,13 @@ source /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/robodojo_sim_env.sh "$R
 # and ROBODOJO_NUM_ENVS=5 — required for valid wrist-camera RGB on Isaac Sim 5.1
 ```
 
+Do **not** raise `ROBODOJO_NUM_ENVS` to 10 on this host. Isaac Sim is still 5.1.0;
+NVIDIA [IsaacSim #367](https://github.com/isaac-sim/IsaacSim/issues/367) only
+fixes tiled RTX RGB in 6.0. Untiled 10-env exhausts RTX ParameterBlock resources
+(`logs/verify/wrist-10env-untiled.log`). Tiled 10-env restores black wrists.
+Keep 5 env until a separate Isaac 6.0 checkout passes a 10-env three-camera smoke.
+
+
 Assets (skip if `Assets/{Robots,Eval_Layout,Object,Material,Background,Room,Sensor,Traj}`
 are already populated):
 
