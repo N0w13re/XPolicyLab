@@ -3,8 +3,8 @@
     "Pi_05": {
       "delta": null,
       "episodes": 350,
-      "in_progress_episodes": 524,
-      "in_progress_success_rate": 8.587786259541986,
+      "in_progress_episodes": 529,
+      "in_progress_success_rate": 8.506616257088846,
       "in_progress_successes": 45,
       "incomplete_tasks": [
         "align_blocks",
@@ -76,8 +76,8 @@
           "successes": 2
         },
         "imitate_sorting_sequence": {
-          "episodes": 31,
-          "score": 0.967741935483871,
+          "episodes": 36,
+          "score": 1.1111111111111112,
           "success_rate": 0.0,
           "successes": 0
         },
