@@ -2,9 +2,9 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 1600,
-      "in_progress_episodes": 1810,
-      "in_progress_success_rate": 11.38121546961326,
+      "episodes": 1650,
+      "in_progress_episodes": 1820,
+      "in_progress_success_rate": 11.31868131868132,
       "in_progress_successes": 206,
       "incomplete_tasks": [
         "align_blocks",
@@ -15,8 +15,7 @@
         "pour_liquid_into_cup",
         "push_T",
         "stack_blocks",
-        "swap_T",
-        "sweep_blocks"
+        "swap_T"
       ],
       "official_success_rate": 6.91,
       "per_task": {
@@ -213,7 +212,7 @@
           "successes": 5
         },
         "pour_liquid_into_cup_random": {
-          "episodes": 15,
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -303,15 +302,15 @@
           "successes": 0
         },
         "sweep_blocks_random": {
-          "episodes": 20,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 32,
-      "score": 17.253125,
-      "success_rate": 11.625,
+      "reported_tasks_complete": 33,
+      "score": 16.73030303030303,
+      "success_rate": 11.272727272727273,
       "table_complete": false
     }
   },
