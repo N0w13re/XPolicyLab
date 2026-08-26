@@ -3,9 +3,9 @@
     "Pi_05": {
       "delta": null,
       "episodes": 0,
-      "in_progress_episodes": 113,
-      "in_progress_success_rate": 17.699115044247787,
-      "in_progress_successes": 20,
+      "in_progress_episodes": 138,
+      "in_progress_success_rate": 15.942028985507244,
+      "in_progress_successes": 22,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -53,10 +53,10 @@
       "official_success_rate": 6.91,
       "per_task": {
         "build_tower": {
-          "episodes": 25,
-          "score": 71.2,
-          "success_rate": 64.0,
-          "successes": 16
+          "episodes": 30,
+          "score": 68.33333333333333,
+          "success_rate": 60.0,
+          "successes": 18
         },
         "classify_objects": {
           "episodes": 20,
@@ -65,20 +65,20 @@
           "successes": 4
         },
         "classify_objects_by_language": {
-          "episodes": 20,
-          "score": 2.5,
+          "episodes": 25,
+          "score": 2.0,
           "success_rate": 0.0,
           "successes": 0
         },
         "fasten_screws": {
-          "episodes": 10,
-          "score": 11.000000000000002,
+          "episodes": 15,
+          "score": 10.666666666666668,
           "success_rate": 0.0,
           "successes": 0
         },
         "imitate_sorting_sequence": {
-          "episodes": 4,
-          "score": 0.0,
+          "episodes": 9,
+          "score": 0.5555555555555556,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -89,8 +89,8 @@
           "successes": 0
         },
         "play_tic_tac_toe": {
-          "episodes": 4,
-          "score": 26.25,
+          "episodes": 9,
+          "score": 16.11111111111111,
           "success_rate": 0.0,
           "successes": 0
         },
