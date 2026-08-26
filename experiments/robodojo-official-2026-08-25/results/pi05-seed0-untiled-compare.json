@@ -3,9 +3,9 @@
     "Pi_05": {
       "delta": null,
       "episodes": 1600,
-      "in_progress_episodes": 1800,
-      "in_progress_success_rate": 11.38888888888889,
-      "in_progress_successes": 205,
+      "in_progress_episodes": 1810,
+      "in_progress_success_rate": 11.38121546961326,
+      "in_progress_successes": 206,
       "incomplete_tasks": [
         "align_blocks",
         "deposit_coin",
@@ -81,10 +81,10 @@
           "successes": 11
         },
         "fold_clothes_random": {
-          "episodes": 15,
-          "score": 33.33333333333333,
+          "episodes": 20,
+          "score": 33.0,
           "success_rate": 20.0,
-          "successes": 3
+          "successes": 4
         },
         "general_pickup": {
           "episodes": 50,
@@ -111,8 +111,8 @@
           "successes": 0
         },
         "insert_key": {
-          "episodes": 20,
-          "score": 12.75,
+          "episodes": 25,
+          "score": 12.6,
           "success_rate": 0.0,
           "successes": 0
         },
