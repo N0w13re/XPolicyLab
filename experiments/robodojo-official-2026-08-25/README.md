@@ -8,7 +8,7 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **2/42**: `build_tower` 29/50 (58%), `classify_objects_by_language` 0/50 (0%). Partial table mean 29% is not comparable to 6.91. GPU5 on `store_tools_in_toolbox`. | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **3/42**: `build_tower` 29/50, `classify_objects_by_language` 0/50, `play_stacking_toy` 0/50. Partial mean 19.3% not comparable to 6.91. GPU4 launching `organize_table`. | not started |
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05; adapter and venv issues already fixed | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); closed-loop smoke still pending until a GPU frees | not started |
 

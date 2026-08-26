@@ -1,35 +1,28 @@
 {
-  "as_of": "2026-08-26T21:32+08",
+  "as_of": "2026-08-26T21:36+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
-  "untiled": true,
-  "official_cells_complete": 2,
+  "official_cells_complete": 3,
   "official_cells_total": 42,
-  "partial_table_sr_percent": 29.0,
-  "official_sr_note": "Mean of 2 completed cells only; not comparable to 6.91 until 42 cells.",
+  "partial_table_sr_percent": 19.33,
   "completed_cells": {
-    "build_tower": {"successes": 29, "episodes": 50, "sr_percent": 58.0},
-    "classify_objects_by_language": {"successes": 0, "episodes": 50, "sr_percent": 0.0}
+    "build_tower": "29/50",
+    "classify_objects_by_language": "0/50",
+    "play_stacking_toy": "0/50"
   },
-  "in_progress_episodes": "39/287",
-  "in_progress_sr_percent": 13.59,
-  "wrist_classify_objects_by_language_ep49": {
-    "head_YMAX": 241,
-    "left_wrist_YMAX": 245,
-    "right_wrist_YMAX": 235
-  },
+  "in_progress_episodes": "39/292",
+  "wrist_play_stacking_toy_ep49_YMAX": {"head": 233, "left_wrist": 221, "right_wrist": 184},
   "running": {
     "gpu0": "imitate_sorting_sequence",
     "gpu1": "play_tic_tac_toe",
     "gpu2": "pour_by_language",
     "gpu3": "fasten_screws",
-    "gpu4": "play_stacking_toy",
+    "gpu4": "organize_table",
     "gpu5": "store_tools_in_toolbox",
     "gpu6": "classify_objects",
     "gpu7": "fill_pen_holder"
   },
-  "pids": {"sweep": 3281259, "elastic": 3282394},
-  "eta_max_shard_remaining_h": 9.78
+  "pids": {"sweep": 3281259, "elastic": 3282394}
 }
