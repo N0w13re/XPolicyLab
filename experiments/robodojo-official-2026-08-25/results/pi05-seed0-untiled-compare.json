@@ -3,9 +3,9 @@
     "Pi_05": {
       "delta": null,
       "episodes": 200,
-      "in_progress_episodes": 352,
-      "in_progress_success_rate": 11.931818181818182,
-      "in_progress_successes": 42,
+      "in_progress_episodes": 357,
+      "in_progress_success_rate": 12.044817927170868,
+      "in_progress_successes": 43,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -85,10 +85,10 @@
           "successes": 0
         },
         "organize_table": {
-          "episodes": 5,
+          "episodes": 10,
           "score": 40.0,
-          "success_rate": 0.0,
-          "successes": 0
+          "success_rate": 10.0,
+          "successes": 1
         },
         "play_stacking_toy": {
           "episodes": 50,
