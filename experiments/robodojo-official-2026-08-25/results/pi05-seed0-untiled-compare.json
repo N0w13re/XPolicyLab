@@ -3,7 +3,7 @@
     "G05": {
       "delta": null,
       "episodes": 0,
-      "in_progress_episodes": 4,
+      "in_progress_episodes": 9,
       "in_progress_success_rate": 0.0,
       "in_progress_successes": 0,
       "incomplete_tasks": [
@@ -57,6 +57,12 @@
           "score": 3.75,
           "success_rate": 0.0,
           "successes": 0
+        },
+        "pour_by_language": {
+          "episodes": 5,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
         }
       },
       "reported_tasks_complete": 0,
@@ -66,15 +72,13 @@
     },
     "Pi_05": {
       "delta": null,
-      "episodes": 1750,
-      "in_progress_episodes": 1885,
-      "in_progress_success_rate": 11.03448275862069,
+      "episodes": 1850,
+      "in_progress_episodes": 1920,
+      "in_progress_success_rate": 10.833333333333334,
       "in_progress_successes": 208,
       "incomplete_tasks": [
         "align_blocks",
         "deposit_coin",
-        "hang_mugs",
-        "insert_key",
         "push_T",
         "stack_blocks",
         "swap_T"
@@ -82,7 +86,7 @@
       "official_success_rate": 6.91,
       "per_task": {
         "align_blocks": {
-          "episodes": 15,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -124,7 +128,7 @@
           "successes": 10
         },
         "deposit_coin": {
-          "episodes": 5,
+          "episodes": 15,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -166,8 +170,8 @@
           "successes": 8
         },
         "hang_mugs": {
-          "episodes": 20,
-          "score": 10.25,
+          "episodes": 25,
+          "score": 8.8,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -184,8 +188,8 @@
           "successes": 0
         },
         "insert_key": {
-          "episodes": 45,
-          "score": 12.666666666666668,
+          "episodes": 50,
+          "score": 12.6,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -297,6 +301,12 @@
           "success_rate": 0.0,
           "successes": 0
         },
+        "push_T_random": {
+          "episodes": 5,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "put_bottles_into_dustbin": {
           "episodes": 50,
           "score": 84.7,
@@ -382,9 +392,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 35,
-      "score": 17.282857142857143,
-      "success_rate": 11.885714285714286,
+      "reported_tasks_complete": 37,
+      "score": 16.864864864864863,
+      "success_rate": 11.243243243243244,
       "table_complete": false
     }
   },

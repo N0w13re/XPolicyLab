@@ -8,11 +8,11 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **35/42**. New: `pour_liquid_into_cup` 5/50 and `fold_clothes` 17/50 (YMAX 255/254/252 and 253/255/255). Partial mean 11.89%; in-progress 208/1885 at 11.03%. | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | overlapping on GPU2 `pour_by_language`, GPU3 `imitate_sorting_sequence` (0/4 flushed, YMAX 255/255/254), GPU7 `play_tic_tac_toe`. Native `num_envs=5`. | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **37/42**. New: `insert_key` 0/50 (YMAX 252/171/255) and `hang_mugs` 0/50 (YMAX 250/247/253). Partial mean 11.24%; in-progress 208/1920 at 10.83%. | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | overlapping: GPU1 `fasten_screws`, GPU2 `pour_by_language` 0/5, GPU3 `imitate_sorting_sequence` 0/4 (YMAX 255/255/254), GPU7 `play_tic_tac_toe`. Native `num_envs=5`. | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); elastic now gates native cells behind `stack_bowls --eval-num 2` closed-loop | not started |
 
-The seed-0 table is **35/42** as of 05:42 CST Aug 27. Do not compare that thirty-five-cell mean (11.89%) to the published 6.91% until 42/42. Eight Isaac clients with untiled cameras: five Pi_05 plus three G05. Measured ~176 ep/h over 10.7 h (~1.2 h left on Pi_05 at that rate). GPU4/GPU6 finished the `pour_liquid_into_cup` and `fold_clothes` pairs; G05 has a closed-loop `_result.json` on `imitate_sorting_sequence`. GPU1 `play_tic_tac_toe` can sit at 0% util between 5-env flushes because the horizon is 1400 steps. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
+The seed-0 table is **37/42** as of 05:52 CST Aug 27. Do not compare that thirty-seven-cell mean (11.24%) to the published 6.91% until 42/42. Remaining official cells: `align_blocks`, `deposit_coin`, `push_T`, `stack_blocks`, `swap_T`. Measured ~176 ep/h over 10.9 h (~1.0 h left on Pi_05 at that rate). GPU1 `play_tic_tac_toe` can sit at 0% util between 5-env flushes because the horizon is 1400 steps. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
 quarantined because their wrist-camera observations were blank; see below. The first
 attempt ran 07:41-18:07 CST and
 reached 41/42 cells for Pi_05 at **SR 1.07%** against an official 6.91%, plus six
