@@ -8,11 +8,11 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **10/42**. New: `play_tic_tac_toe` 1/50 (wrists YMAX 252/255/252). Partial mean 9.20% not comparable to 6.91. GPU1 now `make_kong`. | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **11/42**. New: `imitate_sorting_sequence` 0/50 (wrists YMAX 255/255/252). Partial mean 8.36% not comparable to 6.91. GPU0 now `fill_egg_holder`. | not started |
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05; adapter and venv issues already fixed | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); elastic now gates native cells behind `stack_bowls --eval-num 2` closed-loop | not started |
 
-The seed-0 table is **10/42** as of 00:33 CST Aug 27. Do not compare that ten-cell mean (9.20%) to the published 6.91%. Eight Isaac clients with untiled cameras; `play_tic_tac_toe` wrists colorful (YMAX 252/255/252). GPU1 `play_tic_tac_toe` can sit at 0% util between 5-env flushes because the horizon is 1400 steps. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
+The seed-0 table is **11/42** as of 00:47 CST Aug 27. Do not compare that eleven-cell mean (8.36%) to the published 6.91%. Eight Isaac clients with untiled cameras; `imitate_sorting_sequence` wrists colorful (YMAX 255/255/252). GPU1 `play_tic_tac_toe` can sit at 0% util between 5-env flushes because the horizon is 1400 steps. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
 quarantined because their wrist-camera observations were blank; see below. The first
 attempt ran 07:41-18:07 CST and
 reached 41/42 cells for Pi_05 at **SR 1.07%** against an official 6.91%, plus six

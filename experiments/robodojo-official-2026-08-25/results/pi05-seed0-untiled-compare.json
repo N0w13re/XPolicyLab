@@ -2,14 +2,13 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 550,
-      "in_progress_episodes": 714,
-      "in_progress_success_rate": 7.9831932773109235,
-      "in_progress_successes": 57,
+      "episodes": 650,
+      "in_progress_episodes": 856,
+      "in_progress_success_rate": 8.528037383177569,
+      "in_progress_successes": 73,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
-        "cover_blocks",
         "deposit_coin",
         "fill_egg_holder",
         "fold_clothes",
@@ -26,7 +25,6 @@
         "plug_in_charger",
         "pour_balls_into_vase",
         "pour_liquid_into_cup",
-        "press_by_number",
         "push_T",
         "put_bottles_into_dustbin",
         "solve_equation",
@@ -42,8 +40,8 @@
       "official_success_rate": 6.91,
       "per_task": {
         "arrange_largest_number_random": {
-          "episodes": 20,
-          "score": 0.5,
+          "episodes": 25,
+          "score": 0.4,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -66,16 +64,22 @@
           "successes": 0
         },
         "cover_blocks": {
-          "episodes": 30,
-          "score": 25.5,
+          "episodes": 50,
+          "score": 25.3,
           "success_rate": 20.0,
-          "successes": 6
+          "successes": 10
         },
         "fasten_screws": {
           "episodes": 50,
           "score": 14.800000000000002,
           "success_rate": 6.0,
           "successes": 3
+        },
+        "fill_egg_holder": {
+          "episodes": 9,
+          "score": 4.444444444444445,
+          "success_rate": 0.0,
+          "successes": 0
         },
         "fill_pen_holder": {
           "episodes": 50,
@@ -90,22 +94,28 @@
           "successes": 0
         },
         "make_kong": {
-          "episodes": 9,
+          "episodes": 27,
           "score": 55.55555555555556,
           "success_rate": 55.55555555555556,
-          "successes": 5
+          "successes": 15
         },
         "make_toast": {
-          "episodes": 10,
-          "score": 10.0,
-          "success_rate": 0.0,
-          "successes": 0
+          "episodes": 20,
+          "score": 17.5,
+          "success_rate": 5.0,
+          "successes": 1
         },
         "make_toast_random": {
           "episodes": 25,
           "score": 1.0,
           "success_rate": 0.0,
           "successes": 0
+        },
+        "match_and_pick_from_conveyor": {
+          "episodes": 15,
+          "score": 6.666666666666667,
+          "success_rate": 6.666666666666667,
+          "successes": 1
         },
         "organize_table": {
           "episodes": 50,
@@ -114,7 +124,7 @@
           "successes": 2
         },
         "pick_from_conveyor_by_image": {
-          "episodes": 15,
+          "episodes": 35,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -138,7 +148,7 @@
           "successes": 0
         },
         "press_by_number": {
-          "episodes": 25,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -156,15 +166,15 @@
           "successes": 0
         },
         "swap_blocks": {
-          "episodes": 5,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 11,
-      "score": 17.109090909090906,
-      "success_rate": 8.363636363636363,
+      "reported_tasks_complete": 13,
+      "score": 16.423076923076923,
+      "success_rate": 8.615384615384615,
       "table_complete": false
     }
   },
