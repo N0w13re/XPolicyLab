@@ -1,35 +1,32 @@
 {
-  "as_of": "2026-08-26T21:25+08",
+  "as_of": "2026-08-26T21:32+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
   "untiled": true,
-  "isaac_sim": "5.1.0",
-  "isaac_lab": "0.54.3",
-  "driver": "535.261.03",
-  "gpu": "8x A800-SXM4-80GB",
-  "isaac6_upgrade": "blocked: official 6.0.1 needs driver 595.58.03 and RT-core GPUs; A800 unsupported",
-  "official_cells_complete": 1,
+  "official_cells_complete": 2,
   "official_cells_total": 42,
-  "official_sr_note": "Partial table average of the one completed cell (build_tower 58%). Not comparable to 6.91 until 42 cells.",
-  "official_published": {
-    "Pi_05": 6.91,
-    "G05": 14.88,
-    "Xiaomi_Robotics_1": 13.93
-  },
+  "partial_table_sr_percent": 29.0,
+  "official_sr_note": "Mean of 2 completed cells only; not comparable to 6.91 until 42 cells.",
   "completed_cells": {
-    "build_tower": {"successes": 29, "episodes": 50, "sr_percent": 58.0, "score": 67.6}
+    "build_tower": {"successes": 29, "episodes": 50, "sr_percent": 58.0},
+    "classify_objects_by_language": {"successes": 0, "episodes": 50, "sr_percent": 0.0}
   },
-  "partial_episodes": "39/282",
-  "partial_sr_percent": 13.83,
+  "in_progress_episodes": "39/287",
+  "in_progress_sr_percent": 13.59,
+  "wrist_classify_objects_by_language_ep49": {
+    "head_YMAX": 241,
+    "left_wrist_YMAX": 245,
+    "right_wrist_YMAX": 235
+  },
   "running": {
     "gpu0": "imitate_sorting_sequence",
     "gpu1": "play_tic_tac_toe",
     "gpu2": "pour_by_language",
     "gpu3": "fasten_screws",
     "gpu4": "play_stacking_toy",
-    "gpu5": "classify_objects_by_language",
+    "gpu5": "store_tools_in_toolbox",
     "gpu6": "classify_objects",
     "gpu7": "fill_pen_holder"
   },

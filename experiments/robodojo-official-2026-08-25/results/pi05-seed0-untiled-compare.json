@@ -2,15 +2,14 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 50,
-      "in_progress_episodes": 282,
-      "in_progress_success_rate": 13.829787234042554,
+      "episodes": 100,
+      "in_progress_episodes": 287,
+      "in_progress_success_rate": 13.588850174216027,
       "in_progress_successes": 39,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
         "classify_objects",
-        "classify_objects_by_language",
         "cover_blocks",
         "deposit_coin",
         "fasten_screws",
@@ -64,8 +63,8 @@
           "successes": 7
         },
         "classify_objects_by_language": {
-          "episodes": 45,
-          "score": 1.3333333333333335,
+          "episodes": 50,
+          "score": 1.2000000000000002,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -106,9 +105,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 1,
-      "score": 67.6,
-      "success_rate": 57.99999999999999,
+      "reported_tasks_complete": 2,
+      "score": 34.4,
+      "success_rate": 28.999999999999996,
       "table_complete": false
     }
   },
