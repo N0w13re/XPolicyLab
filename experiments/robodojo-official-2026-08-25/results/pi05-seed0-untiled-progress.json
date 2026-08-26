@@ -1,31 +1,30 @@
 {
-  "as_of": "2026-08-26T22:03+08",
+  "as_of": "2026-08-26T22:49+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 4,
+  "official_cells_complete": 5,
   "official_cells_total": 42,
-  "partial_table_sr_percent": 19.0,
+  "partial_table_sr_percent": 16.4,
   "completed_cells": {
     "build_tower": "29/50",
     "classify_objects": "9/50",
     "classify_objects_by_language": "0/50",
-    "play_stacking_toy": "0/50"
+    "play_stacking_toy": "0/50",
+    "fasten_screws": "3/50"
   },
-  "in_progress_episodes": "42/347",
-  "in_progress_success_rate_percent": 12.1,
-  "measured_ep_per_hour": 111.8,
-  "elapsed_h": 3.1,
-  "pi05_physical_budget_eps": 2100,
-  "pi05_remaining_eps_est": 1753,
-  "pi05_remaining_h_from_throughput": 15.7,
-  "note": "Weight-based shard ETA (~9.6h) is optimistic vs measured 112 ep/h. Do not compare 4/42 mean 19% to official 6.91.",
-  "next_cells_likely": {
-    "fasten_screws": "3/40",
-    "imitate_sorting_sequence": "0/23",
-    "pour_by_language": "0/30",
-    "play_tic_tac_toe": "1/24"
+  "in_progress_episodes": "44/440",
+  "wrist_fasten_screws_ep49_YMAX": {"head": 246.0, "left_wrist": 238.9, "right_wrist": 253.4},
+  "running": {
+    "gpu0": "imitate_sorting_sequence",
+    "gpu1": "play_tic_tac_toe",
+    "gpu2": "pour_by_language",
+    "gpu3": "sort_nesting_dolls_by_size_random",
+    "gpu4": "organize_table",
+    "gpu5": "store_tools_in_toolbox",
+    "gpu6": "make_toast_random",
+    "gpu7": "fill_pen_holder"
   },
   "pids": {"sweep": 3281259, "elastic": 3950295}
 }
