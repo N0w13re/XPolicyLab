@@ -1,4 +1,5 @@
 # Copyright (C) 2026 Xiaomi Corporation.
+import importlib.util
 import math
 import random
 
@@ -218,9 +219,14 @@ class xr1(nn.Module):
 
     def _build_model(self):
         config = Qwen3VLConfig.from_pretrained("Qwen/Qwen3-VL-4B-Instruct")
+        attn_implementation = (
+            "flash_attention_2"
+            if importlib.util.find_spec("flash_attn") is not None
+            else "sdpa"
+        )
         self.vlm = Qwen3VLForConditionalGeneration._from_config(
             config,
-            attn_implementation="flash_attention_2",
+            attn_implementation=attn_implementation,
             dtype=torch.bfloat16,
         ).train()
         self.vlm.model.get_input_embeddings().requires_grad_(False)
