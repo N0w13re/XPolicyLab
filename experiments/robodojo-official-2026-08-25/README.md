@@ -8,7 +8,7 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid three-camera rerun in progress (18:58 CST Aug 26, 8 cards, `num_envs=5`). Official cells **0/42**; in-progress 33/232 eps (14.22%), `build_tower` 27/45. Wrist luma still healthy on ep44. | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun in progress. Official cells **1/42** (`build_tower` 29/50 = 58%, three-camera videos OK). In-progress 36/252 eps (14.29%). GPU7 moved to `fill_pen_holder`. | not started |
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05; adapter and venv issues already fixed | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); closed-loop smoke still pending until a GPU frees | not started |
 

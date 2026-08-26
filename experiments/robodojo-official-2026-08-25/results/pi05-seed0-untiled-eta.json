@@ -1,11 +1,11 @@
 {
-  "as_of": "2026-08-26T21:07:12+08:00",
+  "as_of": "2026-08-26T21:13:33+08:00",
   "policy": "Pi_05",
   "seed": 0,
   "live_num_envs": 5,
   "weight_num_envs": 10,
   "scale": 2.0,
-  "max_shard_remaining_h": 10.3,
+  "max_shard_remaining_h": 10.2,
   "shards": [
     {
       "gpu": "0",
@@ -57,14 +57,14 @@
     },
     {
       "gpu": "1",
-      "remaining_h": 10.3,
+      "remaining_h": 9.78,
       "tasks": [
         {
           "task": "play_tic_tac_toe",
-          "have": 14,
+          "have": 19,
           "want": 50,
           "weight_s": 9323,
-          "remaining_s": 13425.1
+          "remaining_s": 11560.5
         },
         {
           "task": "make_kong",
@@ -105,14 +105,14 @@
     },
     {
       "gpu": "2",
-      "remaining_h": 9.65,
+      "remaining_h": 9.12,
       "tasks": [
         {
           "task": "pour_by_language",
-          "have": 20,
+          "have": 25,
           "want": 50,
           "weight_s": 9448,
-          "remaining_s": 11337.6
+          "remaining_s": 9448.0
         },
         {
           "task": "arrange_largest_number_random",
@@ -318,14 +318,14 @@
     },
     {
       "gpu": "6",
-      "remaining_h": 9.85,
+      "remaining_h": 9.58,
       "tasks": [
         {
           "task": "classify_objects",
-          "have": 35,
+          "have": 40,
           "want": 50,
           "weight_s": 4881,
-          "remaining_s": 2928.6
+          "remaining_s": 1952.4
         },
         {
           "task": "make_toast_random",
@@ -380,14 +380,14 @@
     },
     {
       "gpu": "7",
-      "remaining_h": 9.37,
+      "remaining_h": 9.11,
       "tasks": [
         {
           "task": "build_tower",
-          "have": 45,
+          "have": 50,
           "want": 50,
           "weight_s": 4750,
-          "remaining_s": 950.0
+          "remaining_s": 0.0
         },
         {
           "task": "fill_pen_holder",

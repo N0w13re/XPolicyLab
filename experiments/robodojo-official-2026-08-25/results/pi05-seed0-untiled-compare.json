@@ -1,15 +1,14 @@
 {
   "policies": {
     "Pi_05": {
-      "delta": null,
-      "episodes": 0,
-      "in_progress_episodes": 232,
-      "in_progress_success_rate": 14.224137931034484,
-      "in_progress_successes": 33,
+      "delta": 51.08999999999999,
+      "episodes": 50,
+      "in_progress_episodes": 252,
+      "in_progress_success_rate": 14.285714285714285,
+      "in_progress_successes": 36,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
-        "build_tower",
         "classify_objects",
         "classify_objects_by_language",
         "cover_blocks",
@@ -53,16 +52,16 @@
       "official_success_rate": 6.91,
       "per_task": {
         "build_tower": {
-          "episodes": 45,
-          "score": 69.11111111111111,
-          "success_rate": 60.0,
-          "successes": 27
+          "episodes": 50,
+          "score": 67.6,
+          "success_rate": 57.99999999999999,
+          "successes": 29
         },
         "classify_objects": {
-          "episodes": 35,
-          "score": 25.0,
-          "success_rate": 11.428571428571429,
-          "successes": 4
+          "episodes": 40,
+          "score": 26.749999999999996,
+          "success_rate": 12.5,
+          "successes": 5
         },
         "classify_objects_by_language": {
           "episodes": 40,
@@ -89,21 +88,21 @@
           "successes": 0
         },
         "play_tic_tac_toe": {
-          "episodes": 14,
-          "score": 18.21428571428571,
-          "success_rate": 7.142857142857142,
+          "episodes": 19,
+          "score": 16.05263157894737,
+          "success_rate": 5.263157894736842,
           "successes": 1
         },
         "pour_by_language": {
-          "episodes": 20,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 0,
-      "score": NaN,
-      "success_rate": NaN
+      "reported_tasks_complete": 1,
+      "score": 67.6,
+      "success_rate": 57.99999999999999
     }
   },
   "seed": 0
