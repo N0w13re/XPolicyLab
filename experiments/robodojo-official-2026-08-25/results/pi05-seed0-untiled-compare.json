@@ -3,8 +3,8 @@
     "Pi_05": {
       "delta": null,
       "episodes": 0,
-      "in_progress_episodes": 73,
-      "in_progress_success_rate": 15.068493150684931,
+      "in_progress_episodes": 83,
+      "in_progress_success_rate": 13.253012048192772,
       "in_progress_successes": 11,
       "incomplete_tasks": [
         "align_blocks",
@@ -59,9 +59,9 @@
           "successes": 10
         },
         "classify_objects": {
-          "episodes": 10,
-          "score": 18.5,
-          "success_rate": 10.0,
+          "episodes": 15,
+          "score": 16.333333333333336,
+          "success_rate": 6.666666666666667,
           "successes": 1
         },
         "classify_objects_by_language": {
@@ -83,7 +83,7 @@
           "successes": 0
         },
         "play_stacking_toy": {
-          "episodes": 10,
+          "episodes": 15,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0

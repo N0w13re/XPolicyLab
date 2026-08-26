@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T19:49:41+08:00",
+  "as_of": "2026-08-26T19:51:48+08:00",
   "policy": "Pi_05",
   "seed": 0,
   "live_num_envs": 5,
@@ -318,14 +318,14 @@
     },
     {
       "gpu": "6",
-      "remaining_h": 11.2,
+      "remaining_h": 10.93,
       "tasks": [
         {
           "task": "classify_objects",
-          "have": 10,
+          "have": 15,
           "want": 50,
           "weight_s": 4881,
-          "remaining_s": 7809.6
+          "remaining_s": 6833.4
         },
         {
           "task": "make_toast_random",
