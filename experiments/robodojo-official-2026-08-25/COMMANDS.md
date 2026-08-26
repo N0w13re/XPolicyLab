@@ -14,7 +14,13 @@ Do **not** raise `ROBODOJO_NUM_ENVS` to 10 on this host. Isaac Sim is still 5.1.
 NVIDIA [IsaacSim #367](https://github.com/isaac-sim/IsaacSim/issues/367) only
 fixes tiled RTX RGB in 6.0. Untiled 10-env exhausts RTX ParameterBlock resources
 (`logs/verify/wrist-10env-untiled.log`). Tiled 10-env restores black wrists.
-Keep 5 env until a separate Isaac 6.0 checkout passes a 10-env three-camera smoke.
+
+Do **not** upgrade this A800 host to Isaac Sim 6.0 in place. Official 6.0.1
+requirements ([docs](https://docs.isaacsim.omniverse.nvidia.com/6.0.1/installation/requirements.html)):
+Python 3.12, Linux driver **595.58.03**, and GPUs **with RT cores**. This box is
+Python 3.11 + Isaac Lab 0.54.3 + driver **535.261.03** + 8× A800 (no RT cores;
+A100/H100 class is explicitly unsupported). Upgrading the driver would also kill
+the live 5.1 sweep. Stay on 5.1 + untiled + 5 env here.
 
 
 Assets (skip if `Assets/{Robots,Eval_Layout,Object,Material,Background,Room,Sensor,Traj}`

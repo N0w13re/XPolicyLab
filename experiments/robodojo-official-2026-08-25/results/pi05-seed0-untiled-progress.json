@@ -1,14 +1,18 @@
 {
-  "as_of": "2026-08-26T21:13+08",
+  "as_of": "2026-08-26T21:25+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
   "untiled": true,
+  "isaac_sim": "5.1.0",
+  "isaac_lab": "0.54.3",
+  "driver": "535.261.03",
+  "gpu": "8x A800-SXM4-80GB",
+  "isaac6_upgrade": "blocked: official 6.0.1 needs driver 595.58.03 and RT-core GPUs; A800 unsupported",
   "official_cells_complete": 1,
   "official_cells_total": 42,
-  "official_sr": 58.0,
-  "official_sr_note": "Partial table average of the one completed cell (build_tower). Not comparable to 6.91 until 42 cells.",
+  "official_sr_note": "Partial table average of the one completed cell (build_tower 58%). Not comparable to 6.91 until 42 cells.",
   "official_published": {
     "Pi_05": 6.91,
     "G05": 14.88,
@@ -17,23 +21,8 @@
   "completed_cells": {
     "build_tower": {"successes": 29, "episodes": 50, "sr_percent": 58.0, "score": 67.6}
   },
-  "partial_results": {
-    "build_tower": "29/50",
-    "classify_objects": "5/40",
-    "classify_objects_by_language": "0/40",
-    "fasten_screws": "1/25",
-    "imitate_sorting_sequence": "0/13",
-    "play_stacking_toy": "0/40",
-    "play_tic_tac_toe": "1/19",
-    "pour_by_language": "0/25"
-  },
-  "partial_episodes": "36/252",
-  "partial_sr_percent": 14.29,
-  "wrist_check_build_tower_ep49": {
-    "head": {"YMIN": 3, "YMAX": 236, "YAVG": 106.64},
-    "left_wrist": {"YMIN": 12, "YMAX": 240, "YAVG": 103.57},
-    "right_wrist": {"YMIN": 9, "YMAX": 239, "YAVG": 109.90}
-  },
+  "partial_episodes": "39/282",
+  "partial_sr_percent": 13.83,
   "running": {
     "gpu0": "imitate_sorting_sequence",
     "gpu1": "play_tic_tac_toe",
@@ -44,10 +33,6 @@
     "gpu6": "classify_objects",
     "gpu7": "fill_pen_holder"
   },
-  "pids": {
-    "sweep": 3281259,
-    "elastic": 3282394
-  },
-  "eta_max_shard_remaining_h": 10.2,
-  "eta_three_policies_h": 31.0
+  "pids": {"sweep": 3281259, "elastic": 3282394},
+  "eta_max_shard_remaining_h": 9.78
 }
