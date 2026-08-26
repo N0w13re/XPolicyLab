@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T19:51:48+08:00",
+  "as_of": "2026-08-26T19:53:19+08:00",
   "policy": "Pi_05",
   "seed": 0,
   "live_num_envs": 5,
@@ -380,14 +380,14 @@
     },
     {
       "gpu": "7",
-      "remaining_h": 10.95,
+      "remaining_h": 10.69,
       "tasks": [
         {
           "task": "build_tower",
-          "have": 15,
+          "have": 20,
           "want": 50,
           "weight_s": 4750,
-          "remaining_s": 6650.0
+          "remaining_s": 5700.0
         },
         {
           "task": "fill_pen_holder",

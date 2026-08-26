@@ -3,9 +3,9 @@
     "Pi_05": {
       "delta": null,
       "episodes": 0,
-      "in_progress_episodes": 83,
-      "in_progress_success_rate": 13.253012048192772,
-      "in_progress_successes": 11,
+      "in_progress_episodes": 88,
+      "in_progress_success_rate": 15.909090909090908,
+      "in_progress_successes": 14,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -53,10 +53,10 @@
       "official_success_rate": 6.91,
       "per_task": {
         "build_tower": {
-          "episodes": 15,
-          "score": 74.0,
-          "success_rate": 66.66666666666666,
-          "successes": 10
+          "episodes": 20,
+          "score": 72.0,
+          "success_rate": 65.0,
+          "successes": 13
         },
         "classify_objects": {
           "episodes": 15,
