@@ -2,10 +2,10 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 800,
-      "in_progress_episodes": 989,
-      "in_progress_success_rate": 9.504550050556118,
-      "in_progress_successes": 94,
+      "episodes": 850,
+      "in_progress_episodes": 1003,
+      "in_progress_success_rate": 9.870388833499502,
+      "in_progress_successes": 99,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -16,7 +16,6 @@
         "hang_mugs",
         "insert_key",
         "insert_tubes",
-        "make_kong",
         "match_and_pick_from_conveyor",
         "pack_objects_into_box",
         "play_Xylophone",
@@ -91,10 +90,10 @@
           "successes": 0
         },
         "make_kong": {
-          "episodes": 46,
-          "score": 54.347826086956516,
-          "success_rate": 54.347826086956516,
-          "successes": 25
+          "episodes": 50,
+          "score": 56.00000000000001,
+          "success_rate": 56.00000000000001,
+          "successes": 28
         },
         "make_toast": {
           "episodes": 25,
@@ -145,10 +144,10 @@
           "successes": 1
         },
         "pour_balls_into_vase": {
-          "episodes": 20,
-          "score": 10.0,
-          "success_rate": 10.0,
-          "successes": 2
+          "episodes": 25,
+          "score": 12.0,
+          "success_rate": 12.0,
+          "successes": 3
         },
         "pour_by_language": {
           "episodes": 50,
@@ -163,10 +162,10 @@
           "successes": 0
         },
         "sort_nesting_dolls_by_size": {
-          "episodes": 10,
+          "episodes": 15,
           "score": 20.0,
           "success_rate": 20.0,
-          "successes": 2
+          "successes": 3
         },
         "sort_nesting_dolls_by_size_random": {
           "episodes": 25,
@@ -187,9 +186,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 16,
-      "score": 13.96875,
-      "success_rate": 7.249999999999999,
+      "reported_tasks_complete": 17,
+      "score": 16.441176470588236,
+      "success_rate": 10.117647058823529,
       "table_complete": false
     }
   },
