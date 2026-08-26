@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T01:26+08",
+  "as_of": "2026-08-27T01:31+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -7,12 +7,12 @@
   "official_cells_complete": 13,
   "official_cells_total": 42,
   "partial_table_sr_percent": 8.62,
-  "in_progress_sr_percent": 8.48,
-  "in_progress_episodes": "73/861",
-  "throughput_ep_per_h": 133.0,
-  "elapsed_h": 6.47,
-  "pi05_remain_ep_est": 1239,
-  "pi05_remain_h_est": 9.3,
+  "in_progress_sr_percent": 9.03,
+  "in_progress_episodes": "79/875",
+  "throughput_ep_per_h": 133.6,
+  "elapsed_h": 6.55,
+  "pi05_remain_ep_est": 1225,
+  "pi05_remain_h_est": 9.2,
   "completed_cells": {
     "build_tower": "29/50",
     "classify_objects": "9/50",
@@ -42,7 +42,7 @@
   "next_cells_likely": {
     "sort_nesting_dolls_by_size": "paired; random half already 25/25 at 0%",
     "make_toast": "1/20 plus make_toast_random 0/25 already full",
-    "make_kong": "15/27 at 55.6%"
+    "make_kong": "19/32 at 59.4%"
   },
   "pids": {"sweep": 3281259, "elastic": 3950295},
   "note": "Partial 8.62% is mean of 13 completed cells only; do not delta vs official 6.91 until 42/42. G05/Xiaomi not started. Xiaomi still gated on stack_bowls x2."

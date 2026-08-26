@@ -3,9 +3,9 @@
     "Pi_05": {
       "delta": null,
       "episodes": 650,
-      "in_progress_episodes": 861,
-      "in_progress_success_rate": 8.478513356562138,
-      "in_progress_successes": 73,
+      "in_progress_episodes": 875,
+      "in_progress_success_rate": 9.028571428571428,
+      "in_progress_successes": 79,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -76,8 +76,8 @@
           "successes": 3
         },
         "fill_egg_holder": {
-          "episodes": 9,
-          "score": 4.444444444444445,
+          "episodes": 13,
+          "score": 3.8461538461538463,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -94,10 +94,10 @@
           "successes": 0
         },
         "make_kong": {
-          "episodes": 27,
-          "score": 55.55555555555556,
-          "success_rate": 55.55555555555556,
-          "successes": 15
+          "episodes": 32,
+          "score": 59.375,
+          "success_rate": 59.375,
+          "successes": 19
         },
         "make_toast": {
           "episodes": 20,
@@ -112,10 +112,10 @@
           "successes": 0
         },
         "match_and_pick_from_conveyor": {
-          "episodes": 15,
-          "score": 6.666666666666667,
-          "success_rate": 6.666666666666667,
-          "successes": 1
+          "episodes": 20,
+          "score": 15.0,
+          "success_rate": 15.0,
+          "successes": 3
         },
         "organize_table": {
           "episodes": 50,

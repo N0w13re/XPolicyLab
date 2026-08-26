@@ -8,7 +8,7 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **13/42**. New: `cover_blocks` 10/50 (wrists YMAX 250/173/203). Partial mean 8.62%; in-progress 73/861 at 8.48%. GPU7 now `pour_balls_into_vase`. | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **13/42**. New: `cover_blocks` 10/50 (wrists YMAX 250/173/203). Partial mean 8.62%; in-progress 79/875 at 9.03%. GPU7 now `pour_balls_into_vase`. | not started |
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05; adapter and venv issues already fixed | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); elastic now gates native cells behind `stack_bowls --eval-num 2` closed-loop | not started |
 
