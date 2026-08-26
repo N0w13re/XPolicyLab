@@ -1,0 +1,32 @@
+[
+  {
+    "file": "episode_0000019_cam_head_success.mp4",
+    "mean_rgb": [
+      125.8,
+      96.9,
+      84.3
+    ],
+    "spread": 41.5,
+    "max": 255
+  },
+  {
+    "file": "episode_0000019_cam_left_wrist_success.mp4",
+    "mean_rgb": [
+      123.6,
+      92.4,
+      78.4
+    ],
+    "spread": 45.2,
+    "max": 255
+  },
+  {
+    "file": "episode_0000019_cam_right_wrist_success.mp4",
+    "mean_rgb": [
+      128.5,
+      100.4,
+      82.0
+    ],
+    "spread": 46.5,
+    "max": 255
+  }
+]

@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T19:53+08",
+  "as_of": "2026-08-26T19:57+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -21,10 +21,10 @@
     "imitate_sorting_sequence": "0/4",
     "play_stacking_toy": "0/15",
     "play_tic_tac_toe": "0/4",
-    "pour_by_language": "0/5"
+    "pour_by_language": "0/10"
   },
-  "partial_episodes": "14/88",
-  "partial_sr_percent": 15.91,
+  "partial_episodes": "14/93",
+  "partial_sr_percent": 15.05,
   "running": {
     "gpu0": {
       "task": "imitate_sorting_sequence",
@@ -67,5 +67,12 @@
   },
   "eta_max_shard_remaining_h": 11.33,
   "eta_three_policies_h": 34.0,
-  "eta_note": "smoke_all_tasks weights at num_envs=10, scaled x2 for num_envs=5; untiled overhead not included"
+  "eta_note": "smoke_all_tasks weights at num_envs=10, scaled x2 for num_envs=5; untiled overhead not included",
+  "official_pi05_paper_table1": {
+    "source": "arxiv 2607.04434v3 Table 1, frozen 2026-07-03",
+    "average_sr": 6.91,
+    "precision_sr": 5.5,
+    "long_horizon_sr": 14.67,
+    "note": "No official per-task SR for Pi_05. build_tower is Precision; 13/20 is not the official cell."
+  }
 }
