@@ -2,10 +2,10 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 1450,
-      "in_progress_episodes": 1620,
-      "in_progress_success_rate": 11.11111111111111,
-      "in_progress_successes": 180,
+      "episodes": 1500,
+      "in_progress_episodes": 1684,
+      "in_progress_success_rate": 11.401425178147269,
+      "in_progress_successes": 192,
       "incomplete_tasks": [
         "align_blocks",
         "deposit_coin",
@@ -17,7 +17,6 @@
         "push_T",
         "stack_blocks",
         "stack_blocks_by_language",
-        "stack_bowls",
         "swap_T",
         "sweep_blocks"
       ],
@@ -77,11 +76,23 @@
           "success_rate": 4.0,
           "successes": 2
         },
+        "fold_clothes": {
+          "episodes": 5,
+          "score": 64.0,
+          "success_rate": 60.0,
+          "successes": 3
+        },
+        "fold_clothes_random": {
+          "episodes": 5,
+          "score": 16.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "general_pickup": {
-          "episodes": 15,
-          "score": 26.666666666666668,
-          "success_rate": 26.666666666666668,
-          "successes": 4
+          "episodes": 34,
+          "score": 17.647058823529413,
+          "success_rate": 17.647058823529413,
+          "successes": 6
         },
         "hang_mugs_random": {
           "episodes": 25,
@@ -191,6 +202,12 @@
           "success_rate": 20.0,
           "successes": 5
         },
+        "pour_liquid_into_cup_random": {
+          "episodes": 5,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "press_by_number": {
           "episodes": 50,
           "score": 0.0,
@@ -222,22 +239,22 @@
           "successes": 0
         },
         "stack_blocks_by_language": {
-          "episodes": 10,
-          "score": 2.0,
+          "episodes": 25,
+          "score": 1.6,
           "success_rate": 0.0,
           "successes": 0
         },
         "stack_blocks_random": {
-          "episodes": 15,
-          "score": 0.0,
+          "episodes": 20,
+          "score": 0.75,
           "success_rate": 0.0,
           "successes": 0
         },
         "stack_bowls": {
-          "episodes": 15,
-          "score": 68.66666666666667,
-          "success_rate": 66.66666666666666,
-          "successes": 10
+          "episodes": 25,
+          "score": 71.0,
+          "success_rate": 68.0,
+          "successes": 17
         },
         "stack_bowls_random": {
           "episodes": 25,
@@ -282,9 +299,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 29,
-      "score": 16.948275862068964,
-      "success_rate": 10.965517241379311,
+      "reported_tasks_complete": 30,
+      "score": 17.83,
+      "success_rate": 11.866666666666667,
       "table_complete": false
     }
   },
