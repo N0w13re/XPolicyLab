@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T20:42+08",
+  "as_of": "2026-08-26T20:44+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -14,7 +14,7 @@
     "Xiaomi_Robotics_1": 13.93
   },
   "partial_results": {
-    "build_tower": "22/35",
+    "build_tower": "24/40",
     "classify_objects": "4/30",
     "classify_objects_by_language": "0/30",
     "fasten_screws": "0/20",
@@ -23,8 +23,8 @@
     "play_tic_tac_toe": "1/14",
     "pour_by_language": "0/15"
   },
-  "partial_episodes": "27/183",
-  "partial_sr_percent": 14.75,
+  "partial_episodes": "29/188",
+  "partial_sr_percent": 15.43,
   "running": {
     "gpu0": {
       "task": "imitate_sorting_sequence",
