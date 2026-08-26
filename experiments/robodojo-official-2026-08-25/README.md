@@ -8,7 +8,7 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **4/42**: `build_tower` 29/50, `classify_objects` 9/50, `classify_objects_by_language` 0/50, `play_stacking_toy` 0/50. Partial mean 19% not comparable to 6.91. In-progress 41/337 eps (12.17%). Next cells likely `fasten_screws` 2/35, `pour_by_language` 0/30, `play_tic_tac_toe` 1/24. GPU4 `organize_table` 0/5 with colorful wrists; GPU6 `make_toast_random` stepping. | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **4/42**. In-progress 42/347 eps (12.1%). Measured **112 ep/h** (~15.7 h left for Pi_05 physical budget, vs 9.6 h weight ETA). Next: `fasten_screws` 3/40. | not started |
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05; adapter and venv issues already fixed | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); elastic now gates native cells behind `stack_bowls --eval-num 2` closed-loop | not started |
 
