@@ -1,0 +1,14 @@
+{
+  "as_of": "2026-08-26T21:52+08",
+  "run_id": "2026-08-26_18-57-47_smoke",
+  "note": "YMAX from ffmpeg frame ~1s into latest episode_*_cam_{head,left_wrist,right_wrist}_*.mp4. Black wrists in the tiled bug were YMAX ~0-3.",
+  "tasks": {
+    "fasten_screws": {"n_head": 35, "ymax": {"head": 247.4, "left_wrist": 252.4, "right_wrist": 254.9}, "mean": {"head": 97.6, "left_wrist": 94.3, "right_wrist": 99.9}},
+    "play_tic_tac_toe": {"n_head": 24, "ymax": {"head": 252.0, "left_wrist": 253.9, "right_wrist": 254.8}},
+    "pour_by_language": {"n_head": 30, "ymax": {"head": 250.3, "left_wrist": 234.8, "right_wrist": 245.6}},
+    "fill_pen_holder": {"n_head": 10, "ymax": {"head": 248.2, "left_wrist": 254.8, "right_wrist": 251.4}},
+    "imitate_sorting_sequence": {"n_head": 18, "ymax": {"head": 255.0, "left_wrist": 255.0, "right_wrist": 255.0}},
+    "store_tools_in_toolbox": {"n_head": 5, "ymax": {"head": 251.0, "left_wrist": 252.3, "right_wrist": 249.5}},
+    "classify_objects": {"n_head": 50, "ymax": {"head": 250.4, "left_wrist": 241.2, "right_wrist": 247.4}}
+  }
+}

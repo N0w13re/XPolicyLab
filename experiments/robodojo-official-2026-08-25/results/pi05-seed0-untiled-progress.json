@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T21:39+08",
+  "as_of": "2026-08-26T21:52+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -13,8 +13,9 @@
     "classify_objects_by_language": "0/50",
     "play_stacking_toy": "0/50"
   },
-  "in_progress_episodes": "41/312",
-  "wrist_classify_objects_ep49_YMAX": {"head": 237, "left_wrist": 236, "right_wrist": 233},
+  "in_progress_episodes": "41/322",
+  "in_progress_success_rate_percent": 12.73,
+  "wrist_fasten_screws_ep34_YMAX": {"head": 247.4, "left_wrist": 252.4, "right_wrist": 254.9},
   "running": {
     "gpu0": "imitate_sorting_sequence",
     "gpu1": "play_tic_tac_toe",
@@ -25,5 +26,11 @@
     "gpu6": "make_toast_random",
     "gpu7": "fill_pen_holder"
   },
+  "next_cells_likely": {
+    "fasten_screws": "2/35",
+    "pour_by_language": "0/30",
+    "play_tic_tac_toe": "1/24"
+  },
+  "eta_max_shard_h": 9.61,
   "pids": {"sweep": 3281259, "elastic": 3282394}
 }
