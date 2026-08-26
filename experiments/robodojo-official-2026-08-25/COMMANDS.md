@@ -70,6 +70,11 @@ python3 /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/elastic_robodojo_sched
 # pid file: /tmp/elastic-untiled.pid
 ```
 
+Xiaomi's first elastic job is `stack_bowls --eval-num 2` (SDPA path). Native 42-cell
+Xiaomi tasks start only after that smoke has `_result.json` with at least two episodes.
+Disable with `--xiaomi-smoke-eval-num 0`. Restarting this scheduler does not stop live
+Isaac clients owned by the Pi_05 sweep.
+
 One task on one card, for a manual retry (assets must already be on disk):
 
 ```bash

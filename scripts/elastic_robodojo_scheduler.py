@@ -95,6 +95,17 @@ def parse_args() -> argparse.Namespace:
         help="Policy whose completion releases --kill-pid.",
     )
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--xiaomi-smoke-task",
+        default="stack_bowls",
+        help="Closed-loop smoke task required before any Xiaomi native cell.",
+    )
+    parser.add_argument(
+        "--xiaomi-smoke-eval-num",
+        type=int,
+        default=2,
+        help="Episode budget for the Xiaomi smoke. 0 disables the gate.",
+    )
     return parser.parse_args()
 
 
@@ -273,8 +284,29 @@ class Job:
     started: datetime = field(default_factory=datetime.now)
 
 
+def xiaomi_smoke_complete(robodojo_root: Path, args: argparse.Namespace) -> bool:
+    """True once Xiaomi has written at least the smoke episode budget."""
+    if args.xiaomi_smoke_eval_num <= 0:
+        return True
+    have = episodes_on_disk(
+        robodojo_root,
+        args.xiaomi_smoke_task,
+        "Xiaomi_Robotics_1",
+        args.env_cfg,
+        args.seed,
+        args.ckpt,
+        POLICY_ACTION_TYPE["Xiaomi_Robotics_1"],
+    )
+    return have >= args.xiaomi_smoke_eval_num
+
+
 def launch(
-    policy: str, task: str, gpu: str, args: argparse.Namespace, log_dir: Path
+    policy: str,
+    task: str,
+    gpu: str,
+    args: argparse.Namespace,
+    log_dir: Path,
+    eval_num: str = "native",
 ) -> Job | None:
     log_path = log_dir / f"{policy}-{task}-gpu{gpu}.log"
     cmd = [
@@ -285,7 +317,7 @@ def launch(
         "--task",
         task,
         "--eval-num",
-        "native",
+        str(eval_num),
         "--seed",
         str(args.seed),
         "--policy-gpu",
@@ -293,7 +325,7 @@ def launch(
         "--env-gpu",
         gpu,
     ]
-    log(f"launch {policy}/{task} on gpu {gpu} -> {log_path.name}")
+    log(f"launch {policy}/{task} eval_num={eval_num} on gpu {gpu} -> {log_path.name}")
     if args.dry_run:
         return None
     handle = log_path.open("a")
@@ -362,11 +394,31 @@ def main() -> int:
         }
         reserved_tasks, active_sweep_gpus = sweep_reserved(groups, runs, incomplete_pi)
 
-        pending: list[tuple[str, str]] = []
+        pending: list[tuple[str, str, str]] = []
         per_policy_remaining: dict[str, int] = {}
+        smoke_ok = xiaomi_smoke_complete(robodojo_root, args)
         for policy in policies:
             action_type = POLICY_ACTION_TYPE.get(policy, "ee")
             remaining = 0
+            if (
+                policy == "Xiaomi_Robotics_1"
+                and not smoke_ok
+                and args.xiaomi_smoke_eval_num > 0
+            ):
+                key = (policy, args.xiaomi_smoke_task)
+                if key in given_up:
+                    per_policy_remaining[policy] = 0
+                    continue
+                remaining = 1
+                already = any(
+                    j.policy == policy and j.task == args.xiaomi_smoke_task for j in jobs
+                )
+                if not already and key not in elsewhere:
+                    pending.append(
+                        (policy, args.xiaomi_smoke_task, str(args.xiaomi_smoke_eval_num))
+                    )
+                per_policy_remaining[policy] = remaining
+                continue
             for task in order:
                 key = (policy, task)
                 if key in given_up:
@@ -384,7 +436,7 @@ def main() -> int:
                     continue
                 if policy == "Pi_05" and task in reserved_tasks:
                     continue
-                pending.append(key)
+                pending.append((policy, task, "native"))
             per_policy_remaining[policy] = remaining
 
         if args.kill_pid and not killed_sweep:
@@ -418,9 +470,9 @@ def main() -> int:
                 continue
             if idle_streak[gpu] < args.free_polls:
                 continue
-            policy, task = pending.pop(0)
+            policy, task, eval_num = pending.pop(0)
             attempts[(policy, task)] = attempts.get((policy, task), 0) + 1
-            job = launch(policy, task, gpu, args, log_dir)
+            job = launch(policy, task, gpu, args, log_dir, eval_num=eval_num)
             if job is not None:
                 jobs.append(job)
                 idle_streak[gpu] = 0
