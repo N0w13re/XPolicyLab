@@ -53,6 +53,7 @@ from PIL import Image
 from scipy.spatial.transform import Rotation
 
 from XPolicyLab.model_template import ModelTemplate
+from XPolicyLab.utils.checkpoint_resolver import resolve_checkpoint_root
 
 _SUPPORTED_BENCH_NAMES = ("RoboDojo", "RoboDojo_real")
 
@@ -254,7 +255,7 @@ class Model(ModelTemplate):
 
     @staticmethod
     def _resolve_model_dir(model_cfg: dict[str, Any]) -> str:
-        """Resolve the checkpoint dir: explicit model_dir > checkpoints/<ckpt_name>.
+        """Resolve the checkpoint dir through the shared resolver.
 
         ``mibot.server.deploy.load_model`` expects the directory to hold
         ``config.py`` and ``last.ckpt/checkpoint/mp_rank_00_model_states.pt``.
@@ -262,19 +263,13 @@ class Model(ModelTemplate):
         bounded search for ``config.py`` is done before giving up.
         """
         policy_dir = os.path.dirname(os.path.abspath(__file__))
-        model_dir = model_cfg.get("model_dir")
-        ckpt_name = model_cfg.get("ckpt_name")
-
-        if not model_dir:
-            if not ckpt_name:
-                raise ValueError(
-                    "[Xiaomi_Robotics_1] neither model_dir nor ckpt_name is set "
-                    "in deploy.yml"
-                )
-            model_dir = os.path.join(policy_dir, "checkpoints", ckpt_name)
-
-        if not os.path.isabs(model_dir):
-            model_dir = os.path.join(policy_dir, model_dir)
+        model_dir = str(
+            resolve_checkpoint_root(
+                model_cfg,
+                os.path.join(policy_dir, "checkpoints"),
+                policy_dir=policy_dir,
+            )
+        )
         if not os.path.isdir(model_dir):
             raise ValueError(
                 f"[Xiaomi_Robotics_1] checkpoint dir does not exist: {model_dir}"
