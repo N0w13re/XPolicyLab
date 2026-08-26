@@ -2,10 +2,10 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 1400,
-      "in_progress_episodes": 1575,
-      "in_progress_success_rate": 10.984126984126984,
-      "in_progress_successes": 173,
+      "episodes": 1450,
+      "in_progress_episodes": 1620,
+      "in_progress_success_rate": 11.11111111111111,
+      "in_progress_successes": 180,
       "incomplete_tasks": [
         "align_blocks",
         "deposit_coin",
@@ -15,7 +15,6 @@
         "insert_key",
         "pour_liquid_into_cup",
         "push_T",
-        "solve_equation",
         "stack_blocks",
         "stack_blocks_by_language",
         "stack_bowls",
@@ -79,10 +78,10 @@
           "successes": 2
         },
         "general_pickup": {
-          "episodes": 5,
-          "score": 40.0,
-          "success_rate": 40.0,
-          "successes": 2
+          "episodes": 15,
+          "score": 26.666666666666668,
+          "success_rate": 26.666666666666668,
+          "successes": 4
         },
         "hang_mugs_random": {
           "episodes": 25,
@@ -205,7 +204,7 @@
           "successes": 38
         },
         "solve_equation": {
-          "episodes": 40,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -223,28 +222,28 @@
           "successes": 0
         },
         "stack_blocks_by_language": {
-          "episodes": 5,
-          "score": 4.0,
+          "episodes": 10,
+          "score": 2.0,
           "success_rate": 0.0,
           "successes": 0
         },
         "stack_blocks_random": {
-          "episodes": 10,
+          "episodes": 15,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
         "stack_bowls": {
-          "episodes": 10,
-          "score": 61.5,
-          "success_rate": 60.0,
-          "successes": 6
+          "episodes": 15,
+          "score": 68.66666666666667,
+          "success_rate": 66.66666666666666,
+          "successes": 10
         },
         "stack_bowls_random": {
-          "episodes": 20,
-          "score": 13.25,
-          "success_rate": 5.0,
-          "successes": 1
+          "episodes": 25,
+          "score": 15.8,
+          "success_rate": 8.0,
+          "successes": 2
         },
         "store_laptop_and_headphones": {
           "episodes": 25,
@@ -277,15 +276,15 @@
           "successes": 0
         },
         "sweep_blocks_random": {
-          "episodes": 10,
+          "episodes": 15,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 28,
-      "score": 17.55357142857143,
-      "success_rate": 11.357142857142858,
+      "reported_tasks_complete": 29,
+      "score": 16.948275862068964,
+      "success_rate": 10.965517241379311,
       "table_complete": false
     }
   },

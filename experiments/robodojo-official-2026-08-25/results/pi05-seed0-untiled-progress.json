@@ -1,18 +1,18 @@
 {
-  "as_of": "2026-08-27T04:34+08",
+  "as_of": "2026-08-27T04:42+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 28,
+  "official_cells_complete": 29,
   "official_cells_total": 42,
-  "partial_table_sr_percent": 11.36,
-  "in_progress_sr_percent": 10.98,
-  "in_progress_episodes": "173/1575",
-  "throughput_ep_per_h": 164.1,
-  "elapsed_h": 9.6,
-  "pi05_remain_ep_est": 525,
-  "pi05_remain_h_est": 3.2,
+  "partial_table_sr_percent": 10.97,
+  "in_progress_sr_percent": 11.11,
+  "in_progress_episodes": "180/1620",
+  "throughput_ep_per_h": 166.7,
+  "elapsed_h": 9.73,
+  "pi05_remain_ep_est": 480,
+  "pi05_remain_h_est": 2.9,
   "completed_cells": {
     "build_tower": "29/50",
     "classify_objects": "9/50",
@@ -41,24 +41,24 @@
     "insert_tubes": "3/50",
     "store_laptop_and_headphones": "3/50",
     "plug_in_charger": "1/50",
-    "play_Xylophone": "1/50"
+    "play_Xylophone": "1/50",
+    "solve_equation": "0/50"
   },
-  "wrist_play_Xylophone_ep49_YMAX": {"head": 254, "left_wrist": 255, "right_wrist": 255},
-  "wrist_stack_bowls_ep9_YMAX": {"head": 252, "left_wrist": 248, "right_wrist": 255},
+  "wrist_solve_equation_ep49_YMAX": {"head": 253, "left_wrist": 255, "right_wrist": 249},
   "running": {
     "gpu0": "sweep_blocks_random",
     "gpu1": "stack_blocks_random",
     "gpu2": "stack_blocks_by_language",
     "gpu3": "general_pickup",
-    "gpu4": "stack_bowls_random",
+    "gpu4": "pour_liquid_into_cup_random",
     "gpu5": "stack_bowls",
     "gpu6": "fold_clothes_random",
-    "gpu7": "solve_equation"
+    "gpu7": "fold_clothes"
   },
   "next_cells_likely": {
-    "solve_equation": "0/40 of 50",
-    "sweep_blocks": "0/25 plus random 0/10",
-    "stack_bowls": "6/10 plus random 1/20"
+    "sweep_blocks": "0/25 plus random 0/15",
+    "stack_bowls": "10/15 plus random 25/25",
+    "pour_liquid_into_cup": "5/25 plus random starting"
   },
   "incomplete_official_cells": [
     "align_blocks",
@@ -69,7 +69,6 @@
     "insert_key",
     "pour_liquid_into_cup",
     "push_T",
-    "solve_equation",
     "stack_blocks",
     "stack_blocks_by_language",
     "stack_bowls",
@@ -77,5 +76,5 @@
     "sweep_blocks"
   ],
   "pids": {"sweep": 3281259, "elastic": 3950295},
-  "note": "Partial 11.36% is mean of 28 completed cells; do not delta vs official 6.91 until 42/42. G05/Xiaomi not started. Xiaomi remaining=1 is the stack_bowls smoke gate."
+  "note": "Partial 10.97% is mean of 29 completed cells; do not delta vs official 6.91 until 42/42. G05/Xiaomi not started."
 }
