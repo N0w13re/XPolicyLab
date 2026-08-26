@@ -1,0 +1,11 @@
+{
+  "as_of": "2026-08-26T19:35+08",
+  "checkpoint_root": "/mnt/bn/robotics-data-mx/wenbo/XPolicyLab/policy/Xiaomi_Robotics_1/checkpoints/RoboDojo-sim-arx_x5-ee-0",
+  "config_py": true,
+  "last_ckpt": true,
+  "flash_attn": null,
+  "attn_implementation": "sdpa",
+  "sdpa_fallback_in_xr1_py": true,
+  "resolve_checkpoint_root": "ok",
+  "closed_loop_smoke": "pending (8 GPUs busy with Pi_05; run stack_bowls eval-num 2 before Xiaomi handoff)"
+}

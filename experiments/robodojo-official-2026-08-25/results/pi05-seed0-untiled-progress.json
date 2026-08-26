@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T19:31+08",
+  "as_of": "2026-08-26T19:35+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -8,26 +8,60 @@
   "official_cells_complete": 0,
   "official_cells_total": 42,
   "official_sr": null,
-  "official_published": {"Pi_05": 6.91, "G05": 14.88, "Xiaomi_Robotics_1": 13.93},
+  "official_published": {
+    "Pi_05": 6.91,
+    "G05": 14.88,
+    "Xiaomi_Robotics_1": 13.93
+  },
   "partial_results": {
     "build_tower": "6/10",
-    "classify_objects": "1/5",
-    "classify_objects_by_language": "0/5",
+    "classify_objects": "1/10",
+    "classify_objects_by_language": "0/10",
     "fasten_screws": "0/5",
-    "play_stacking_toy": "0/5"
+    "play_stacking_toy": "0/10",
+    "play_tic_tac_toe": "0/4",
+    "pour_by_language": "0/5"
   },
-  "partial_episodes": "7/30",
-  "partial_sr_percent": 23.33,
+  "partial_episodes": "7/54",
+  "partial_sr_percent": 12.96,
   "running": {
-    "gpu0": {"task": "imitate_sorting_sequence", "step": "1001/1600"},
-    "gpu1": {"task": "play_tic_tac_toe", "step": "871/1100"},
-    "gpu2": {"task": "pour_by_language", "step": "735/800"},
-    "gpu3": {"task": "fasten_screws", "step": "267/1900", "note": "second batch after 0/5"},
-    "gpu4": {"task": "play_stacking_toy", "step": "726/1200", "note": "second batch after 0/5"},
-    "gpu5": {"task": "classify_objects_by_language", "step": "812/1100", "note": "second batch after 0/5"},
-    "gpu6": {"task": "classify_objects", "step": "699/1100", "note": "second batch after 1/5"},
-    "gpu7": {"task": "build_tower", "step": "43/1050", "note": "third batch after 6/10"}
+    "gpu0": {
+      "task": "imitate_sorting_sequence",
+      "step": "1375/1600 (env2)"
+    },
+    "gpu1": {
+      "task": "play_tic_tac_toe",
+      "step": "(reset/between)"
+    },
+    "gpu2": {
+      "task": "pour_by_language",
+      "step": "75/800 (env0)"
+    },
+    "gpu3": {
+      "task": "fasten_screws",
+      "step": "870/1900 (env0)"
+    },
+    "gpu4": {
+      "task": "play_stacking_toy",
+      "step": "19/1200 (env0)"
+    },
+    "gpu5": {
+      "task": "classify_objects_by_language",
+      "step": "154/1100 (env0)"
+    },
+    "gpu6": {
+      "task": "classify_objects",
+      "step": "(reset/between)"
+    },
+    "gpu7": {
+      "task": "build_tower",
+      "step": "600/1050 (env0)"
+    }
   },
-  "wrist_check": "live-1930.json: all sampled wrists max=255, head/wrist spread typically 37-59 (classify_objects left wrist 19.9 is low-chroma table, not blackout)",
-  "note": "Official 42-cell SR is still empty. Do not use 1.10/1.57 or 1.07. Sweep pid 3281259, elastic pid 3282394."
+  "timeout_note": "Startup TimeoutError seen on several tasks; all recovered and continued stepping. request_timeout_s default 120s.",
+  "wrist_check": "live-1930.json still authoritative; no blackout regression observed",
+  "pids": {
+    "sweep": 3281259,
+    "elastic": 3282394
+  }
 }
