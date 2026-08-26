@@ -2,10 +2,10 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 1250,
-      "in_progress_episodes": 1455,
-      "in_progress_success_rate": 11.202749140893472,
-      "in_progress_successes": 163,
+      "episodes": 1350,
+      "in_progress_episodes": 1550,
+      "in_progress_success_rate": 11.032258064516128,
+      "in_progress_successes": 171,
       "incomplete_tasks": [
         "align_blocks",
         "deposit_coin",
@@ -14,14 +14,12 @@
         "hang_mugs",
         "insert_key",
         "play_Xylophone",
-        "plug_in_charger",
         "pour_liquid_into_cup",
         "push_T",
         "solve_equation",
         "stack_blocks",
         "stack_blocks_by_language",
         "stack_bowls",
-        "store_laptop_and_headphones",
         "swap_T",
         "sweep_blocks"
       ],
@@ -148,9 +146,9 @@
           "successes": 0
         },
         "play_Xylophone": {
-          "episodes": 30,
-          "score": 3.3333333333333335,
-          "success_rate": 3.3333333333333335,
+          "episodes": 45,
+          "score": 2.2222222222222223,
+          "success_rate": 2.2222222222222223,
           "successes": 1
         },
         "play_stacking_toy": {
@@ -166,10 +164,10 @@
           "successes": 1
         },
         "plug_in_charger": {
-          "episodes": 30,
-          "score": 0.0,
-          "success_rate": 0.0,
-          "successes": 0
+          "episodes": 50,
+          "score": 2.0,
+          "success_rate": 2.0,
+          "successes": 1
         },
         "pour_balls_into_vase": {
           "episodes": 50,
@@ -202,7 +200,7 @@
           "successes": 38
         },
         "solve_equation": {
-          "episodes": 15,
+          "episodes": 35,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -219,16 +217,28 @@
           "success_rate": 0.0,
           "successes": 0
         },
-        "stack_bowls_random": {
-          "episodes": 10,
-          "score": 6.0,
+        "stack_blocks_random": {
+          "episodes": 5,
+          "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
+        "stack_bowls": {
+          "episodes": 10,
+          "score": 61.5,
+          "success_rate": 60.0,
+          "successes": 6
+        },
+        "stack_bowls_random": {
+          "episodes": 20,
+          "score": 13.25,
+          "success_rate": 5.0,
+          "successes": 1
+        },
         "store_laptop_and_headphones": {
-          "episodes": 15,
-          "score": 24.000000000000004,
-          "success_rate": 13.333333333333334,
+          "episodes": 25,
+          "score": 20.8,
+          "success_rate": 8.0,
           "successes": 2
         },
         "store_laptop_and_headphones_random": {
@@ -256,15 +266,15 @@
           "successes": 0
         },
         "sweep_blocks_random": {
-          "episodes": 5,
+          "episodes": 10,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 25,
-      "score": 18.764,
-      "success_rate": 12.32,
+      "reported_tasks_complete": 27,
+      "score": 18.12962962962963,
+      "success_rate": 11.703703703703704,
       "table_complete": false
     }
   },

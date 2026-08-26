@@ -1,18 +1,18 @@
 {
-  "as_of": "2026-08-27T04:09+08",
+  "as_of": "2026-08-27T04:29+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 25,
+  "official_cells_complete": 27,
   "official_cells_total": 42,
-  "partial_table_sr_percent": 12.32,
-  "in_progress_sr_percent": 11.20,
-  "in_progress_episodes": "163/1455",
-  "throughput_ep_per_h": 158.5,
-  "elapsed_h": 9.18,
-  "pi05_remain_ep_est": 645,
-  "pi05_remain_h_est": 4.1,
+  "partial_table_sr_percent": 11.70,
+  "in_progress_sr_percent": 11.03,
+  "in_progress_episodes": "171/1550",
+  "throughput_ep_per_h": 161.6,
+  "elapsed_h": 9.53,
+  "pi05_remain_ep_est": 550,
+  "pi05_remain_h_est": 3.5,
   "completed_cells": {
     "build_tower": "29/50",
     "classify_objects": "9/50",
@@ -38,24 +38,27 @@
     "put_bottles_into_dustbin": "38/50",
     "pack_objects_into_box": "1/50",
     "arrange_largest_number": "1/50",
-    "insert_tubes": "3/50"
+    "insert_tubes": "3/50",
+    "store_laptop_and_headphones": "3/50",
+    "plug_in_charger": "1/50"
   },
-  "wrist_insert_tubes_ep49_YMAX": {"head": 248, "left_wrist": 233, "right_wrist": 241},
+  "wrist_store_laptop_ep24_YMAX": {"head": 255, "left_wrist": 173, "right_wrist": 255},
+  "wrist_plug_in_charger_ep49_YMAX": {"head": 253, "left_wrist": 254, "right_wrist": 252},
   "running": {
     "gpu0": "sweep_blocks_random",
     "gpu1": "stack_blocks_random",
-    "gpu2": "plug_in_charger",
-    "gpu3": "store_laptop_and_headphones",
+    "gpu2": "stack_blocks_by_language",
+    "gpu3": "general_pickup",
     "gpu4": "stack_bowls_random",
     "gpu5": "stack_bowls",
     "gpu6": "play_Xylophone",
     "gpu7": "solve_equation"
   },
   "next_cells_likely": {
-    "store_laptop_and_headphones": "2/15 plus random 1/25 already full",
-    "stack_bowls": "both halves running",
-    "plug_in_charger": "0/30 of 50"
+    "play_Xylophone": "1/45 of 50",
+    "stack_bowls": "6/10 plus random 1/20",
+    "solve_equation": "0/35 of 50"
   },
   "pids": {"sweep": 3281259, "elastic": 3950295},
-  "note": "Partial 12.32% is mean of 25 completed cells; do not delta vs official 6.91 until 42/42. G05/Xiaomi not started."
+  "note": "Partial 11.70% is mean of 27 completed cells; do not delta vs official 6.91 until 42/42. G05/Xiaomi not started."
 }
