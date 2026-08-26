@@ -2,9 +2,9 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 100,
-      "in_progress_episodes": 287,
-      "in_progress_success_rate": 13.588850174216027,
+      "episodes": 150,
+      "in_progress_episodes": 292,
+      "in_progress_success_rate": 13.356164383561644,
       "in_progress_successes": 39,
       "incomplete_tasks": [
         "align_blocks",
@@ -28,7 +28,6 @@
         "pack_objects_into_box",
         "pick_from_conveyor_by_image",
         "play_Xylophone",
-        "play_stacking_toy",
         "play_tic_tac_toe",
         "plug_in_charger",
         "pour_balls_into_vase",
@@ -87,7 +86,7 @@
           "successes": 0
         },
         "play_stacking_toy": {
-          "episodes": 45,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -105,9 +104,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 2,
-      "score": 34.4,
-      "success_rate": 28.999999999999996,
+      "reported_tasks_complete": 3,
+      "score": 22.933333333333334,
+      "success_rate": 19.333333333333332,
       "table_complete": false
     }
   },
