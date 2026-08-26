@@ -152,6 +152,8 @@ def main() -> int:
                 "success_rate": suc / len(entries) * 100 if entries else None,
                 "score": sum(sc for _, sc in entries) / len(entries) * 100 if entries else None,
             }
+        raw_eps = sum(len(v) for v in per_policy[policy].values())
+        raw_succ = sum(1 for v in per_policy[policy].values() for s, _ in v if s)
         report[policy] = {
             "reported_tasks_complete": len(complete),
             "episodes": n_ep,
@@ -160,6 +162,11 @@ def main() -> int:
             "official_success_rate": official,
             "delta": delta,
             "incomplete_tasks": sorted(incomplete),
+            "in_progress_episodes": raw_eps,
+            "in_progress_successes": raw_succ,
+            "in_progress_success_rate": (
+                raw_succ / raw_eps * 100 if raw_eps else None
+            ),
             "per_task": per_task,
         }
 
@@ -178,6 +185,24 @@ def main() -> int:
         )
     print("\nA reported task counts only when its full 50-episode budget is present;")
     print("`tasks` below 42 means the sweep is still incomplete and SR is a partial average.")
+
+    for policy in sorted(per_policy):
+        info = report[policy]
+        raw_eps = info.get("in_progress_episodes") or 0
+        if info["reported_tasks_complete"] >= 42 or raw_eps == 0:
+            continue
+        raw_succ = info.get("in_progress_successes") or 0
+        raw_sr = info.get("in_progress_success_rate")
+        print(
+            f"\nin-progress {policy} (not official): "
+            f"{raw_succ}/{raw_eps} eps"
+            + (f" ({raw_sr:.2f}%)" if raw_sr is not None else "")
+        )
+        for name, stats in sorted(info["per_task"].items()):
+            print(
+                f"  {name:40s} {stats['successes']:3d}/{stats['episodes']:<4d}  "
+                f"sr={stats['success_rate']:.1f}%"
+            )
 
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)

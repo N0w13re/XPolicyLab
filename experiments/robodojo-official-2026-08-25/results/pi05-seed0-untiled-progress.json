@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T19:35+08",
+  "as_of": "2026-08-26T19:38+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -23,7 +23,7 @@
     "pour_by_language": "0/5"
   },
   "partial_episodes": "7/54",
-  "partial_sr_percent": 12.96,
+  "partial_sr_percent": 12.962962962962962,
   "running": {
     "gpu0": {
       "task": "imitate_sorting_sequence",
