@@ -18,10 +18,11 @@
   },
   "elastic": {
     "sweep_pid": 3281259,
-    "elastic_pid": 3282394,
+    "elastic_pid": 3950295,
     "kill_pid_policy": "Pi_05",
-    "reserved_tasks": 53,
+    "reserved_tasks": 50,
     "active_gpus": ["0", "1", "2", "3", "4", "5", "6", "7"],
-    "note": "Pi_05 leftovers stay reserved per shard. First stealable GPU after a shard drains goes to G05, not Xiaomi."
+    "xiaomi_remaining_until_smoke": 1,
+    "note": "Pi_05 leftovers stay reserved per shard. First stealable GPU after a shard drains goes to G05. Xiaomi native cells wait until stack_bowls has 2 closed-loop episodes."
   }
 }

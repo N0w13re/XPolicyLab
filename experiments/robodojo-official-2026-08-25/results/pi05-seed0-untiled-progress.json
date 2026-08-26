@@ -33,5 +33,5 @@
     "play_tic_tac_toe": "1/24"
   },
   "eta_max_shard_h": 9.61,
-  "pids": {"sweep": 3281259, "elastic": 3282394}
+  "pids": {"sweep": 3281259, "elastic": 3950295}
 }

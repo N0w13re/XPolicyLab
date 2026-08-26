@@ -10,7 +10,7 @@ recorded single forward passes and never entered the simulator.
 | --- | --- | --- | --- | --- |
 | Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **4/42**: `build_tower` 29/50, `classify_objects` 9/50, `classify_objects_by_language` 0/50, `play_stacking_toy` 0/50. Partial mean 19% not comparable to 6.91. In-progress 41/337 eps (12.17%). Next cells likely `fasten_screws` 2/35, `pour_by_language` 0/30, `play_tic_tac_toe` 1/24. GPU4 `organize_table` 0/5 with colorful wrists; GPU6 `make_toast_random` stepping. | not started |
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05; adapter and venv issues already fixed | not started |
-| Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); closed-loop smoke still pending until a GPU frees | not started |
+| Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); elastic now gates native cells behind `stack_bowls --eval-num 2` closed-loop | not started |
 
 The seed-0 table is **4/42** as of 21:58 CST Aug 26. Do not compare that four-cell mean (19%) to the published 6.91%. Eight Isaac clients with untiled cameras; wrist videos still colorful (`organize_table` YMAX head/left/right 255/248/255). GPU1 `play_tic_tac_toe` can sit at 0% util between 5-env flushes because the horizon is 1400 steps. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
 quarantined because their wrist-camera observations were blank; see below. The first
