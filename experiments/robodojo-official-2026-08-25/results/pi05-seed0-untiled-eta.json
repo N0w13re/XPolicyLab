@@ -1,22 +1,22 @@
 {
-  "as_of": "2026-08-26T19:53:19+08:00",
+  "as_of": "2026-08-26T20:19:54+08:00",
   "policy": "Pi_05",
   "seed": 0,
   "live_num_envs": 5,
   "weight_num_envs": 10,
   "scale": 2.0,
-  "max_shard_remaining_h": 11.33,
+  "max_shard_remaining_h": 10.81,
   "shards": [
     {
       "gpu": "0",
-      "remaining_h": 11.26,
+      "remaining_h": 10.67,
       "tasks": [
         {
           "task": "imitate_sorting_sequence",
-          "have": 4,
+          "have": 9,
           "want": 50,
           "weight_s": 10596,
-          "remaining_s": 19496.6
+          "remaining_s": 17377.4
         },
         {
           "task": "fill_egg_holder",
@@ -57,14 +57,14 @@
     },
     {
       "gpu": "1",
-      "remaining_h": 11.33,
+      "remaining_h": 10.81,
       "tasks": [
         {
           "task": "play_tic_tac_toe",
-          "have": 4,
+          "have": 9,
           "want": 50,
           "weight_s": 9323,
-          "remaining_s": 17154.3
+          "remaining_s": 15289.7
         },
         {
           "task": "make_kong",
@@ -105,14 +105,14 @@
     },
     {
       "gpu": "2",
-      "remaining_h": 11.22,
+      "remaining_h": 10.7,
       "tasks": [
         {
           "task": "pour_by_language",
-          "have": 5,
+          "have": 10,
           "want": 50,
           "weight_s": 9448,
-          "remaining_s": 17006.4
+          "remaining_s": 15116.8
         },
         {
           "task": "arrange_largest_number_random",
@@ -153,14 +153,14 @@
     },
     {
       "gpu": "3",
-      "remaining_h": 10.86,
+      "remaining_h": 10.42,
       "tasks": [
         {
           "task": "fasten_screws",
-          "have": 10,
+          "have": 15,
           "want": 50,
           "weight_s": 7876,
-          "remaining_s": 12601.6
+          "remaining_s": 11026.4
         },
         {
           "task": "sort_nesting_dolls_by_size_random",
@@ -208,14 +208,14 @@
     },
     {
       "gpu": "4",
-      "remaining_h": 10.83,
+      "remaining_h": 10.23,
       "tasks": [
         {
           "task": "play_stacking_toy",
-          "have": 15,
+          "have": 25,
           "want": 50,
           "weight_s": 5416,
-          "remaining_s": 7582.4
+          "remaining_s": 5416.0
         },
         {
           "task": "organize_table",
@@ -263,14 +263,14 @@
     },
     {
       "gpu": "5",
-      "remaining_h": 10.91,
+      "remaining_h": 10.36,
       "tasks": [
         {
           "task": "classify_objects_by_language",
-          "have": 15,
+          "have": 25,
           "want": 50,
           "weight_s": 4955,
-          "remaining_s": 6937.0
+          "remaining_s": 4955.0
         },
         {
           "task": "store_tools_in_toolbox",
@@ -318,14 +318,14 @@
     },
     {
       "gpu": "6",
-      "remaining_h": 10.93,
+      "remaining_h": 10.66,
       "tasks": [
         {
           "task": "classify_objects",
-          "have": 15,
+          "have": 20,
           "want": 50,
           "weight_s": 4881,
-          "remaining_s": 6833.4
+          "remaining_s": 5857.2
         },
         {
           "task": "make_toast_random",
@@ -380,14 +380,14 @@
     },
     {
       "gpu": "7",
-      "remaining_h": 10.69,
+      "remaining_h": 10.16,
       "tasks": [
         {
           "task": "build_tower",
-          "have": 20,
+          "have": 30,
           "want": 50,
           "weight_s": 4750,
-          "remaining_s": 5700.0
+          "remaining_s": 3800.0
         },
         {
           "task": "fill_pen_holder",

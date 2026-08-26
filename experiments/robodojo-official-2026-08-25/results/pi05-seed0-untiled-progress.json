@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T20:18+08",
+  "as_of": "2026-08-26T20:19+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -65,8 +65,8 @@
     "sweep": 3281259,
     "elastic": 3282394
   },
-  "eta_max_shard_remaining_h": 11.33,
-  "eta_three_policies_h": 34.0,
+  "eta_max_shard_remaining_h": 10.81,
+  "eta_three_policies_h": 32.4,
   "eta_note": "smoke_all_tasks weights at num_envs=10, scaled x2 for num_envs=5; untiled overhead not included",
   "official_pi05_paper_table1": {
     "source": "arxiv 2607.04434v3 Table 1, frozen 2026-07-03",
