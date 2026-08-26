@@ -2,14 +2,13 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 150,
-      "in_progress_episodes": 292,
-      "in_progress_success_rate": 13.356164383561644,
-      "in_progress_successes": 39,
+      "episodes": 200,
+      "in_progress_episodes": 312,
+      "in_progress_success_rate": 13.141025641025642,
+      "in_progress_successes": 41,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
-        "classify_objects",
         "cover_blocks",
         "deposit_coin",
         "fasten_screws",
@@ -56,10 +55,10 @@
           "successes": 29
         },
         "classify_objects": {
-          "episodes": 45,
-          "score": 28.888888888888886,
-          "success_rate": 15.555555555555555,
-          "successes": 7
+          "episodes": 50,
+          "score": 30.599999999999998,
+          "success_rate": 18.0,
+          "successes": 9
         },
         "classify_objects_by_language": {
           "episodes": 50,
@@ -68,14 +67,14 @@
           "successes": 0
         },
         "fasten_screws": {
-          "episodes": 30,
-          "score": 16.0,
-          "success_rate": 6.666666666666667,
+          "episodes": 35,
+          "score": 15.42857142857143,
+          "success_rate": 5.714285714285714,
           "successes": 2
         },
         "fill_pen_holder": {
-          "episodes": 5,
-          "score": 17.0,
+          "episodes": 10,
+          "score": 13.5,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -98,15 +97,15 @@
           "successes": 1
         },
         "pour_by_language": {
-          "episodes": 25,
+          "episodes": 30,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 3,
-      "score": 22.933333333333334,
-      "success_rate": 19.333333333333332,
+      "reported_tasks_complete": 4,
+      "score": 24.85,
+      "success_rate": 19.0,
       "table_complete": false
     }
   },
