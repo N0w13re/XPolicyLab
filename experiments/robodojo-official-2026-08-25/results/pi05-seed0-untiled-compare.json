@@ -2,10 +2,10 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 1200,
-      "in_progress_episodes": 1445,
-      "in_progress_success_rate": 11.211072664359861,
-      "in_progress_successes": 162,
+      "episodes": 1250,
+      "in_progress_episodes": 1455,
+      "in_progress_success_rate": 11.202749140893472,
+      "in_progress_successes": 163,
       "incomplete_tasks": [
         "align_blocks",
         "deposit_coin",
@@ -13,7 +13,6 @@
         "general_pickup",
         "hang_mugs",
         "insert_key",
-        "insert_tubes",
         "play_Xylophone",
         "plug_in_charger",
         "pour_liquid_into_cup",
@@ -95,10 +94,10 @@
           "successes": 0
         },
         "insert_tubes": {
-          "episodes": 45,
-          "score": 25.333333333333336,
-          "success_rate": 4.444444444444445,
-          "successes": 2
+          "episodes": 50,
+          "score": 26.0,
+          "success_rate": 6.0,
+          "successes": 3
         },
         "make_kong": {
           "episodes": 50,
@@ -149,9 +148,9 @@
           "successes": 0
         },
         "play_Xylophone": {
-          "episodes": 25,
-          "score": 4.0,
-          "success_rate": 4.0,
+          "episodes": 30,
+          "score": 3.3333333333333335,
+          "success_rate": 3.3333333333333335,
           "successes": 1
         },
         "play_stacking_toy": {
@@ -263,9 +262,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 24,
-      "score": 18.462500000000002,
-      "success_rate": 12.583333333333332,
+      "reported_tasks_complete": 25,
+      "score": 18.764,
+      "success_rate": 12.32,
       "table_complete": false
     }
   },

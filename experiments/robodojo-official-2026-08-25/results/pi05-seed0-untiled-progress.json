@@ -1,18 +1,18 @@
 {
-  "as_of": "2026-08-27T04:05+08",
+  "as_of": "2026-08-27T04:09+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 24,
+  "official_cells_complete": 25,
   "official_cells_total": 42,
-  "partial_table_sr_percent": 12.58,
-  "in_progress_sr_percent": 11.21,
-  "in_progress_episodes": "162/1445",
-  "throughput_ep_per_h": 157.8,
-  "elapsed_h": 9.12,
-  "pi05_remain_ep_est": 655,
-  "pi05_remain_h_est": 4.2,
+  "partial_table_sr_percent": 12.32,
+  "in_progress_sr_percent": 11.20,
+  "in_progress_episodes": "163/1455",
+  "throughput_ep_per_h": 158.5,
+  "elapsed_h": 9.18,
+  "pi05_remain_ep_est": 645,
+  "pi05_remain_h_est": 4.1,
   "completed_cells": {
     "build_tower": "29/50",
     "classify_objects": "9/50",
@@ -37,12 +37,13 @@
     "fill_egg_holder": "0/50",
     "put_bottles_into_dustbin": "38/50",
     "pack_objects_into_box": "1/50",
-    "arrange_largest_number": "1/50"
+    "arrange_largest_number": "1/50",
+    "insert_tubes": "3/50"
   },
-  "wrist_arrange_largest_number_ep24_YMAX": {"head": 252, "left_wrist": 226, "right_wrist": 236},
+  "wrist_insert_tubes_ep49_YMAX": {"head": 248, "left_wrist": 233, "right_wrist": 241},
   "running": {
     "gpu0": "sweep_blocks_random",
-    "gpu1": "insert_tubes",
+    "gpu1": "stack_blocks_random",
     "gpu2": "plug_in_charger",
     "gpu3": "store_laptop_and_headphones",
     "gpu4": "stack_bowls_random",
@@ -51,10 +52,10 @@
     "gpu7": "solve_equation"
   },
   "next_cells_likely": {
-    "insert_tubes": "2/45 of 50",
-    "sweep_blocks": "0/25 + random 0/5",
-    "stack_bowls": "both halves running"
+    "store_laptop_and_headphones": "2/15 plus random 1/25 already full",
+    "stack_bowls": "both halves running",
+    "plug_in_charger": "0/30 of 50"
   },
   "pids": {"sweep": 3281259, "elastic": 3950295},
-  "note": "Partial 12.58% is mean of 24 completed cells; do not delta vs official 6.91 until 42/42. G05/Xiaomi not started."
+  "note": "Partial 12.32% is mean of 25 completed cells; do not delta vs official 6.91 until 42/42. G05/Xiaomi not started."
 }
