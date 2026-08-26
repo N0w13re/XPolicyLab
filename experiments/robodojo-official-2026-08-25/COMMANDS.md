@@ -76,3 +76,12 @@ python3 /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/compare_robodojo_to_of
   --eval-root "$ROBODOJO_ROOT" --seed 0 \
   --json-out /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/experiments/robodojo-official-2026-08-25/results/compare-seed0.json
 ```
+
+Remaining-time estimate from shard weights (not a protocol score; scale 2x for `num_envs=5`):
+
+```bash
+ROBODOJO_NUM_ENVS=5 python3 /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/robodojo_eval_eta.py \
+  --robodojo-root "$ROBODOJO_ROOT" \
+  --sweep-log /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/experiments/robodojo-official-2026-08-25/logs/Pi_05-seed0-untiled.log \
+  --json-out /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/experiments/robodojo-official-2026-08-25/results/pi05-seed0-untiled-eta.json
+```
