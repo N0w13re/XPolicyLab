@@ -1,0 +1,438 @@
+{
+  "as_of": "2026-08-26T19:49:41+08:00",
+  "policy": "Pi_05",
+  "seed": 0,
+  "live_num_envs": 5,
+  "weight_num_envs": 10,
+  "scale": 2.0,
+  "max_shard_remaining_h": 11.33,
+  "shards": [
+    {
+      "gpu": "0",
+      "remaining_h": 11.26,
+      "tasks": [
+        {
+          "task": "imitate_sorting_sequence",
+          "have": 4,
+          "want": 50,
+          "weight_s": 10596,
+          "remaining_s": 19496.6
+        },
+        {
+          "task": "fill_egg_holder",
+          "have": 0,
+          "want": 50,
+          "weight_s": 3063,
+          "remaining_s": 6126.0
+        },
+        {
+          "task": "sweep_blocks_random",
+          "have": 0,
+          "want": 25,
+          "weight_s": 2392,
+          "remaining_s": 4784.0
+        },
+        {
+          "task": "align_blocks",
+          "have": 0,
+          "want": 50,
+          "weight_s": 2013,
+          "remaining_s": 4026.0
+        },
+        {
+          "task": "swap_T",
+          "have": 0,
+          "want": 50,
+          "weight_s": 1746,
+          "remaining_s": 3492.0
+        },
+        {
+          "task": "push_T",
+          "have": 0,
+          "want": 25,
+          "weight_s": 1311,
+          "remaining_s": 2622.0
+        }
+      ]
+    },
+    {
+      "gpu": "1",
+      "remaining_h": 11.33,
+      "tasks": [
+        {
+          "task": "play_tic_tac_toe",
+          "have": 4,
+          "want": 50,
+          "weight_s": 9323,
+          "remaining_s": 17154.3
+        },
+        {
+          "task": "make_kong",
+          "have": 0,
+          "want": 50,
+          "weight_s": 3818,
+          "remaining_s": 7636.0
+        },
+        {
+          "task": "pour_liquid_into_cup",
+          "have": 0,
+          "want": 25,
+          "weight_s": 2543,
+          "remaining_s": 5086.0
+        },
+        {
+          "task": "insert_tubes",
+          "have": 0,
+          "want": 50,
+          "weight_s": 2296,
+          "remaining_s": 4592.0
+        },
+        {
+          "task": "stack_blocks_random",
+          "have": 0,
+          "want": 25,
+          "weight_s": 1768,
+          "remaining_s": 3536.0
+        },
+        {
+          "task": "insert_key",
+          "have": 0,
+          "want": 50,
+          "weight_s": 1396,
+          "remaining_s": 2792.0
+        }
+      ]
+    },
+    {
+      "gpu": "2",
+      "remaining_h": 11.22,
+      "tasks": [
+        {
+          "task": "pour_by_language",
+          "have": 5,
+          "want": 50,
+          "weight_s": 9448,
+          "remaining_s": 17006.4
+        },
+        {
+          "task": "arrange_largest_number_random",
+          "have": 0,
+          "want": 25,
+          "weight_s": 3101,
+          "remaining_s": 6202.0
+        },
+        {
+          "task": "match_and_pick_from_conveyor",
+          "have": 0,
+          "want": 50,
+          "weight_s": 2915,
+          "remaining_s": 5830.0
+        },
+        {
+          "task": "sweep_blocks",
+          "have": 0,
+          "want": 25,
+          "weight_s": 2170,
+          "remaining_s": 4340.0
+        },
+        {
+          "task": "plug_in_charger",
+          "have": 0,
+          "want": 50,
+          "weight_s": 1777,
+          "remaining_s": 3554.0
+        },
+        {
+          "task": "stack_blocks_by_language",
+          "have": 0,
+          "want": 50,
+          "weight_s": 1733,
+          "remaining_s": 3466.0
+        }
+      ]
+    },
+    {
+      "gpu": "3",
+      "remaining_h": 10.86,
+      "tasks": [
+        {
+          "task": "fasten_screws",
+          "have": 10,
+          "want": 50,
+          "weight_s": 7876,
+          "remaining_s": 12601.6
+        },
+        {
+          "task": "sort_nesting_dolls_by_size_random",
+          "have": 0,
+          "want": 25,
+          "weight_s": 3021,
+          "remaining_s": 6042.0
+        },
+        {
+          "task": "press_by_number",
+          "have": 0,
+          "want": 50,
+          "weight_s": 2955,
+          "remaining_s": 5910.0
+        },
+        {
+          "task": "sort_nesting_dolls_by_size",
+          "have": 0,
+          "want": 25,
+          "weight_s": 2377,
+          "remaining_s": 4754.0
+        },
+        {
+          "task": "store_laptop_and_headphones_random",
+          "have": 0,
+          "want": 25,
+          "weight_s": 1981,
+          "remaining_s": 3962.0
+        },
+        {
+          "task": "store_laptop_and_headphones",
+          "have": 0,
+          "want": 25,
+          "weight_s": 1715,
+          "remaining_s": 3430.0
+        },
+        {
+          "task": "general_pickup",
+          "have": 0,
+          "want": 50,
+          "weight_s": 1201,
+          "remaining_s": 2402.0
+        }
+      ]
+    },
+    {
+      "gpu": "4",
+      "remaining_h": 10.83,
+      "tasks": [
+        {
+          "task": "play_stacking_toy",
+          "have": 15,
+          "want": 50,
+          "weight_s": 5416,
+          "remaining_s": 7582.4
+        },
+        {
+          "task": "organize_table",
+          "have": 0,
+          "want": 50,
+          "weight_s": 4104,
+          "remaining_s": 8208.0
+        },
+        {
+          "task": "pick_from_conveyor_by_image",
+          "have": 0,
+          "want": 50,
+          "weight_s": 3150,
+          "remaining_s": 6300.0
+        },
+        {
+          "task": "pack_objects_into_box_random",
+          "have": 0,
+          "want": 25,
+          "weight_s": 2917,
+          "remaining_s": 5834.0
+        },
+        {
+          "task": "stack_bowls_random",
+          "have": 0,
+          "want": 25,
+          "weight_s": 2146,
+          "remaining_s": 4292.0
+        },
+        {
+          "task": "pour_liquid_into_cup_random",
+          "have": 0,
+          "want": 25,
+          "weight_s": 1798,
+          "remaining_s": 3596.0
+        },
+        {
+          "task": "push_T_random",
+          "have": 0,
+          "want": 25,
+          "weight_s": 1593,
+          "remaining_s": 3186.0
+        }
+      ]
+    },
+    {
+      "gpu": "5",
+      "remaining_h": 10.91,
+      "tasks": [
+        {
+          "task": "classify_objects_by_language",
+          "have": 15,
+          "want": 50,
+          "weight_s": 4955,
+          "remaining_s": 6937.0
+        },
+        {
+          "task": "store_tools_in_toolbox",
+          "have": 0,
+          "want": 50,
+          "weight_s": 3783,
+          "remaining_s": 7566.0
+        },
+        {
+          "task": "make_toast",
+          "have": 0,
+          "want": 25,
+          "weight_s": 3781,
+          "remaining_s": 7562.0
+        },
+        {
+          "task": "pack_objects_into_box",
+          "have": 0,
+          "want": 25,
+          "weight_s": 2725,
+          "remaining_s": 5450.0
+        },
+        {
+          "task": "arrange_largest_number",
+          "have": 0,
+          "want": 25,
+          "weight_s": 2346,
+          "remaining_s": 4692.0
+        },
+        {
+          "task": "stack_bowls",
+          "have": 0,
+          "want": 25,
+          "weight_s": 1806,
+          "remaining_s": 3612.0
+        },
+        {
+          "task": "hang_mugs",
+          "have": 0,
+          "want": 25,
+          "weight_s": 1734,
+          "remaining_s": 3468.0
+        }
+      ]
+    },
+    {
+      "gpu": "6",
+      "remaining_h": 11.2,
+      "tasks": [
+        {
+          "task": "classify_objects",
+          "have": 10,
+          "want": 50,
+          "weight_s": 4881,
+          "remaining_s": 7809.6
+        },
+        {
+          "task": "make_toast_random",
+          "have": 0,
+          "want": 25,
+          "weight_s": 3775,
+          "remaining_s": 7550.0
+        },
+        {
+          "task": "swap_blocks",
+          "have": 0,
+          "want": 50,
+          "weight_s": 2941,
+          "remaining_s": 5882.0
+        },
+        {
+          "task": "put_bottles_into_dustbin",
+          "have": 0,
+          "want": 50,
+          "weight_s": 2887,
+          "remaining_s": 5774.0
+        },
+        {
+          "task": "play_Xylophone",
+          "have": 0,
+          "want": 50,
+          "weight_s": 2174,
+          "remaining_s": 4348.0
+        },
+        {
+          "task": "fold_clothes_random",
+          "have": 0,
+          "want": 25,
+          "weight_s": 1858,
+          "remaining_s": 3716.0
+        },
+        {
+          "task": "deposit_coin",
+          "have": 0,
+          "want": 50,
+          "weight_s": 1373,
+          "remaining_s": 2746.0
+        },
+        {
+          "task": "stack_blocks",
+          "have": 0,
+          "want": 25,
+          "weight_s": 1252,
+          "remaining_s": 2504.0
+        }
+      ]
+    },
+    {
+      "gpu": "7",
+      "remaining_h": 10.95,
+      "tasks": [
+        {
+          "task": "build_tower",
+          "have": 15,
+          "want": 50,
+          "weight_s": 4750,
+          "remaining_s": 6650.0
+        },
+        {
+          "task": "fill_pen_holder",
+          "have": 0,
+          "want": 50,
+          "weight_s": 4698,
+          "remaining_s": 9396.0
+        },
+        {
+          "task": "cover_blocks",
+          "have": 0,
+          "want": 50,
+          "weight_s": 3837,
+          "remaining_s": 7674.0
+        },
+        {
+          "task": "pour_balls_into_vase",
+          "have": 0,
+          "want": 50,
+          "weight_s": 2509,
+          "remaining_s": 5018.0
+        },
+        {
+          "task": "hang_mugs_random",
+          "have": 0,
+          "want": 25,
+          "weight_s": 2047,
+          "remaining_s": 4094.0
+        },
+        {
+          "task": "solve_equation",
+          "have": 0,
+          "want": 50,
+          "weight_s": 1867,
+          "remaining_s": 3734.0
+        },
+        {
+          "task": "fold_clothes",
+          "have": 0,
+          "want": 25,
+          "weight_s": 1435,
+          "remaining_s": 2870.0
+        }
+      ]
+    }
+  ],
+  "note": "Weights are smoke_all_tasks embedded seconds at weight_num_envs; scaled linearly for live_num_envs. Untiled cameras add extra cost not in weights."
+}

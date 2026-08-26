@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T19:47+08",
+  "as_of": "2026-08-26T19:50+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -64,5 +64,8 @@
   "pids": {
     "sweep": 3281259,
     "elastic": 3282394
-  }
+  },
+  "eta_max_shard_remaining_h": 11.33,
+  "eta_three_policies_h": 34.0,
+  "eta_note": "smoke_all_tasks weights at num_envs=10, scaled x2 for num_envs=5; untiled overhead not included"
 }
