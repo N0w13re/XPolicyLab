@@ -3,8 +3,8 @@
     "Pi_05": {
       "delta": null,
       "episodes": 200,
-      "in_progress_episodes": 322,
-      "in_progress_success_rate": 12.732919254658384,
+      "in_progress_episodes": 337,
+      "in_progress_success_rate": 12.166172106824925,
       "in_progress_successes": 41,
       "incomplete_tasks": [
         "align_blocks",
@@ -73,14 +73,20 @@
           "successes": 2
         },
         "fill_pen_holder": {
-          "episodes": 10,
-          "score": 13.5,
+          "episodes": 15,
+          "score": 15.333333333333336,
           "success_rate": 0.0,
           "successes": 0
         },
         "imitate_sorting_sequence": {
           "episodes": 18,
           "score": 0.2777777777777778,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "organize_table": {
+          "episodes": 5,
+          "score": 40.0,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -103,7 +109,7 @@
           "successes": 0
         },
         "store_tools_in_toolbox": {
-          "episodes": 5,
+          "episodes": 10,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0

@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T21:52+08",
+  "as_of": "2026-08-26T21:58+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -13,9 +13,10 @@
     "classify_objects_by_language": "0/50",
     "play_stacking_toy": "0/50"
   },
-  "in_progress_episodes": "41/322",
-  "in_progress_success_rate_percent": 12.73,
-  "wrist_fasten_screws_ep34_YMAX": {"head": 247.4, "left_wrist": 252.4, "right_wrist": 254.9},
+  "in_progress_episodes": "41/337",
+  "in_progress_success_rate_percent": 12.17,
+  "wrist_organize_table_ep4_YMAX": {"head": 255.0, "left_wrist": 247.8, "right_wrist": 255.0},
+  "gpu1_note": "play_tic_tac_toe GPU util 0% between batches is expected: 1400-step horizon, videos flush after 5-env batch (last mp4 21:40, next batch stepping).",
   "running": {
     "gpu0": "imitate_sorting_sequence",
     "gpu1": "play_tic_tac_toe",

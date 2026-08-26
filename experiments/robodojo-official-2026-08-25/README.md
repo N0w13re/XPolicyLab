@@ -8,11 +8,11 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **4/42**: `build_tower` 29/50, `classify_objects` 9/50, `classify_objects_by_language` 0/50, `play_stacking_toy` 0/50. Partial mean 19% not comparable to 6.91. In-progress 41/322 eps (12.73%). Next cells likely `fasten_screws` 2/35, `pour_by_language` 0/30, `play_tic_tac_toe` 1/24. GPU4 `organize_table`, GPU6 `make_toast_random` still loading/early. | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | valid rerun (`num_envs=5`). Official cells **4/42**: `build_tower` 29/50, `classify_objects` 9/50, `classify_objects_by_language` 0/50, `play_stacking_toy` 0/50. Partial mean 19% not comparable to 6.91. In-progress 41/337 eps (12.17%). Next cells likely `fasten_screws` 2/35, `pour_by_language` 0/30, `play_tic_tac_toe` 1/24. GPU4 `organize_table` 0/5 with colorful wrists; GPU6 `make_toast_random` stepping. | not started |
 | G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | queued behind Pi_05; adapter and venv issues already fixed | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); closed-loop smoke still pending until a GPU frees | not started |
 
-The seed-0 table is **4/42** as of 21:52 CST Aug 26. Do not compare that four-cell mean (19%) to the published 6.91%. Eight Isaac clients with untiled cameras; wrist videos still colorful (latest `fasten_screws` YMAX head/left/right 247/252/255). Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
+The seed-0 table is **4/42** as of 21:58 CST Aug 26. Do not compare that four-cell mean (19%) to the published 6.91%. Eight Isaac clients with untiled cameras; wrist videos still colorful (`organize_table` YMAX head/left/right 255/248/255). GPU1 `play_tic_tac_toe` can sit at 0% util between 5-env flushes because the horizon is 1400 steps. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
 quarantined because their wrist-camera observations were blank; see below. The first
 attempt ran 07:41-18:07 CST and
 reached 41/42 cells for Pi_05 at **SR 1.07%** against an official 6.91%, plus six

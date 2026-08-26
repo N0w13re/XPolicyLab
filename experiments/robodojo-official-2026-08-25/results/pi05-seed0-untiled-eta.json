@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-26T21:52:12+08:00",
+  "as_of": "2026-08-26T21:58:45+08:00",
   "policy": "Pi_05",
   "seed": 0,
   "live_num_envs": 5,
@@ -208,7 +208,7 @@
     },
     {
       "gpu": "4",
-      "remaining_h": 8.73,
+      "remaining_h": 8.5,
       "tasks": [
         {
           "task": "play_stacking_toy",
@@ -219,10 +219,10 @@
         },
         {
           "task": "organize_table",
-          "have": 0,
+          "have": 5,
           "want": 50,
           "weight_s": 4104,
-          "remaining_s": 8208.0
+          "remaining_s": 7387.2
         },
         {
           "task": "pick_from_conveyor_by_image",
@@ -263,7 +263,7 @@
     },
     {
       "gpu": "5",
-      "remaining_h": 8.78,
+      "remaining_h": 8.57,
       "tasks": [
         {
           "task": "classify_objects_by_language",
@@ -274,10 +274,10 @@
         },
         {
           "task": "store_tools_in_toolbox",
-          "have": 5,
+          "have": 10,
           "want": 50,
           "weight_s": 3783,
-          "remaining_s": 6809.4
+          "remaining_s": 6052.8
         },
         {
           "task": "make_toast",
@@ -380,7 +380,7 @@
     },
     {
       "gpu": "7",
-      "remaining_h": 8.59,
+      "remaining_h": 8.32,
       "tasks": [
         {
           "task": "build_tower",
@@ -391,10 +391,10 @@
         },
         {
           "task": "fill_pen_holder",
-          "have": 10,
+          "have": 15,
           "want": 50,
           "weight_s": 4698,
-          "remaining_s": 7516.8
+          "remaining_s": 6577.2
         },
         {
           "task": "cover_blocks",
