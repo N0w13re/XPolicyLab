@@ -51,7 +51,7 @@
     "gpu0": "sweep_blocks_random",
     "gpu1": "insert_key",
     "gpu2": "stack_blocks_by_language",
-    "gpu3": "idle_between_tasks",
+    "gpu3": "G05/imitate_sorting_sequence",
     "gpu4": "pour_liquid_into_cup_random",
     "gpu5": "hang_mugs",
     "gpu6": "fold_clothes_random",
@@ -76,5 +76,5 @@
     "sweep_blocks"
   ],
   "pids": {"sweep": 3281259, "elastic": 3950295},
-  "note": "Partial 12.00% is mean of 31 completed cells; do not delta vs official 6.91 until 42/42. G05/Xiaomi not started. GPU3 gap is expected between sweep tasks."
+  "note": "Partial 12.00% is mean of 31 completed cells; do not delta vs official 6.91 until 42/42. G05 overlap started 05:10 CST on GPU3 imitate_sorting_sequence. Xiaomi still gated."
 }
