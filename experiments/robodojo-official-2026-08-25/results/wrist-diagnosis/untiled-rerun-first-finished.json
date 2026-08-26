@@ -1,0 +1,35 @@
+[
+  {
+    "task": "build_tower",
+    "cam": "cam_head",
+    "mean_rgb": [
+      126.5,
+      98.2,
+      86.0
+    ],
+    "spread": 56.3,
+    "file": "episode_0000000_cam_head_success.mp4"
+  },
+  {
+    "task": "build_tower",
+    "cam": "cam_left_wrist",
+    "mean_rgb": [
+      160.4,
+      135.0,
+      113.1
+    ],
+    "spread": 74.2,
+    "file": "episode_0000000_cam_left_wrist_success.mp4"
+  },
+  {
+    "task": "build_tower",
+    "cam": "cam_right_wrist",
+    "mean_rgb": [
+      166.9,
+      143.3,
+      122.5
+    ],
+    "spread": 68.8,
+    "file": "episode_0000000_cam_right_wrist_success.mp4"
+  }
+]

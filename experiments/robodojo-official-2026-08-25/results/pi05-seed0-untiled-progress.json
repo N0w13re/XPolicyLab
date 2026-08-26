@@ -1,0 +1,38 @@
+{
+  "as_of": "2026-08-26T19:14+08",
+  "run_id": "2026-08-26_18-57-47_smoke",
+  "policy": "Pi_05",
+  "seed": 0,
+  "num_envs": 5,
+  "untiled": true,
+  "official_cells": 0,
+  "first_partial": {
+    "build_tower": "4/5"
+  },
+  "camera_check": {
+    "cam_head": {
+      "mean_rgb": [
+        126.5,
+        98.2,
+        86.0
+      ],
+      "spread": 56.3
+    },
+    "cam_left_wrist": {
+      "mean_rgb": [
+        160.4,
+        135.0,
+        113.1
+      ],
+      "spread": 74.2
+    },
+    "cam_right_wrist": {
+      "mean_rgb": [
+        166.9,
+        143.3,
+        122.5
+      ],
+      "spread": 68.8
+    }
+  }
+}
