@@ -2,10 +2,10 @@
   "policies": {
     "Pi_05": {
       "delta": null,
-      "episodes": 1350,
-      "in_progress_episodes": 1550,
-      "in_progress_success_rate": 11.032258064516128,
-      "in_progress_successes": 171,
+      "episodes": 1400,
+      "in_progress_episodes": 1575,
+      "in_progress_success_rate": 10.984126984126984,
+      "in_progress_successes": 173,
       "incomplete_tasks": [
         "align_blocks",
         "deposit_coin",
@@ -13,7 +13,6 @@
         "general_pickup",
         "hang_mugs",
         "insert_key",
-        "play_Xylophone",
         "pour_liquid_into_cup",
         "push_T",
         "solve_equation",
@@ -77,6 +76,12 @@
           "episodes": 50,
           "score": 20.6,
           "success_rate": 4.0,
+          "successes": 2
+        },
+        "general_pickup": {
+          "episodes": 5,
+          "score": 40.0,
+          "success_rate": 40.0,
           "successes": 2
         },
         "hang_mugs_random": {
@@ -146,9 +151,9 @@
           "successes": 0
         },
         "play_Xylophone": {
-          "episodes": 45,
-          "score": 2.2222222222222223,
-          "success_rate": 2.2222222222222223,
+          "episodes": 50,
+          "score": 2.0,
+          "success_rate": 2.0,
           "successes": 1
         },
         "play_stacking_toy": {
@@ -200,7 +205,7 @@
           "successes": 38
         },
         "solve_equation": {
-          "episodes": 35,
+          "episodes": 40,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -217,8 +222,14 @@
           "success_rate": 0.0,
           "successes": 0
         },
-        "stack_blocks_random": {
+        "stack_blocks_by_language": {
           "episodes": 5,
+          "score": 4.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "stack_blocks_random": {
+          "episodes": 10,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -272,9 +283,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 27,
-      "score": 18.12962962962963,
-      "success_rate": 11.703703703703704,
+      "reported_tasks_complete": 28,
+      "score": 17.55357142857143,
+      "success_rate": 11.357142857142858,
       "table_complete": false
     }
   },
