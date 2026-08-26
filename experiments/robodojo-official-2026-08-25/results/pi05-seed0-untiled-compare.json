@@ -3,9 +3,9 @@
     "Pi_05": {
       "delta": null,
       "episodes": 0,
-      "in_progress_episodes": 54,
-      "in_progress_success_rate": 12.962962962962962,
-      "in_progress_successes": 7,
+      "in_progress_episodes": 73,
+      "in_progress_success_rate": 15.068493150684931,
+      "in_progress_successes": 11,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -53,10 +53,10 @@
       "official_success_rate": 6.91,
       "per_task": {
         "build_tower": {
-          "episodes": 10,
-          "score": 68.0,
-          "success_rate": 60.0,
-          "successes": 6
+          "episodes": 15,
+          "score": 74.0,
+          "success_rate": 66.66666666666666,
+          "successes": 10
         },
         "classify_objects": {
           "episodes": 10,
@@ -65,14 +65,20 @@
           "successes": 1
         },
         "classify_objects_by_language": {
-          "episodes": 10,
-          "score": 0.0,
+          "episodes": 15,
+          "score": 3.3333333333333335,
           "success_rate": 0.0,
           "successes": 0
         },
         "fasten_screws": {
-          "episodes": 5,
-          "score": 13.999999999999998,
+          "episodes": 10,
+          "score": 11.000000000000002,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "imitate_sorting_sequence": {
+          "episodes": 4,
+          "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
