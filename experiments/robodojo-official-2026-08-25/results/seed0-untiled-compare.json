@@ -35,23 +35,23 @@
       "episodes": 650,
       "generalization_halves": {
         "random": {
-          "episodes": 20,
-          "score": 5.0,
+          "episodes": 25,
+          "score": 4.0,
           "success_rate": 0.0,
           "successes": 0,
-          "tasks": 2
+          "tasks": 3
         },
         "standard": {
-          "episodes": 15,
-          "score": 31.666666666666664,
+          "episodes": 20,
+          "score": 30.0,
           "success_rate": 20.0,
-          "successes": 3,
+          "successes": 4,
           "tasks": 1
         }
       },
-      "in_progress_episodes": 724,
-      "in_progress_success_rate": 12.430939226519337,
-      "in_progress_successes": 90,
+      "in_progress_episodes": 763,
+      "in_progress_success_rate": 11.926605504587156,
+      "in_progress_successes": 91,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -124,7 +124,7 @@
           "successes": 2
         },
         "fill_egg_holder": {
-          "episodes": 9,
+          "episodes": 18,
           "score": 3.333333333333334,
           "success_rate": 0.0,
           "successes": 0
@@ -148,10 +148,10 @@
           "successes": 11
         },
         "make_toast": {
-          "episodes": 15,
-          "score": 31.666666666666664,
+          "episodes": 20,
+          "score": 30.0,
           "success_rate": 20.0,
-          "successes": 3
+          "successes": 4
         },
         "make_toast_random": {
           "episodes": 5,
@@ -166,7 +166,7 @@
           "successes": 6
         },
         "pick_from_conveyor_by_image": {
-          "episodes": 25,
+          "episodes": 30,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -190,6 +190,12 @@
           "successes": 0
         },
         "press_by_number": {
+          "episodes": 15,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "sort_nesting_dolls_by_size_random": {
           "episodes": 5,
           "score": 0.0,
           "success_rate": 0.0,
@@ -197,6 +203,12 @@
         },
         "store_tools_in_toolbox": {
           "episodes": 50,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "swap_blocks": {
+          "episodes": 5,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
