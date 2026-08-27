@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T11:02+08",
+  "as_of": "2026-08-27T11:07+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -81,7 +81,7 @@
   "eval_clients": 8,
   "all_num_envs_5": true,
   "g05": {
-    "official_cells": 8,
+    "official_cells": 9,
     "completed_cells": {
       "play_stacking_toy": "0/50",
       "classify_objects_by_language": "0/50",
@@ -90,23 +90,23 @@
       "fasten_screws": "2/50",
       "pour_by_language": "0/50",
       "play_tic_tac_toe": "13/50",
-      "cover_blocks": "7/50"
+      "cover_blocks": "7/50",
+      "fill_pen_holder": "8/50"
     },
-    "partial_average_sr_percent": 5.75,
+    "partial_average_sr_percent": 6.0,
     "partial_dimensions_present": 4,
-    "in_progress_episodes": "72/581",
-    "in_progress_micro_sr_percent": 12.39,
+    "in_progress_episodes": "76/595",
+    "in_progress_micro_sr_percent": 12.77,
     "near": {
-      "build_tower": "15/20",
-      "fill_pen_holder": "7/45"
+      "build_tower": "28/40"
     },
     "gpus": {
       "0": "build_tower",
       "1": "store_tools_in_toolbox",
       "2": "make_toast",
-      "3": "awaiting refill after cover_blocks",
+      "3": "pick_from_conveyor_by_image",
       "4": "organize_table",
-      "5": "fill_pen_holder",
+      "5": "idle after fill_pen_holder",
       "6": "make_kong",
       "7": "make_toast_random"
     },
@@ -121,5 +121,5 @@
     "sweep_alive": false,
     "elastic": 3950295
   },
-  "note": "Pi_05 42/42 official-style Average SR 10.12% vs 6.91 (+3.21); micro SR 10.14%. G05 8/42 partial four-dimension Average 5.75%; do not delta vs 14.88 until 42/42. Xiaomi still gated."
+  "note": "Pi_05 42/42 official-style Average SR 10.12% vs 6.91 (+3.21); micro SR 10.14%. G05 9/42 partial four-dimension Average 6.00%; do not delta vs 14.88 until 42/42. Xiaomi still gated."
 }

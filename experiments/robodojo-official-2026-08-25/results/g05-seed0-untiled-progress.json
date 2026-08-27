@@ -1,0 +1,63 @@
+{
+  "as_of": "2026-08-27T11:07+08",
+  "run_id": "2026-08-26_18-57-47_smoke",
+  "policy": "G05",
+  "seed": 0,
+  "num_envs": 5,
+  "official_cells_complete": 9,
+  "official_cells_total": 42,
+  "table_complete": false,
+  "ours_average_sr_percent": 6.0,
+  "ours_micro_sr_percent": 7.78,
+  "official_sr_percent": 14.88,
+  "delta": null,
+  "delta_note": "Withheld until 42/42; Generalization has no completed cell so Average is four-dimension only.",
+  "dimension_sr_percent": {
+    "Precision": 4.0,
+    "Long-Horizon": 13.0,
+    "Memory": 7.0,
+    "Open": 0.0
+  },
+  "episodes": 450,
+  "in_progress_episodes": "76/595",
+  "in_progress_micro_sr_percent": 12.77,
+  "completed_cells": {
+    "play_stacking_toy": "0/50",
+    "classify_objects_by_language": "0/50",
+    "imitate_sorting_sequence": "0/50",
+    "classify_objects": "5/50",
+    "fasten_screws": "2/50",
+    "pour_by_language": "0/50",
+    "play_tic_tac_toe": "13/50",
+    "cover_blocks": "7/50",
+    "fill_pen_holder": "8/50"
+  },
+  "near": {
+    "build_tower": "28/40"
+  },
+  "gpus": {
+    "0": "build_tower",
+    "1": "store_tools_in_toolbox",
+    "2": "make_toast",
+    "3": "pick_from_conveyor_by_image",
+    "4": "organize_table",
+    "5": "idle after fill_pen_holder",
+    "6": "make_kong",
+    "7": "make_toast_random"
+  },
+  "elastic_remaining": {
+    "Pi_05": 0,
+    "G05": 45,
+    "Xiaomi_Robotics_1": 1
+  },
+  "wrist_ymax_json": "results/g05-wrist-ymax.json",
+  "all_num_envs_5": true,
+  "pids": {
+    "elastic": 3950295
+  },
+  "xiaomi": {
+    "official_cells": 0,
+    "remaining_gate": "stack_bowls --eval-num 2"
+  },
+  "note": "Pi_05 42/42 official Average 10.12 vs 6.91 (+3.21). G05 9/42 partial Average 6.00; do not delta vs 14.88. Xiaomi gated."
+}
