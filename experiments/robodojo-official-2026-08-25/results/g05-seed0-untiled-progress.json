@@ -1,48 +1,43 @@
 {
-  "as_of": "2026-08-27T17:42+08",
+  "as_of": "2026-08-27T18:15+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "G05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 36,
+  "official_cells_complete": 42,
   "official_cells_total": 42,
-  "table_complete": false,
-  "ours_average_sr_percent": 13.46,
+  "table_complete": true,
+  "ours_average_sr_percent": 12.55,
   "official_sr_percent": 14.88,
-  "delta": null,
-  "delta_note": "Withheld until 42/42. Partial Average 13.46 is not comparable to official 14.88.",
+  "delta": -2.33,
+  "delta_note": "Within 5 abs of official 14.88.",
   "dimension_sr_percent": {
-    "Generalization": 12.44,
-    "Precision": 25.33,
+    "Generalization": 13.0,
+    "Precision": 19.25,
     "Long-Horizon": 21.5,
     "Memory": 8.0,
-    "Open": 0.0
+    "Open": 1.0
   },
-  "episodes": 1800,
-  "gpus": {
-    "0": "G05/push_T",
-    "1": "G05/deposit_coin",
-    "2": "idle (Xiaomi stopped)",
-    "3": "idle (Xiaomi stopped)",
-    "4": "G05/fold_clothes",
-    "5": "G05/stack_blocks",
-    "6": "G05/insert_key",
-    "7": "G05/general_pickup"
-  },
+  "episodes": 2100,
+  "gpus": "all idle; eval clients stopped",
   "elastic_remaining": {
     "Pi_05": 0,
-    "G05": 6,
+    "G05": 0,
     "Xiaomi_Robotics_1": "cancelled_by_user"
   },
   "all_num_envs_5": true,
-  "pids": {"elastic": null, "elastic_stopped_at": "2026-08-27T17:41+08"},
+  "pids": {"elastic": null},
   "xiaomi": {
     "official_cells": 0,
-    "cancelled": true,
-    "note": "User asked not to evaluate Xiaomi. Elastic scheduler 2791870 stopped. Xiaomi imitate_sorting_sequence/pour_by_language trees killed. GPU2/3 idle."
+    "cancelled": true
   },
   "wrist_ymax_new": {
-    "store_laptop_and_headphones": "255/173/255"
+    "insert_key": "253/170/255",
+    "fold_clothes": "248/240/240",
+    "deposit_coin": "253/240/194",
+    "push_T": "249/172/207",
+    "stack_blocks": "253/255/193",
+    "general_pickup": "255/255/255"
   },
-  "note": "Pi_05 42/42. G05 36/42 leftover in-flight: fold_clothes, insert_key, deposit_coin, push_T, stack_blocks, general_pickup. Xiaomi not evaluated."
+  "note": "Pi_05 42/42 Average 10.12 vs 6.91 (+3.21). G05 42/42 Average 12.55 vs 14.88 (-2.33). Xiaomi not evaluated per user. Closed-loop _result.json + three-camera videos."
 }

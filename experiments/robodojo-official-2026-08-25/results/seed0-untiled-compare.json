@@ -1,14 +1,14 @@
 {
   "policies": {
     "G05": {
-      "delta": null,
+      "delta": -2.33,
       "dimension_metrics": {
         "Generalization": {
-          "episodes": 450,
-          "score": 18.31111111111111,
-          "success_rate": 12.444444444444445,
-          "successes": 56,
-          "tasks": 9
+          "episodes": 600,
+          "score": 18.658333333333335,
+          "success_rate": 13.0,
+          "successes": 78,
+          "tasks": 12
         },
         "Long-Horizon": {
           "episodes": 400,
@@ -25,21 +25,21 @@
           "tasks": 6
         },
         "Open": {
-          "episodes": 350,
-          "score": 0.05714285714285715,
-          "success_rate": 0.0,
-          "successes": 0,
-          "tasks": 7
+          "episodes": 400,
+          "score": 1.05,
+          "success_rate": 1.0,
+          "successes": 4,
+          "tasks": 8
         },
         "Precision": {
-          "episodes": 300,
-          "score": 32.766666666666666,
-          "success_rate": 25.333333333333336,
-          "successes": 76,
-          "tasks": 6
+          "episodes": 400,
+          "score": 25.7625,
+          "success_rate": 19.25,
+          "successes": 77,
+          "tasks": 8
         }
       },
-      "episodes": 1800,
+      "episodes": 2100,
       "generalization_halves": {
         "random": {
           "episodes": 300,
@@ -49,26 +49,19 @@
           "tasks": 12
         },
         "standard": {
-          "episodes": 260,
-          "score": 29.326923076923077,
-          "success_rate": 22.30769230769231,
-          "successes": 58,
+          "episodes": 300,
+          "score": 27.98333333333333,
+          "success_rate": 21.0,
+          "successes": 63,
           "tasks": 12
         }
       },
-      "in_progress_episodes": 2000,
-      "in_progress_success_rate": 13.05,
-      "in_progress_successes": 261,
-      "incomplete_tasks": [
-        "deposit_coin",
-        "fold_clothes",
-        "general_pickup",
-        "insert_key",
-        "push_T",
-        "stack_blocks"
-      ],
-      "micro_score": 19.363888888888887,
-      "micro_success_rate": 13.444444444444445,
+      "in_progress_episodes": 2100,
+      "in_progress_success_rate": 12.80952380952381,
+      "in_progress_successes": 269,
+      "incomplete_tasks": [],
+      "micro_score": 18.42142857142857,
+      "micro_success_rate": 12.80952380952381,
       "official_success_rate": 14.88,
       "per_task": {
         "align_blocks": {
@@ -114,9 +107,9 @@
           "successes": 7
         },
         "deposit_coin": {
-          "episodes": 35,
-          "score": 8.0,
-          "success_rate": 2.857142857142857,
+          "episodes": 50,
+          "score": 9.200000000000001,
+          "success_rate": 2.0,
           "successes": 1
         },
         "fasten_screws": {
@@ -138,10 +131,10 @@
           "successes": 8
         },
         "fold_clothes": {
-          "episodes": 20,
-          "score": 59.00000000000001,
-          "success_rate": 50.0,
-          "successes": 10
+          "episodes": 25,
+          "score": 53.6,
+          "success_rate": 44.0,
+          "successes": 11
         },
         "fold_clothes_random": {
           "episodes": 25,
@@ -150,10 +143,10 @@
           "successes": 5
         },
         "general_pickup": {
-          "episodes": 10,
-          "score": 10.0,
-          "success_rate": 10.0,
-          "successes": 1
+          "episodes": 50,
+          "score": 8.0,
+          "success_rate": 8.0,
+          "successes": 4
         },
         "hang_mugs": {
           "episodes": 25,
@@ -174,8 +167,8 @@
           "successes": 0
         },
         "insert_key": {
-          "episodes": 45,
-          "score": 0.3333333333333333,
+          "episodes": 50,
+          "score": 0.3,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -288,7 +281,7 @@
           "successes": 0
         },
         "push_T": {
-          "episodes": 10,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -324,10 +317,10 @@
           "successes": 0
         },
         "stack_blocks": {
-          "episodes": 5,
-          "score": 46.0,
-          "success_rate": 40.0,
-          "successes": 2
+          "episodes": 25,
+          "score": 33.6,
+          "success_rate": 24.0,
+          "successes": 6
         },
         "stack_blocks_by_language": {
           "episodes": 50,
@@ -396,10 +389,10 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 36,
-      "score": 19.07281746031746,
-      "success_rate": 13.455555555555557,
-      "table_complete": false
+      "reported_tasks_complete": 42,
+      "score": 17.94,
+      "success_rate": 12.55,
+      "table_complete": true
     },
     "Pi_05": {
       "delta": 3.206666666666665,
