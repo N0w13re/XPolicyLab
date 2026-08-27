@@ -239,6 +239,40 @@
         "ymax": 255.0,
         "ymean": 106.3
       }
+    },
+    "pack_objects_into_box": {
+      "head": {
+        "file": "episode_0000024_cam_head_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 99.08
+      },
+      "left_wrist": {
+        "file": "episode_0000024_cam_left_wrist_fail.mp4",
+        "ymax": 254.89,
+        "ymean": 89.93
+      },
+      "right_wrist": {
+        "file": "episode_0000024_cam_right_wrist_fail.mp4",
+        "ymax": 254.66,
+        "ymean": 88.23
+      }
+    },
+    "pour_balls_into_vase": {
+      "head": {
+        "file": "episode_0000049_cam_head_fail.mp4",
+        "ymax": 254.09,
+        "ymean": 99.55
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_fail.mp4",
+        "ymax": 189.51,
+        "ymean": 93.69
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_fail.mp4",
+        "ymax": 251.92,
+        "ymean": 112.85
+      }
     }
   }
 }

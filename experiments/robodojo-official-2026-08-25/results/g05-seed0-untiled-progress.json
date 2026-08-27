@@ -1,56 +1,45 @@
 {
-  "as_of": "2026-08-27T14:39+08",
+  "as_of": "2026-08-27T14:59+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "G05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 20,
+  "official_cells_complete": 22,
   "official_cells_total": 42,
   "table_complete": false,
-  "ours_average_sr_percent": 15.62,
+  "ours_average_sr_percent": 14.15,
   "official_sr_percent": 14.88,
   "delta": null,
-  "delta_note": "Withheld until 42/42. Five dimensions now have at least one cell (first Generalization cell make_toast). Partial Average is not comparable to official 14.88.",
+  "delta_note": "Withheld until 42/42. Five-dimension partial Average is not comparable to official 14.88.",
   "dimension_sr_percent": {
-    "Generalization": 10.0,
-    "Precision": 37.0,
+    "Generalization": 5.0,
+    "Precision": 34.67,
     "Long-Horizon": 21.5,
     "Memory": 9.6,
     "Open": 0.0
   },
-  "long_horizon_dimension_complete": true,
-  "episodes": 1000,
-  "in_progress_episodes": "180/1190",
-  "in_progress_micro_sr_percent": 15.13,
+  "episodes": 1100,
   "new_cells": {
-    "make_toast": "5/50",
-    "match_and_pick_from_conveyor": "17/50",
-    "put_bottles_into_dustbin": "43/50"
+    "pack_objects_into_box": "0/50",
+    "pour_balls_into_vase": "15/50"
   },
   "gpus": {
-    "0": "pour_liquid_into_cup",
-    "1": "sweep_blocks_random",
+    "0": "align_blocks",
+    "1": "hang_mugs_random",
     "2": "sort_nesting_dolls_by_size",
     "3": "play_Xylophone",
-    "4": "pour_balls_into_vase",
+    "4": "stack_bowls_random",
     "5": "insert_tubes",
-    "6": "pack_objects_into_box",
+    "6": "sweep_blocks",
     "7": "arrange_largest_number"
   },
   "elastic_remaining": {
     "Pi_05": 0,
-    "G05": 30,
+    "G05": 26,
     "Xiaomi_Robotics_1": 54
   },
-  "wrist_ymax_json": "results/g05-wrist-ymax.json",
   "all_num_envs_5": true,
-  "pids": {
-    "elastic": 2791870
-  },
-  "xiaomi": {
-    "official_cells": 0,
-    "smoke_running": false,
-    "gate_passed": true
-  },
-  "note": "Pi_05 42/42 Average 10.12 vs 6.91 (+3.21). G05 20/42 five-dimension partial Average 15.62; Long-Horizon 8/8 complete at 21.5%; do not delta vs 14.88. Xiaomi native 0/42."
+  "pids": {"elastic": 2791870},
+  "xiaomi": {"official_cells": 0, "gate_passed": true},
+  "note": "Pi_05 42/42 Average 10.12 vs 6.91. G05 22/42 five-dimension partial Average 14.15 (pack_objects 0/50 pulled Gen to 5%); not vs 14.88. Xiaomi native 0/42."
 }
