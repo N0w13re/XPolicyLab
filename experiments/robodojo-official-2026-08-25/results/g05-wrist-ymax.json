@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T16:10:00+08:00",
+  "as_of": "2026-08-27T16:33:00+08:00",
   "num_envs": 5,
   "tasks": {
     "play_tic_tac_toe": {
@@ -425,6 +425,40 @@
         "file": "episode_0000024_cam_right_wrist_fail.mp4",
         "ymax": 255.0,
         "ymean": 126.26
+      }
+    },
+    "stack_bowls": {
+      "head": {
+        "file": "episode_0000024_cam_head_success.mp4",
+        "ymax": 250.0,
+        "ymean": 99.25
+      },
+      "left_wrist": {
+        "file": "episode_0000024_cam_left_wrist_success.mp4",
+        "ymax": 228.0,
+        "ymean": 92.6
+      },
+      "right_wrist": {
+        "file": "episode_0000024_cam_right_wrist_success.mp4",
+        "ymax": 255.0,
+        "ymean": 99.41
+      }
+    },
+    "solve_equation": {
+      "head": {
+        "file": "episode_0000049_cam_head_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 99.69
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 93.08
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_fail.mp4",
+        "ymax": 245.0,
+        "ymean": 102.91
       }
     }
   }

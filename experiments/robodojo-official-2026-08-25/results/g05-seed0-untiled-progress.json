@@ -1,28 +1,27 @@
 {
-  "as_of": "2026-08-27T16:10+08",
+  "as_of": "2026-08-27T16:33+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "G05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 28,
+  "official_cells_complete": 30,
   "official_cells_total": 42,
   "table_complete": false,
-  "ours_average_sr_percent": 12.78,
+  "ours_average_sr_percent": 14.42,
   "official_sr_percent": 14.88,
   "delta": null,
-  "delta_note": "Withheld until 42/42. Five-dimension partial Average is not comparable to official 14.88.",
+  "delta_note": "Withheld until 42/42. Five-dimension partial Average is not comparable to official 14.88 even when the number looks close.",
   "dimension_sr_percent": {
-    "Generalization": 2.8,
+    "Generalization": 11.0,
     "Precision": 30.0,
     "Long-Horizon": 21.5,
     "Memory": 9.6,
     "Open": 0.0
   },
-  "episodes": 1400,
-  "paired_halves_done_awaiting_sibling": {
-    "hang_mugs_random": "0/25",
-    "stack_bowls_random": "6/25",
-    "sweep_blocks": "0/50 already merged"
+  "episodes": 1500,
+  "new_cells": {
+    "stack_bowls": "26/50 (20/25 std + 6/25 random)",
+    "solve_equation": "0/50"
   },
   "gpus": {
     "0": "fold_clothes_random",
@@ -30,20 +29,21 @@
     "2": "store_laptop_and_headphones_random",
     "3": "pour_liquid_into_cup_random",
     "4": "stack_blocks_random",
-    "5": "stack_bowls",
+    "5": "hang_mugs",
     "6": "plug_in_charger",
-    "7": "solve_equation"
+    "7": "stack_blocks_by_language"
   },
   "elastic_remaining": {
     "Pi_05": 0,
-    "G05": 18,
+    "G05": 16,
     "Xiaomi_Robotics_1": 54
   },
   "all_num_envs_5": true,
   "pids": {"elastic": 2791870},
   "xiaomi": {"official_cells": 0, "gate_passed": true},
   "wrist_ymax_new": {
-    "hang_mugs_random": "254/255/255"
+    "stack_bowls": "250/228/255",
+    "solve_equation": "255/255/245"
   },
-  "note": "Pi_05 42/42 Average 10.12 vs 6.91. G05 28/42 five-dimension partial Average 12.78; not vs 14.88. hang_mugs_random 25/25 done; hang_mugs std not started so no new official cell. Xiaomi native 0/42."
+  "note": "Pi_05 42/42 Average 10.12 vs 6.91. G05 30/42 five-dimension partial Average 14.42; not vs 14.88. hang_mugs std now running (random already 25/25). Xiaomi native 0/42."
 }
