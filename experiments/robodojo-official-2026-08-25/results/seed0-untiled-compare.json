@@ -18,11 +18,11 @@
           "tasks": 8
         },
         "Memory": {
-          "episodes": 250,
-          "score": 11.120000000000001,
-          "success_rate": 9.6,
+          "episodes": 300,
+          "score": 9.266666666666667,
+          "success_rate": 8.0,
           "successes": 24,
-          "tasks": 5
+          "tasks": 6
         },
         "Open": {
           "episodes": 300,
@@ -32,48 +32,46 @@
           "tasks": 6
         },
         "Precision": {
-          "episodes": 250,
-          "score": 38.92,
-          "success_rate": 30.0,
-          "successes": 75,
-          "tasks": 5
+          "episodes": 300,
+          "score": 32.766666666666666,
+          "success_rate": 25.333333333333336,
+          "successes": 76,
+          "tasks": 6
         }
       },
-      "episodes": 1550,
+      "episodes": 1650,
       "generalization_halves": {
         "random": {
-          "episodes": 260,
-          "score": 10.134615384615385,
-          "success_rate": 5.384615384615385,
-          "successes": 14,
-          "tasks": 11
+          "episodes": 275,
+          "score": 10.181818181818182,
+          "success_rate": 5.454545454545454,
+          "successes": 15,
+          "tasks": 12
         },
         "standard": {
-          "episodes": 180,
-          "score": 28.138888888888886,
-          "success_rate": 23.333333333333332,
-          "successes": 42,
-          "tasks": 8
+          "episodes": 195,
+          "score": 28.512820512820515,
+          "success_rate": 22.564102564102566,
+          "successes": 44,
+          "tasks": 9
         }
       },
-      "in_progress_episodes": 1725,
-      "in_progress_success_rate": 14.028985507246377,
-      "in_progress_successes": 242,
+      "in_progress_episodes": 1795,
+      "in_progress_success_rate": 13.649025069637883,
+      "in_progress_successes": 245,
       "incomplete_tasks": [
         "deposit_coin",
         "fold_clothes",
         "general_pickup",
         "hang_mugs",
         "insert_key",
-        "plug_in_charger",
         "push_T",
         "stack_blocks",
         "stack_blocks_by_language",
-        "store_laptop_and_headphones",
-        "swap_T"
+        "store_laptop_and_headphones"
       ],
-      "micro_score": 21.364516129032257,
-      "micro_success_rate": 15.225806451612902,
+      "micro_score": 20.13030303030303,
+      "micro_success_rate": 14.363636363636365,
       "official_success_rate": 14.88,
       "per_task": {
         "align_blocks": {
@@ -137,16 +135,16 @@
           "successes": 8
         },
         "fold_clothes_random": {
-          "episodes": 15,
-          "score": 34.66666666666667,
-          "success_rate": 26.666666666666668,
-          "successes": 4
+          "episodes": 20,
+          "score": 32.0,
+          "success_rate": 25.0,
+          "successes": 5
         },
         "hang_mugs": {
-          "episodes": 5,
-          "score": 6.0,
-          "success_rate": 0.0,
-          "successes": 0
+          "episodes": 10,
+          "score": 14.499999999999998,
+          "success_rate": 10.0,
+          "successes": 1
         },
         "hang_mugs_random": {
           "episodes": 25,
@@ -233,9 +231,9 @@
           "successes": 13
         },
         "plug_in_charger": {
-          "episodes": 40,
-          "score": 2.5,
-          "success_rate": 2.5,
+          "episodes": 50,
+          "score": 2.0,
+          "success_rate": 2.0,
           "successes": 1
         },
         "pour_balls_into_vase": {
@@ -268,6 +266,12 @@
           "success_rate": 0.0,
           "successes": 0
         },
+        "push_T_random": {
+          "episodes": 5,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "put_bottles_into_dustbin": {
           "episodes": 50,
           "score": 91.3,
@@ -293,14 +297,14 @@
           "successes": 0
         },
         "stack_blocks_by_language": {
-          "episodes": 10,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
         "stack_blocks_random": {
-          "episodes": 20,
-          "score": 4.5,
+          "episodes": 25,
+          "score": 5.3999999999999995,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -316,6 +320,12 @@
           "success_rate": 24.0,
           "successes": 6
         },
+        "store_laptop_and_headphones": {
+          "episodes": 10,
+          "score": 38.0,
+          "success_rate": 10.0,
+          "successes": 1
+        },
         "store_laptop_and_headphones_random": {
           "episodes": 25,
           "score": 15.200000000000003,
@@ -329,7 +339,7 @@
           "successes": 0
         },
         "swap_T": {
-          "episodes": 35,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -353,9 +363,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 31,
-      "score": 20.78335714285714,
-      "success_rate": 15.134285714285715,
+      "reported_tasks_complete": 33,
+      "score": 19.18202380952381,
+      "success_rate": 13.880952380952383,
       "table_complete": false
     },
     "Pi_05": {

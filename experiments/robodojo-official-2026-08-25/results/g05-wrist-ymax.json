@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T16:47:00+08:00",
+  "as_of": "2026-08-27T17:05:00+08:00",
   "num_envs": 5,
   "tasks": {
     "play_tic_tac_toe": {
@@ -476,6 +476,40 @@
         "file": "episode_0000024_cam_right_wrist_fail.mp4",
         "ymax": 250.0,
         "ymean": 154.79
+      }
+    },
+    "plug_in_charger": {
+      "head": {
+        "file": "episode_0000049_cam_head_fail.mp4",
+        "ymax": 251.0,
+        "ymean": 99.36
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 101.56
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_fail.mp4",
+        "ymax": 252.0,
+        "ymean": 102.64
+      }
+    },
+    "swap_T": {
+      "head": {
+        "file": "episode_0000049_cam_head_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 98.79
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_fail.mp4",
+        "ymax": 176.0,
+        "ymean": 93.64
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_fail.mp4",
+        "ymax": 189.0,
+        "ymean": 99.07
       }
     }
   }
