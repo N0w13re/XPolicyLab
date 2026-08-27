@@ -31,25 +31,24 @@
     "cover_blocks": "7/50",
     "fill_pen_holder": "8/50",
     "make_kong": "11/50",
-    "organize_table": "6/50"
+    "organize_table": "6/50",
+    "build_tower": "35/50"
   },
-  "near": {
-    "build_tower": "32/45"
-  },
+  "near": {},
   "gpus": {
-    "0": "build_tower",
+    "0": "press_by_number",
     "1": "store_tools_in_toolbox",
     "2": "make_toast",
     "3": "pick_from_conveyor_by_image",
     "4": "fill_egg_holder",
     "5": "arrange_largest_number_random",
-    "6": "Xiaomi_Robotics_1/stack_bowls eval_num=2",
+    "6": "sort_nesting_dolls_by_size_random",
     "7": "make_toast_random"
   },
   "elastic_remaining": {
     "Pi_05": 0,
-    "G05": 43,
-    "Xiaomi_Robotics_1": 1
+    "G05": 42,
+    "Xiaomi_Robotics_1": 54
   },
   "wrist_ymax_json": "results/g05-wrist-ymax.json",
   "all_num_envs_5": true,
@@ -58,13 +57,12 @@
   },
   "xiaomi": {
     "official_cells": 0,
-    "smoke_running": true,
+    "smoke_running": false,
+    "gate_passed": true,
     "smoke_task": "stack_bowls",
     "smoke_eval_num": 2,
-    "gpu": 6,
-    "action_type": "ee",
-    "num_envs": 5,
-    "model_loaded": true
+    "smoke_successes": 2,
+    "evidence": "results/xiaomi-stack-bowls-smoke.json"
   },
-  "note": "Pi_05 42/42 official Average 10.12 vs 6.91 (+3.21). G05 11/42 partial Average 6.33; do not delta vs 14.88. Xiaomi stack_bowls x2 closed-loop is running on GPU6."
+  "note": "Pi_05 42/42 official Average 10.12 vs 6.91 (+3.21). G05 12/42 partial Average 14.58 (four dims, Precision now 37% after build_tower 35/50); do not delta vs 14.88. Xiaomi smoke 2/2 passed; native 0/42."
 }

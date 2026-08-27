@@ -49,8 +49,8 @@
           "tasks": 1
         }
       },
-      "in_progress_episodes": 680,
-      "in_progress_success_rate": 12.941176470588237,
+      "in_progress_episodes": 685,
+      "in_progress_success_rate": 12.846715328467154,
       "in_progress_successes": 88,
       "incomplete_tasks": [
         "align_blocks",
@@ -123,6 +123,12 @@
           "score": 26.0,
           "success_rate": 4.0,
           "successes": 2
+        },
+        "fill_egg_holder": {
+          "episodes": 5,
+          "score": 4.0,
+          "success_rate": 0.0,
+          "successes": 0
         },
         "fill_pen_holder": {
           "episodes": 50,
