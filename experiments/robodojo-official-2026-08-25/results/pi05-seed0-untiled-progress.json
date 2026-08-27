@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T08:30+08",
+  "as_of": "2026-08-27T08:31+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -59,15 +59,19 @@
     "swap_blocks": "0/50",
     "sweep_blocks": "0/50"
   },
-  "wrist_push_T_ep24_YMAX": {"head": 250.0, "left_wrist": 169.1, "right_wrist": 194.7},
+  "wrist_push_T_ep24_YMAX": {
+    "head": 250.0,
+    "left_wrist": 169.1,
+    "right_wrist": 194.7
+  },
   "push_T_videos": 75,
   "incomplete_official_cells": [],
   "eval_clients": 8,
   "all_num_envs_5": true,
   "g05": {
     "official_cells": 0,
-    "in_progress_episodes": "12/230",
-    "in_progress_sr_percent": 5.22,
+    "in_progress_episodes": "12/235",
+    "in_progress_sr_percent": 5.11,
     "gpu0_next": "build_tower",
     "running_tasks": [
       "build_tower",
@@ -84,6 +88,10 @@
     "official_cells": 0,
     "remaining_gate": "stack_bowls --eval-num 2"
   },
-  "pids": {"sweep": 3281259, "sweep_alive": false, "elastic": 3950295},
+  "pids": {
+    "sweep": 3281259,
+    "sweep_alive": false,
+    "elastic": 3950295
+  },
   "note": "Pi_05 seed-0 42/42 closed-loop SR 10.14% vs official 6.91 (delta +3.23, within 5 abs). Sweep released 08:27; GPU0 now G05 build_tower. G05/Xiaomi tables not complete."
 }

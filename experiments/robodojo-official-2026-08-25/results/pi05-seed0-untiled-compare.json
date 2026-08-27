@@ -3,8 +3,8 @@
     "G05": {
       "delta": null,
       "episodes": 0,
-      "in_progress_episodes": 230,
-      "in_progress_success_rate": 5.217391304347826,
+      "in_progress_episodes": 235,
+      "in_progress_success_rate": 5.106382978723404,
       "in_progress_successes": 12,
       "incomplete_tasks": [
         "align_blocks",
@@ -59,7 +59,7 @@
           "successes": 3
         },
         "classify_objects_by_language": {
-          "episodes": 35,
+          "episodes": 40,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
