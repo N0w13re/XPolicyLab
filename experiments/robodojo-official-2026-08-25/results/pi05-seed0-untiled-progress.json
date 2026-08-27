@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T09:05+08",
+  "as_of": "2026-08-27T09:30+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -76,10 +76,23 @@
       "imitate_sorting_sequence": "0/50"
     },
     "partial_table_sr_percent": 0.0,
-    "in_progress_episodes": "18/295",
-    "in_progress_sr_percent": 6.10,
+    "in_progress_episodes": "36/350",
+    "in_progress_sr_percent": 10.29,
     "near": {
-      "build_tower": "3/5"
+      "classify_objects": "4/45",
+      "build_tower": "12/15",
+      "fasten_screws": "2/40",
+      "pour_by_language": "0/40"
+    },
+    "gpus": {
+      "0": "build_tower",
+      "1": "fasten_screws",
+      "2": "pour_by_language",
+      "3": "cover_blocks",
+      "4": "organize_table",
+      "5": "fill_pen_holder",
+      "6": "classify_objects",
+      "7": "play_tic_tac_toe"
     },
     "wrist_ymax_json": "results/g05-wrist-ymax.json"
   },

@@ -9,7 +9,7 @@ recorded single forward passes and never entered the simulator.
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
 | Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | **42/42** seed-0 closed-loop. SR **10.14%** vs official 6.91 (**delta +3.23**, within 5 abs). 2100 ep. Last cell `push_T` 0/50; ep24 YMAX head/left/right 250/169/195; 75 three-camera videos. Sweep pid 3281259 released 08:27. | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | **3/42**. Cells all 0/50: `play_stacking_toy`, `classify_objects_by_language`, `imitate_sorting_sequence`. In-progress 18/295 (6.10%). GPU4 `organize_table`; GPU3 draining after imitate. Wrist YMAX ≫30. Native `num_envs=5`. | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | **3/42**. Completed 0/50: stacking_toy, classify_by_language, imitate. In-progress **36/350 (10.29%)**. `build_tower` 12/15 at 80%. `classify_objects` 4/45. GPU3 `cover_blocks`, GPU4 `organize_table`. 8× `--num_envs 5`. | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); elastic still gates native cells behind `stack_bowls --eval-num 2` closed-loop | not started |
 
 The seed-0 Pi_05 table is **42/42** as of 08:26 CST Aug 27: 213/2100 successes, **10.14%** vs published **6.91%** (**+3.23**). Eight `eval_client` processes all use `--num_envs 5`. Elastic released the Pi_05 sweep at 08:27 and launched G05 `build_tower` on GPU0 at 08:29. GPU7 `play_tic_tac_toe` can sit at 0% util between 5-env flushes. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
