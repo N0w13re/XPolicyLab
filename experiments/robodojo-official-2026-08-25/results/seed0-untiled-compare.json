@@ -18,11 +18,11 @@
           "tasks": 2
         },
         "Open": {
-          "episodes": 150,
+          "episodes": 200,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0,
-          "tasks": 3
+          "tasks": 4
         },
         "Precision": {
           "episodes": 100,
@@ -32,26 +32,26 @@
           "tasks": 2
         }
       },
-      "episodes": 650,
+      "episodes": 700,
       "generalization_halves": {
         "random": {
-          "episodes": 25,
-          "score": 4.0,
+          "episodes": 60,
+          "score": 2.7500000000000004,
           "success_rate": 0.0,
           "successes": 0,
-          "tasks": 3
+          "tasks": 4
         },
         "standard": {
-          "episodes": 20,
-          "score": 30.0,
+          "episodes": 25,
+          "score": 31.0,
           "success_rate": 20.0,
-          "successes": 4,
+          "successes": 5,
           "tasks": 1
         }
       },
-      "in_progress_episodes": 763,
-      "in_progress_success_rate": 11.926605504587156,
-      "in_progress_successes": 91,
+      "in_progress_episodes": 892,
+      "in_progress_success_rate": 10.538116591928251,
+      "in_progress_successes": 94,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -65,7 +65,6 @@
         "make_toast",
         "match_and_pick_from_conveyor",
         "pack_objects_into_box",
-        "pick_from_conveyor_by_image",
         "play_Xylophone",
         "plug_in_charger",
         "pour_balls_into_vase",
@@ -83,13 +82,13 @@
         "swap_blocks",
         "sweep_blocks"
       ],
-      "micro_score": 23.661538461538463,
-      "micro_success_rate": 13.384615384615383,
+      "micro_score": 21.97142857142857,
+      "micro_success_rate": 12.428571428571429,
       "official_success_rate": 14.88,
       "per_task": {
         "arrange_largest_number_random": {
-          "episodes": 15,
-          "score": 1.6666666666666667,
+          "episodes": 25,
+          "score": 1.4000000000000001,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -124,8 +123,8 @@
           "successes": 2
         },
         "fill_egg_holder": {
-          "episodes": 18,
-          "score": 3.333333333333334,
+          "episodes": 37,
+          "score": 4.45945945945946,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -148,16 +147,22 @@
           "successes": 11
         },
         "make_toast": {
-          "episodes": 20,
-          "score": 30.0,
+          "episodes": 25,
+          "score": 31.0,
           "success_rate": 20.0,
-          "successes": 4
+          "successes": 5
         },
         "make_toast_random": {
-          "episodes": 5,
-          "score": 15.0,
+          "episodes": 10,
+          "score": 7.5,
           "success_rate": 0.0,
           "successes": 0
+        },
+        "match_and_pick_from_conveyor": {
+          "episodes": 5,
+          "score": 40.0,
+          "success_rate": 40.0,
+          "successes": 2
         },
         "organize_table": {
           "episodes": 50,
@@ -165,8 +170,14 @@
           "success_rate": 12.0,
           "successes": 6
         },
+        "pack_objects_into_box_random": {
+          "episodes": 5,
+          "score": 11.000000000000002,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "pick_from_conveyor_by_image": {
-          "episodes": 30,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -190,13 +201,13 @@
           "successes": 0
         },
         "press_by_number": {
-          "episodes": 15,
+          "episodes": 35,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
         "sort_nesting_dolls_by_size_random": {
-          "episodes": 5,
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -208,13 +219,13 @@
           "successes": 0
         },
         "swap_blocks": {
-          "episodes": 5,
+          "episodes": 30,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 13,
+      "reported_tasks_complete": 14,
       "score": 23.133333333333333,
       "success_rate": 14.583333333333334,
       "table_complete": false

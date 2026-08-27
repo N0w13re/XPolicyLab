@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T11:07:00+08:00",
+  "as_of": "2026-08-27T13:03:00+08:00",
   "num_envs": 5,
   "tasks": {
     "play_tic_tac_toe": {
@@ -102,6 +102,74 @@
         "file": "episode_0000049_cam_right_wrist_success.mp4",
         "ymax": 255.0,
         "ymean": 87.6
+      }
+    },
+    "pick_from_conveyor_by_image": {
+      "head": {
+        "file": "episode_0000049_cam_head_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 91.78
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 91.52
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 89.86
+      }
+    },
+    "swap_blocks": {
+      "head": {
+        "file": "episode_0000029_cam_head_fail.mp4",
+        "ymax": 251.87,
+        "ymean": 102.16
+      },
+      "left_wrist": {
+        "file": "episode_0000029_cam_left_wrist_fail.mp4",
+        "ymax": 171.72,
+        "ymean": 93.2
+      },
+      "right_wrist": {
+        "file": "episode_0000029_cam_right_wrist_fail.mp4",
+        "ymax": 243.36,
+        "ymean": 97.98
+      }
+    },
+    "fill_egg_holder": {
+      "head": {
+        "file": "episode_0000036_cam_head_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 104.06
+      },
+      "left_wrist": {
+        "file": "episode_0000036_cam_left_wrist_fail.mp4",
+        "ymax": 212.99,
+        "ymean": 93.19
+      },
+      "right_wrist": {
+        "file": "episode_0000036_cam_right_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 130.14
+      }
+    },
+    "make_toast": {
+      "head": {
+        "file": "episode_0000024_cam_head_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 100.96
+      },
+      "left_wrist": {
+        "file": "episode_0000024_cam_left_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 114.09
+      },
+      "right_wrist": {
+        "file": "episode_0000024_cam_right_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 89.29
       }
     }
   }

@@ -1,10 +1,10 @@
 {
-  "as_of": "2026-08-27T12:04+08",
+  "as_of": "2026-08-27T13:03+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "G05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 13,
+  "official_cells_complete": 14,
   "official_cells_total": 42,
   "table_complete": false,
   "ours_average_sr_percent": 14.58,
@@ -17,9 +17,9 @@
     "Memory": 7.0,
     "Open": 0.0
   },
-  "episodes": 650,
-  "in_progress_episodes": "90/724",
-  "in_progress_micro_sr_percent": 12.43,
+  "episodes": 700,
+  "in_progress_episodes": "94/892",
+  "in_progress_micro_sr_percent": 10.54,
   "completed_cells": {
     "play_stacking_toy": "0/50",
     "classify_objects_by_language": "0/50",
@@ -33,22 +33,27 @@
     "make_kong": "11/50",
     "organize_table": "6/50",
     "build_tower": "35/50",
-    "store_tools_in_toolbox": "0/50"
+    "store_tools_in_toolbox": "0/50",
+    "pick_from_conveyor_by_image": "0/50"
   },
-  "near": {},
+  "near": {
+    "fill_egg_holder": "0/37",
+    "press_by_number": "0/35",
+    "swap_blocks": "0/30"
+  },
   "gpus": {
     "0": "press_by_number",
-    "1": "awaiting refill after store_tools_in_toolbox",
-    "2": "make_toast",
-    "3": "pick_from_conveyor_by_image",
+    "1": "swap_blocks",
+    "2": "pack_objects_into_box_random",
+    "3": "put_bottles_into_dustbin (just launched)",
     "4": "fill_egg_holder",
-    "5": "arrange_largest_number_random",
+    "5": "match_and_pick_from_conveyor",
     "6": "sort_nesting_dolls_by_size_random",
     "7": "make_toast_random"
   },
   "elastic_remaining": {
     "Pi_05": 0,
-    "G05": 41,
+    "G05": 38,
     "Xiaomi_Robotics_1": 54
   },
   "wrist_ymax_json": "results/g05-wrist-ymax.json",
@@ -65,5 +70,5 @@
     "smoke_successes": 2,
     "evidence": "results/xiaomi-stack-bowls-smoke.json"
   },
-  "note": "Pi_05 42/42 official Average 10.12 vs 6.91 (+3.21). G05 13/42 partial Average 14.58; do not delta vs 14.88. Xiaomi smoke 2/2 passed; native 0/42."
+  "note": "Pi_05 42/42 official Average 10.12 vs 6.91 (+3.21). G05 14/42 partial Average 14.58; Open now 4 cells at 0% including pick_from_conveyor_by_image 0/50; do not delta vs 14.88. Xiaomi smoke 2/2 passed; native 0/42."
 }
