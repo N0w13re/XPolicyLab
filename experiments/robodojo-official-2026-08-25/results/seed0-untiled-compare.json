@@ -11,11 +11,11 @@
           "tasks": 7
         },
         "Memory": {
-          "episodes": 150,
-          "score": 7.200000000000001,
-          "success_rate": 4.666666666666667,
+          "episodes": 200,
+          "score": 5.4,
+          "success_rate": 3.5000000000000004,
           "successes": 7,
-          "tasks": 3
+          "tasks": 4
         },
         "Open": {
           "episodes": 200,
@@ -32,26 +32,26 @@
           "tasks": 2
         }
       },
-      "episodes": 800,
+      "episodes": 850,
       "generalization_halves": {
         "random": {
-          "episodes": 70,
-          "score": 2.857142857142857,
+          "episodes": 80,
+          "score": 3.5625000000000004,
           "success_rate": 0.0,
           "successes": 0,
           "tasks": 4
         },
         "standard": {
-          "episodes": 25,
-          "score": 31.0,
-          "success_rate": 20.0,
+          "episodes": 30,
+          "score": 27.333333333333332,
+          "success_rate": 16.666666666666664,
           "successes": 5,
-          "tasks": 1
+          "tasks": 2
         }
       },
-      "in_progress_episodes": 965,
-      "in_progress_success_rate": 10.880829015544041,
-      "in_progress_successes": 105,
+      "in_progress_episodes": 1015,
+      "in_progress_success_rate": 11.724137931034482,
+      "in_progress_successes": 119,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -77,11 +77,10 @@
         "stack_bowls",
         "store_laptop_and_headphones",
         "swap_T",
-        "swap_blocks",
         "sweep_blocks"
       ],
-      "micro_score": 19.5125,
-      "micro_success_rate": 10.875,
+      "micro_score": 18.36470588235294,
+      "micro_success_rate": 10.23529411764706,
       "official_success_rate": 14.88,
       "per_task": {
         "arrange_largest_number_random": {
@@ -151,16 +150,16 @@
           "successes": 5
         },
         "make_toast_random": {
-          "episodes": 10,
-          "score": 7.5,
+          "episodes": 15,
+          "score": 8.333333333333332,
           "success_rate": 0.0,
           "successes": 0
         },
         "match_and_pick_from_conveyor": {
-          "episodes": 20,
-          "score": 30.0,
-          "success_rate": 30.0,
-          "successes": 6
+          "episodes": 30,
+          "score": 26.666666666666668,
+          "success_rate": 26.666666666666668,
+          "successes": 8
         },
         "organize_table": {
           "episodes": 50,
@@ -168,9 +167,15 @@
           "success_rate": 12.0,
           "successes": 6
         },
-        "pack_objects_into_box_random": {
-          "episodes": 10,
+        "pack_objects_into_box": {
+          "episodes": 5,
           "score": 9.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "pack_objects_into_box_random": {
+          "episodes": 15,
+          "score": 8.333333333333332,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -192,6 +197,12 @@
           "success_rate": 26.0,
           "successes": 13
         },
+        "pour_balls_into_vase": {
+          "episodes": 5,
+          "score": 40.0,
+          "success_rate": 40.0,
+          "successes": 2
+        },
         "pour_by_language": {
           "episodes": 50,
           "score": 0.0,
@@ -205,10 +216,10 @@
           "successes": 0
         },
         "put_bottles_into_dustbin": {
-          "episodes": 10,
-          "score": 80.5,
-          "success_rate": 70.0,
-          "successes": 7
+          "episodes": 20,
+          "score": 90.25000000000001,
+          "success_rate": 85.0,
+          "successes": 17
         },
         "sort_nesting_dolls_by_size_random": {
           "episodes": 25,
@@ -223,15 +234,15 @@
           "successes": 0
         },
         "swap_blocks": {
-          "episodes": 40,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 16,
-      "score": 21.303571428571427,
-      "success_rate": 13.488095238095239,
+      "reported_tasks_complete": 17,
+      "score": 20.853571428571428,
+      "success_rate": 13.196428571428571,
       "table_complete": false
     },
     "Pi_05": {

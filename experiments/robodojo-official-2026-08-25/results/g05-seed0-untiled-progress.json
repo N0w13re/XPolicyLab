@@ -1,25 +1,25 @@
 {
-  "as_of": "2026-08-27T13:28+08",
+  "as_of": "2026-08-27T13:43+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "G05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 16,
+  "official_cells_complete": 17,
   "official_cells_total": 42,
   "table_complete": false,
-  "ours_average_sr_percent": 13.49,
+  "ours_average_sr_percent": 13.2,
   "official_sr_percent": 14.88,
   "delta": null,
   "delta_note": "Withheld until 42/42; Generalization has no completed cell so Average is four-dimension only.",
   "dimension_sr_percent": {
     "Precision": 37.0,
     "Long-Horizon": 12.29,
-    "Memory": 4.67,
+    "Memory": 3.5,
     "Open": 0.0
   },
-  "episodes": 800,
-  "in_progress_episodes": "105/965",
-  "in_progress_micro_sr_percent": 10.88,
+  "episodes": 850,
+  "in_progress_episodes": "119/1015",
+  "in_progress_micro_sr_percent": 11.72,
   "completed_cells": {
     "play_stacking_toy": "0/50",
     "classify_objects_by_language": "0/50",
@@ -36,26 +36,25 @@
     "store_tools_in_toolbox": "0/50",
     "pick_from_conveyor_by_image": "0/50",
     "press_by_number": "0/50",
-    "fill_egg_holder": "0/50"
+    "fill_egg_holder": "0/50",
+    "swap_blocks": "0/50"
   },
   "near": {
-    "swap_blocks": "0/40",
-    "sort_nesting_dolls_by_size_random": "0/25",
-    "put_bottles_into_dustbin": "7/10"
+    "put_bottles_into_dustbin": "17/20"
   },
   "gpus": {
-    "0": "pour_liquid_into_cup (just launched)",
-    "1": "swap_blocks",
+    "0": "pour_liquid_into_cup",
+    "1": "sweep_blocks_random",
     "2": "pack_objects_into_box_random",
     "3": "put_bottles_into_dustbin",
-    "4": "awaiting refill after fill_egg_holder",
+    "4": "pour_balls_into_vase",
     "5": "match_and_pick_from_conveyor",
     "6": "pack_objects_into_box",
     "7": "make_toast_random"
   },
   "elastic_remaining": {
     "Pi_05": 0,
-    "G05": 35,
+    "G05": 34,
     "Xiaomi_Robotics_1": 54
   },
   "wrist_ymax_json": "results/g05-wrist-ymax.json",
@@ -72,5 +71,5 @@
     "smoke_successes": 2,
     "evidence": "results/xiaomi-stack-bowls-smoke.json"
   },
-  "note": "Pi_05 42/42 official Average 10.12 vs 6.91 (+3.21). G05 16/42 partial four-dimension Average 13.49 (fill_egg 0/50 and press_by_number 0/50 pulled LH/Memory down); no Generalization cell; do not delta vs 14.88. Xiaomi smoke 2/2; native 0/42."
+  "note": "Pi_05 42/42 official Average 10.12 vs 6.91 (+3.21). G05 17/42 partial four-dimension Average 13.20 (swap_blocks 0/50 pulled Memory to 3.5); no Generalization cell; do not delta vs 14.88. Xiaomi smoke 2/2; native 0/42."
 }
