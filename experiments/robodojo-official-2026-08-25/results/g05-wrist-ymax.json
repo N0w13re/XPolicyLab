@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T13:03:00+08:00",
+  "as_of": "2026-08-27T14:39:00+08:00",
   "num_envs": 5,
   "tasks": {
     "play_tic_tac_toe": {
@@ -187,6 +187,57 @@
         "file": "episode_0000024_cam_right_wrist_fail.mp4",
         "ymax": 255.0,
         "ymean": 89.29
+      }
+    },
+    "make_toast_random": {
+      "head": {
+        "file": "episode_0000024_cam_head_fail.mp4",
+        "ymax": 249.13,
+        "ymean": 153.35
+      },
+      "left_wrist": {
+        "file": "episode_0000024_cam_left_wrist_fail.mp4",
+        "ymax": 251.48,
+        "ymean": 155.35
+      },
+      "right_wrist": {
+        "file": "episode_0000024_cam_right_wrist_fail.mp4",
+        "ymax": 249.13,
+        "ymean": 158.26
+      }
+    },
+    "match_and_pick_from_conveyor": {
+      "head": {
+        "file": "episode_0000049_cam_head_success.mp4",
+        "ymax": 255.0,
+        "ymean": 83.87
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_success.mp4",
+        "ymax": 248.35,
+        "ymean": 79.82
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_success.mp4",
+        "ymax": 255.0,
+        "ymean": 93.21
+      }
+    },
+    "put_bottles_into_dustbin": {
+      "head": {
+        "file": "episode_0000049_cam_head_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 94.02
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 93.81
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 106.3
       }
     }
   }

@@ -1,60 +1,45 @@
 {
-  "as_of": "2026-08-27T13:43+08",
+  "as_of": "2026-08-27T14:39+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "G05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 17,
+  "official_cells_complete": 20,
   "official_cells_total": 42,
   "table_complete": false,
-  "ours_average_sr_percent": 13.2,
+  "ours_average_sr_percent": 15.62,
   "official_sr_percent": 14.88,
   "delta": null,
-  "delta_note": "Withheld until 42/42; Generalization has no completed cell so Average is four-dimension only.",
+  "delta_note": "Withheld until 42/42. Five dimensions now have at least one cell (first Generalization cell make_toast). Partial Average is not comparable to official 14.88.",
   "dimension_sr_percent": {
+    "Generalization": 10.0,
     "Precision": 37.0,
-    "Long-Horizon": 12.29,
-    "Memory": 3.5,
+    "Long-Horizon": 21.5,
+    "Memory": 9.6,
     "Open": 0.0
   },
-  "episodes": 850,
-  "in_progress_episodes": "119/1015",
-  "in_progress_micro_sr_percent": 11.72,
-  "completed_cells": {
-    "play_stacking_toy": "0/50",
-    "classify_objects_by_language": "0/50",
-    "imitate_sorting_sequence": "0/50",
-    "classify_objects": "5/50",
-    "fasten_screws": "2/50",
-    "pour_by_language": "0/50",
-    "play_tic_tac_toe": "13/50",
-    "cover_blocks": "7/50",
-    "fill_pen_holder": "8/50",
-    "make_kong": "11/50",
-    "organize_table": "6/50",
-    "build_tower": "35/50",
-    "store_tools_in_toolbox": "0/50",
-    "pick_from_conveyor_by_image": "0/50",
-    "press_by_number": "0/50",
-    "fill_egg_holder": "0/50",
-    "swap_blocks": "0/50"
-  },
-  "near": {
-    "put_bottles_into_dustbin": "17/20"
+  "long_horizon_dimension_complete": true,
+  "episodes": 1000,
+  "in_progress_episodes": "180/1190",
+  "in_progress_micro_sr_percent": 15.13,
+  "new_cells": {
+    "make_toast": "5/50",
+    "match_and_pick_from_conveyor": "17/50",
+    "put_bottles_into_dustbin": "43/50"
   },
   "gpus": {
     "0": "pour_liquid_into_cup",
     "1": "sweep_blocks_random",
-    "2": "pack_objects_into_box_random",
-    "3": "put_bottles_into_dustbin",
+    "2": "sort_nesting_dolls_by_size",
+    "3": "play_Xylophone",
     "4": "pour_balls_into_vase",
-    "5": "match_and_pick_from_conveyor",
+    "5": "insert_tubes",
     "6": "pack_objects_into_box",
-    "7": "make_toast_random"
+    "7": "arrange_largest_number"
   },
   "elastic_remaining": {
     "Pi_05": 0,
-    "G05": 34,
+    "G05": 30,
     "Xiaomi_Robotics_1": 54
   },
   "wrist_ymax_json": "results/g05-wrist-ymax.json",
@@ -65,11 +50,7 @@
   "xiaomi": {
     "official_cells": 0,
     "smoke_running": false,
-    "gate_passed": true,
-    "smoke_task": "stack_bowls",
-    "smoke_eval_num": 2,
-    "smoke_successes": 2,
-    "evidence": "results/xiaomi-stack-bowls-smoke.json"
+    "gate_passed": true
   },
-  "note": "Pi_05 42/42 official Average 10.12 vs 6.91 (+3.21). G05 17/42 partial four-dimension Average 13.20 (swap_blocks 0/50 pulled Memory to 3.5); no Generalization cell; do not delta vs 14.88. Xiaomi smoke 2/2; native 0/42."
+  "note": "Pi_05 42/42 Average 10.12 vs 6.91 (+3.21). G05 20/42 five-dimension partial Average 15.62; Long-Horizon 8/8 complete at 21.5%; do not delta vs 14.88. Xiaomi native 0/42."
 }
