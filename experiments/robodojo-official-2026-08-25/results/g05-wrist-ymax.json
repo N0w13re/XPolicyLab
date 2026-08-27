@@ -140,19 +140,36 @@
     },
     "fill_egg_holder": {
       "head": {
-        "file": "episode_0000036_cam_head_fail.mp4",
+        "file": "episode_0000049_cam_head_fail.mp4",
         "ymax": 255.0,
-        "ymean": 104.06
+        "ymean": 102.4
       },
       "left_wrist": {
-        "file": "episode_0000036_cam_left_wrist_fail.mp4",
-        "ymax": 212.99,
-        "ymean": 93.19
+        "file": "episode_0000049_cam_left_wrist_fail.mp4",
+        "ymax": 254.07,
+        "ymean": 130.96
       },
       "right_wrist": {
-        "file": "episode_0000036_cam_right_wrist_fail.mp4",
+        "file": "episode_0000049_cam_right_wrist_fail.mp4",
         "ymax": 255.0,
-        "ymean": 130.14
+        "ymean": 99.35
+      }
+    },
+    "press_by_number": {
+      "head": {
+        "file": "episode_0000049_cam_head_fail.mp4",
+        "ymax": 251.0,
+        "ymean": 99.81
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_fail.mp4",
+        "ymax": 226.04,
+        "ymean": 100.99
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_fail.mp4",
+        "ymax": 194.71,
+        "ymean": 99.24
       }
     },
     "make_toast": {
