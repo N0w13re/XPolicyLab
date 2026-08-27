@@ -70,10 +70,16 @@ python3 /mnt/bn/robotics-data-mx/wenbo/XPolicyLab/scripts/elastic_robodojo_sched
 # pid file: /tmp/elastic-untiled.pid
 ```
 
-Xiaomi's first elastic job is `stack_bowls --eval-num 2` (SDPA path). Native 42-cell
-Xiaomi tasks start only after that smoke has `_result.json` with at least two episodes.
-Disable with `--xiaomi-smoke-eval-num 0`. Restarting this scheduler does not stop live
-Isaac clients owned by the Pi_05 sweep.
+Xiaomi's first elastic job is `stack_bowls --eval-num 2` (SDPA path). That smoke
+passed 2026-08-27 11:44 CST: 2/2 success, `--num_envs 5`, `action_type=ee`, three
+camera videos under
+`eval_result/RoboDojo/stack_bowls/Xiaomi_Robotics_1/arx_x5/0_ckpt_name=sim,action_type=ee/2026-08-27_11-37-43/`.
+After the gate, native Xiaomi cells stay **behind remaining G05 native tasks**.
+Disable the gate with `--xiaomi-smoke-eval-num 0`. Restarting this scheduler
+does not stop live Isaac clients.
+
+Live scheduler (untiled rerun): pid in `/tmp/elastic-untiled.pid`, log
+`experiments/robodojo-official-2026-08-25/logs/elastic-untiled.log`.
 
 One task on one card, for a manual retry (assets must already be on disk):
 
