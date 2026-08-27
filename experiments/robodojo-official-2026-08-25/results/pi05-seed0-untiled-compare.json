@@ -18,11 +18,11 @@
           "tasks": 2
         },
         "Open": {
-          "episodes": 100,
+          "episodes": 150,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0,
-          "tasks": 2
+          "tasks": 3
         },
         "Precision": {
           "episodes": 100,
@@ -32,26 +32,26 @@
           "tasks": 2
         }
       },
-      "episodes": 600,
+      "episodes": 650,
       "generalization_halves": {
         "random": {
-          "episodes": 15,
-          "score": 6.000000000000001,
+          "episodes": 20,
+          "score": 5.0,
           "success_rate": 0.0,
           "successes": 0,
           "tasks": 2
         },
         "standard": {
-          "episodes": 10,
-          "score": 25.0,
-          "success_rate": 10.0,
-          "successes": 1,
+          "episodes": 15,
+          "score": 31.666666666666664,
+          "success_rate": 20.0,
+          "successes": 3,
           "tasks": 1
         }
       },
-      "in_progress_episodes": 685,
-      "in_progress_success_rate": 12.846715328467154,
-      "in_progress_successes": 88,
+      "in_progress_episodes": 724,
+      "in_progress_success_rate": 12.430939226519337,
+      "in_progress_successes": 90,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -79,18 +79,17 @@
         "stack_blocks_by_language",
         "stack_bowls",
         "store_laptop_and_headphones",
-        "store_tools_in_toolbox",
         "swap_T",
         "swap_blocks",
         "sweep_blocks"
       ],
-      "micro_score": 25.633333333333336,
-      "micro_success_rate": 14.499999999999998,
+      "micro_score": 23.661538461538463,
+      "micro_success_rate": 13.384615384615383,
       "official_success_rate": 14.88,
       "per_task": {
         "arrange_largest_number_random": {
-          "episodes": 10,
-          "score": 1.5000000000000002,
+          "episodes": 15,
+          "score": 1.6666666666666667,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -125,8 +124,8 @@
           "successes": 2
         },
         "fill_egg_holder": {
-          "episodes": 5,
-          "score": 4.0,
+          "episodes": 9,
+          "score": 3.333333333333334,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -149,10 +148,10 @@
           "successes": 11
         },
         "make_toast": {
-          "episodes": 10,
-          "score": 25.0,
-          "success_rate": 10.0,
-          "successes": 1
+          "episodes": 15,
+          "score": 31.666666666666664,
+          "success_rate": 20.0,
+          "successes": 3
         },
         "make_toast_random": {
           "episodes": 5,
@@ -167,7 +166,7 @@
           "successes": 6
         },
         "pick_from_conveyor_by_image": {
-          "episodes": 15,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -190,14 +189,20 @@
           "success_rate": 0.0,
           "successes": 0
         },
+        "press_by_number": {
+          "episodes": 5,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "store_tools_in_toolbox": {
-          "episodes": 40,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 12,
+      "reported_tasks_complete": 13,
       "score": 23.133333333333333,
       "success_rate": 14.583333333333334,
       "table_complete": false
