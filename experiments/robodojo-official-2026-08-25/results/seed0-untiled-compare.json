@@ -49,9 +49,9 @@
           "tasks": 1
         }
       },
-      "in_progress_episodes": 892,
-      "in_progress_success_rate": 10.538116591928251,
-      "in_progress_successes": 94,
+      "in_progress_episodes": 902,
+      "in_progress_success_rate": 10.532150776053214,
+      "in_progress_successes": 95,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -159,10 +159,10 @@
           "successes": 0
         },
         "match_and_pick_from_conveyor": {
-          "episodes": 5,
-          "score": 40.0,
-          "success_rate": 40.0,
-          "successes": 2
+          "episodes": 10,
+          "score": 30.0,
+          "success_rate": 30.0,
+          "successes": 3
         },
         "organize_table": {
           "episodes": 50,
@@ -201,7 +201,7 @@
           "successes": 0
         },
         "press_by_number": {
-          "episodes": 35,
+          "episodes": 40,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
