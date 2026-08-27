@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -300,6 +301,82 @@ def xiaomi_smoke_complete(robodojo_root: Path, args: argparse.Namespace) -> bool
     return have >= args.xiaomi_smoke_eval_num
 
 
+def build_work_queue(
+    policies: list[str],
+    order: list[str],
+    jobs: list[Job],
+    elsewhere: set[tuple[str, str]],
+    given_up: set[tuple[str, str]],
+    smoke_ok: bool,
+    args: argparse.Namespace,
+    budgets: dict[str, int],
+    reserved_tasks: set[str],
+    have_fn=episodes_on_disk,
+    robodojo_root: Path | None = None,
+) -> tuple[list[tuple[str, str, str]], dict[str, int]]:
+    """Return (pending launches, remaining counts). Xiaomi smoke is first if needed."""
+    pending: list[tuple[str, str, str]] = []
+    per_policy_remaining: dict[str, int] = {}
+    if (
+        "Xiaomi_Robotics_1" in policies
+        and not smoke_ok
+        and args.xiaomi_smoke_eval_num > 0
+    ):
+        smoke_key = ("Xiaomi_Robotics_1", args.xiaomi_smoke_task)
+        smoke_running = any(
+            j.policy == smoke_key[0] and j.task == smoke_key[1] for j in jobs
+        )
+        if (
+            smoke_key not in given_up
+            and not smoke_running
+            and smoke_key not in elsewhere
+        ):
+            # Compatibility gate on the next free card; native order resumes after.
+            pending.append(
+                (smoke_key[0], smoke_key[1], str(args.xiaomi_smoke_eval_num))
+            )
+    for policy in policies:
+        action_type = POLICY_ACTION_TYPE.get(policy, "ee")
+        remaining = 0
+        if (
+            policy == "Xiaomi_Robotics_1"
+            and not smoke_ok
+            and args.xiaomi_smoke_eval_num > 0
+        ):
+            key = (policy, args.xiaomi_smoke_task)
+            if key in given_up:
+                per_policy_remaining[policy] = 0
+                continue
+            per_policy_remaining[policy] = 1
+            continue
+        for task in order:
+            key = (policy, task)
+            if key in given_up:
+                continue
+            if any(j.policy == policy and j.task == task for j in jobs):
+                remaining += 1
+                continue
+            have = have_fn(
+                robodojo_root,
+                task,
+                policy,
+                args.env_cfg,
+                args.seed,
+                args.ckpt,
+                action_type,
+            )
+            if have >= budgets.get(task, 50):
+                continue
+            remaining += 1
+            if key in elsewhere:
+                continue
+            if policy == "Pi_05" and task in reserved_tasks:
+                continue
+            pending.append((policy, task, "native"))
+        per_policy_remaining[policy] = remaining
+    return pending, per_policy_remaining
+
+
 def launch(
     policy: str,
     task: str,
@@ -351,6 +428,7 @@ def main() -> int:
     weights = runtime_weights(robodojo_root, args.env_cfg)
     order = sorted(tasks, key=lambda t: (-weights.get(t, 0), t))
     log(f"policies={policies} gpus={gpus} tasks={len(tasks)}")
+    Path("/tmp/elastic-untiled.pid").write_text(str(os.getpid()))
 
     attempts: dict[tuple[str, str], int] = {}
     given_up: set[tuple[str, str]] = set()
@@ -394,66 +472,20 @@ def main() -> int:
         }
         reserved_tasks, active_sweep_gpus = sweep_reserved(groups, runs, incomplete_pi)
 
-        pending: list[tuple[str, str, str]] = []
-        per_policy_remaining: dict[str, int] = {}
         smoke_ok = xiaomi_smoke_complete(robodojo_root, args)
-        if (
-            "Xiaomi_Robotics_1" in policies
-            and not smoke_ok
-            and args.xiaomi_smoke_eval_num > 0
-        ):
-            smoke_key = ("Xiaomi_Robotics_1", args.xiaomi_smoke_task)
-            smoke_running = any(
-                j.policy == smoke_key[0] and j.task == smoke_key[1] for j in jobs
-            )
-            if (
-                smoke_key not in given_up
-                and not smoke_running
-                and smoke_key not in elsewhere
-            ):
-                # Run the two-episode compatibility gate on the next free card.
-                # Native cells keep their configured policy priority after it passes.
-                pending.append(
-                    (
-                        smoke_key[0],
-                        smoke_key[1],
-                        str(args.xiaomi_smoke_eval_num),
-                    )
-                )
-        for policy in policies:
-            action_type = POLICY_ACTION_TYPE.get(policy, "ee")
-            remaining = 0
-            if (
-                policy == "Xiaomi_Robotics_1"
-                and not smoke_ok
-                and args.xiaomi_smoke_eval_num > 0
-            ):
-                key = (policy, args.xiaomi_smoke_task)
-                if key in given_up:
-                    per_policy_remaining[policy] = 0
-                    continue
-                remaining = 1
-                per_policy_remaining[policy] = remaining
-                continue
-            for task in order:
-                key = (policy, task)
-                if key in given_up:
-                    continue
-                if any(j.policy == policy and j.task == task for j in jobs):
-                    remaining += 1
-                    continue
-                have = episodes_on_disk(
-                    robodojo_root, task, policy, args.env_cfg, args.seed, args.ckpt, action_type
-                )
-                if have >= budgets.get(task, 50):
-                    continue
-                remaining += 1
-                if key in elsewhere:
-                    continue
-                if policy == "Pi_05" and task in reserved_tasks:
-                    continue
-                pending.append((policy, task, "native"))
-            per_policy_remaining[policy] = remaining
+        pending, per_policy_remaining = build_work_queue(
+            policies,
+            order,
+            jobs,
+            elsewhere,
+            given_up,
+            smoke_ok,
+            args,
+            budgets,
+            reserved_tasks,
+            have_fn=episodes_on_disk,
+            robodojo_root=robodojo_root,
+        )
 
         if args.kill_pid and not killed_sweep:
             target = args.kill_pid_policy
