@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T17:05:00+08:00",
+  "as_of": "2026-08-27T17:42:00+08:00",
   "num_envs": 5,
   "tasks": {
     "play_tic_tac_toe": {
@@ -510,6 +510,57 @@
         "file": "episode_0000049_cam_right_wrist_fail.mp4",
         "ymax": 189.0,
         "ymean": 99.07
+      }
+    },
+    "hang_mugs": {
+      "head": {
+        "file": "episode_0000024_cam_head_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 100.56
+      },
+      "left_wrist": {
+        "file": "episode_0000024_cam_left_wrist_fail.mp4",
+        "ymax": 245.0,
+        "ymean": 98.7
+      },
+      "right_wrist": {
+        "file": "episode_0000024_cam_right_wrist_fail.mp4",
+        "ymax": 252.0,
+        "ymean": 101.57
+      }
+    },
+    "stack_blocks_by_language": {
+      "head": {
+        "file": "episode_0000049_cam_head_fail.mp4",
+        "ymax": 252.0,
+        "ymean": 99.08
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_fail.mp4",
+        "ymax": 234.0,
+        "ymean": 96.4
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_fail.mp4",
+        "ymax": 192.0,
+        "ymean": 99.62
+      }
+    },
+    "store_laptop_and_headphones": {
+      "head": {
+        "file": "episode_0000024_cam_head_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 96.44
+      },
+      "left_wrist": {
+        "file": "episode_0000024_cam_left_wrist_fail.mp4",
+        "ymax": 173.0,
+        "ymean": 89.58
+      },
+      "right_wrist": {
+        "file": "episode_0000024_cam_right_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 90.8
       }
     }
   }
