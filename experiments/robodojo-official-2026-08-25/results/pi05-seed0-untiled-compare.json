@@ -2,16 +2,15 @@
   "policies": {
     "G05": {
       "delta": null,
-      "episodes": 50,
-      "in_progress_episodes": 249,
-      "in_progress_success_rate": 4.819277108433735,
-      "in_progress_successes": 12,
+      "episodes": 100,
+      "in_progress_episodes": 294,
+      "in_progress_success_rate": 6.122448979591836,
+      "in_progress_successes": 18,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
         "build_tower",
         "classify_objects",
-        "classify_objects_by_language",
         "cover_blocks",
         "deposit_coin",
         "fasten_screws",
@@ -51,27 +50,39 @@
       ],
       "official_success_rate": 14.88,
       "per_task": {
+        "build_tower": {
+          "episodes": 5,
+          "score": 68.0,
+          "success_rate": 60.0,
+          "successes": 3
+        },
         "classify_objects": {
-          "episodes": 30,
-          "score": 18.833333333333336,
-          "success_rate": 10.0,
+          "episodes": 35,
+          "score": 17.714285714285715,
+          "success_rate": 8.571428571428571,
           "successes": 3
         },
         "classify_objects_by_language": {
-          "episodes": 40,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
         "fasten_screws": {
-          "episodes": 30,
-          "score": 26.666666666666668,
-          "success_rate": 6.666666666666667,
+          "episodes": 35,
+          "score": 26.285714285714285,
+          "success_rate": 5.714285714285714,
           "successes": 2
         },
+        "fill_pen_holder": {
+          "episodes": 5,
+          "score": 34.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "imitate_sorting_sequence": {
-          "episodes": 44,
-          "score": 1.8181818181818183,
+          "episodes": 49,
+          "score": 1.7346938775510203,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -82,20 +93,20 @@
           "successes": 0
         },
         "play_tic_tac_toe": {
-          "episodes": 25,
-          "score": 54.2,
-          "success_rate": 28.000000000000004,
-          "successes": 7
+          "episodes": 30,
+          "score": 56.16666666666668,
+          "success_rate": 33.33333333333333,
+          "successes": 10
         },
         "pour_by_language": {
-          "episodes": 30,
+          "episodes": 35,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 1,
-      "score": 0.2,
+      "reported_tasks_complete": 2,
+      "score": 0.1,
       "success_rate": 0.0,
       "table_complete": false
     },
