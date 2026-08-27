@@ -2,9 +2,9 @@
   "policies": {
     "G05": {
       "delta": null,
-      "episodes": 100,
-      "in_progress_episodes": 294,
-      "in_progress_success_rate": 6.122448979591836,
+      "episodes": 150,
+      "in_progress_episodes": 300,
+      "in_progress_success_rate": 6.0,
       "in_progress_successes": 18,
       "incomplete_tasks": [
         "align_blocks",
@@ -19,7 +19,6 @@
         "fold_clothes",
         "general_pickup",
         "hang_mugs",
-        "imitate_sorting_sequence",
         "insert_key",
         "insert_tubes",
         "make_kong",
@@ -81,8 +80,8 @@
           "successes": 0
         },
         "imitate_sorting_sequence": {
-          "episodes": 49,
-          "score": 1.7346938775510203,
+          "episodes": 50,
+          "score": 1.7000000000000002,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -99,14 +98,14 @@
           "successes": 10
         },
         "pour_by_language": {
-          "episodes": 35,
+          "episodes": 40,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 2,
-      "score": 0.1,
+      "reported_tasks_complete": 3,
+      "score": 0.6333333333333333,
       "success_rate": 0.0,
       "table_complete": false
     },
