@@ -8,11 +8,11 @@ recorded single forward passes and never entered the simulator.
 
 | Policy | Checkpoint dir | Action type | Seed 0 | Seeds 1-2 |
 | --- | --- | --- | --- | --- |
-| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | **42/42** seed-0 closed-loop. SR **10.14%** vs official 6.91 (**delta +3.23**, within 5 abs). 2100 ep. Last cell `push_T` 0/50; ep24 YMAX head/left/right 250/169/195; 75 three-camera videos. Sweep pid 3281259 released 08:27. | not started |
-| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | **6/42**. New: `pour_by_language` 0/50 (YMAX 253/220/252). Partial 6-cell SR **2.33%** (not vs 14.88). In-progress 46/428 (10.75%). GPU2 `make_toast`. `build_tower` 15/20 at 75%. Native `--num_envs 5`. | not started |
+| Pi_05 | `RoboDojo-sim-arx_x5-joint-0` | joint | **42/42** seed-0 closed-loop. Official-style five-dimension Average SR **10.12%** vs official 6.91 (**delta +3.21**, within 5 abs); raw 213/2100 micro SR 10.14%. Last cell `push_T` 0/50; ep24 YMAX head/left/right 250/169/195. | not started |
+| G05 | `RoboDojo-sim-arx_x5-joint-0` | joint | **8/42**. New: `play_tic_tac_toe` 13/50 and `cover_blocks` 7/50. Partial four-dimension Average SR **5.75%** (Generalization has no completed cell; not vs 14.88). In-progress 72/581 (12.39% micro). GPU7 `make_toast_random`; GPU3 awaiting refill. Native `--num_envs 5`. | not started |
 | Xiaomi_Robotics_1 | `RoboDojo-sim-arx_x5-ee-0` | ee | queued; checkpoint resolves; SDPA fallback verified offline (`results/xiaomi-sdpa-preflight.json`); elastic still gates native cells behind `stack_bowls --eval-num 2` closed-loop | not started |
 
-The seed-0 Pi_05 table is **42/42** as of 08:26 CST Aug 27: 213/2100 successes, **10.14%** vs published **6.91%** (**+3.23**). Eight `eval_client` processes all use `--num_envs 5`. Elastic released the Pi_05 sweep at 08:27 and launched G05 `build_tower` on GPU0 at 08:29. GPU7 `play_tic_tac_toe` can sit at 0% util between 5-env flushes. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
+The seed-0 Pi_05 table is **42/42** as of 08:26 CST Aug 27: 213/2100 successes. The raw episode micro SR is **10.14%**, while the leaderboard's equal-weighted mean over the five capability dimensions is **10.12%** vs published **6.91%** (**+3.21**). Eight `eval_client` processes all use `--num_envs 5`. Elastic released the Pi_05 sweep at 08:27 and launched G05 `build_tower` on GPU0 at 08:29. Early WS `TimeoutError`s during policy warmup recovered without stopping the sweep. Two completed Pi_05/G05 tables were
 quarantined because their wrist-camera observations were blank; see below. The first
 attempt ran 07:41-18:07 CST and
 reached 41/42 cells for Pi_05 at **SR 1.07%** against an official 6.91%, plus six
@@ -221,8 +221,8 @@ Overall simulation success rate from the RoboDojo leaderboard:
 | π0.5 (`Pi_05`) | 6.91% |
 
 The paper additionally breaks π0.5 down by capability dimension as `score / success`:
-Generalization 13.37 / 8.17%, Memory 12.40 / 5.50%, Long-Horizon 23.54 / 14.67%,
-Precision 5.78 / 4.56%, Open 1.98 / 1.67%, overall 11.41 / 6.91%. G0.5 and
+Generalization 13.37 / 8.17%, Precision 12.40 / 5.50%, Long-Horizon 23.54 / 14.67%,
+Memory 5.78 / 4.56%, Open 1.98 / 1.67%, overall 11.41 / 6.91%. G0.5 and
 Xiaomi-Robotics-1 are later leaderboard entries submitted by their own labs, so only the
 overall number is published for them.
 

@@ -2,15 +2,60 @@
   "policies": {
     "G05": {
       "delta": null,
-      "episodes": 300,
-      "in_progress_episodes": 428,
-      "in_progress_success_rate": 10.74766355140187,
-      "in_progress_successes": 46,
+      "dimension_metrics": {
+        "Long-Horizon": {
+          "episodes": 150,
+          "score": 22.633333333333336,
+          "success_rate": 12.0,
+          "successes": 18,
+          "tasks": 3
+        },
+        "Memory": {
+          "episodes": 100,
+          "score": 10.8,
+          "success_rate": 7.000000000000001,
+          "successes": 7,
+          "tasks": 2
+        },
+        "Open": {
+          "episodes": 100,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0,
+          "tasks": 2
+        },
+        "Precision": {
+          "episodes": 50,
+          "score": 26.0,
+          "success_rate": 4.0,
+          "successes": 2,
+          "tasks": 1
+        }
+      },
+      "episodes": 400,
+      "generalization_halves": {
+        "random": {
+          "episodes": 0,
+          "score": NaN,
+          "success_rate": NaN,
+          "successes": 0,
+          "tasks": 0
+        },
+        "standard": {
+          "episodes": 5,
+          "score": 45.0,
+          "success_rate": 20.0,
+          "successes": 1,
+          "tasks": 1
+        }
+      },
+      "in_progress_episodes": 581,
+      "in_progress_success_rate": 12.392426850258175,
+      "in_progress_successes": 72,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
         "build_tower",
-        "cover_blocks",
         "deposit_coin",
         "fill_egg_holder",
         "fill_pen_holder",
@@ -26,7 +71,6 @@
         "pack_objects_into_box",
         "pick_from_conveyor_by_image",
         "play_Xylophone",
-        "play_tic_tac_toe",
         "plug_in_charger",
         "pour_balls_into_vase",
         "pour_liquid_into_cup",
@@ -44,13 +88,15 @@
         "swap_blocks",
         "sweep_blocks"
       ],
+      "micro_score": 14.4375,
+      "micro_success_rate": 6.75,
       "official_success_rate": 14.88,
       "per_task": {
         "build_tower": {
-          "episodes": 20,
-          "score": 80.5,
-          "success_rate": 75.0,
-          "successes": 15
+          "episodes": 35,
+          "score": 76.85714285714286,
+          "success_rate": 71.42857142857143,
+          "successes": 25
         },
         "classify_objects": {
           "episodes": 50,
@@ -65,10 +111,10 @@
           "successes": 0
         },
         "cover_blocks": {
-          "episodes": 20,
-          "score": 25.75,
-          "success_rate": 20.0,
-          "successes": 4
+          "episodes": 50,
+          "score": 19.9,
+          "success_rate": 14.000000000000002,
+          "successes": 7
         },
         "fasten_screws": {
           "episodes": 50,
@@ -77,10 +123,10 @@
           "successes": 2
         },
         "fill_pen_holder": {
-          "episodes": 25,
-          "score": 46.6,
-          "success_rate": 20.0,
-          "successes": 5
+          "episodes": 45,
+          "score": 38.77777777777778,
+          "success_rate": 15.555555555555555,
+          "successes": 7
         },
         "imitate_sorting_sequence": {
           "episodes": 50,
@@ -89,16 +135,22 @@
           "successes": 0
         },
         "make_kong": {
-          "episodes": 4,
-          "score": 0.0,
-          "success_rate": 0.0,
-          "successes": 0
+          "episodes": 32,
+          "score": 25.0,
+          "success_rate": 25.0,
+          "successes": 8
+        },
+        "make_toast": {
+          "episodes": 5,
+          "score": 45.0,
+          "success_rate": 20.0,
+          "successes": 1
         },
         "organize_table": {
-          "episodes": 19,
-          "score": 43.42105263157895,
-          "success_rate": 10.526315789473683,
-          "successes": 2
+          "episodes": 39,
+          "score": 53.84615384615385,
+          "success_rate": 10.256410256410255,
+          "successes": 4
         },
         "play_stacking_toy": {
           "episodes": 50,
@@ -107,9 +159,9 @@
           "successes": 0
         },
         "play_tic_tac_toe": {
-          "episodes": 40,
-          "score": 54.87499999999999,
-          "success_rate": 32.5,
+          "episodes": 50,
+          "score": 49.3,
+          "success_rate": 26.0,
           "successes": 13
         },
         "pour_by_language": {
@@ -117,20 +169,81 @@
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
+        },
+        "store_tools_in_toolbox": {
+          "episodes": 25,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
         }
       },
-      "reported_tasks_complete": 6,
-      "score": 7.716666666666666,
-      "success_rate": 2.3333333333333335,
+      "reported_tasks_complete": 8,
+      "score": 14.858333333333334,
+      "success_rate": 5.75,
       "table_complete": false
     },
     "Pi_05": {
-      "delta": 3.232857142857142,
+      "delta": 3.206666666666665,
+      "dimension_metrics": {
+        "Generalization": {
+          "episodes": 600,
+          "score": 14.641666666666667,
+          "success_rate": 9.166666666666666,
+          "successes": 55,
+          "tasks": 12
+        },
+        "Long-Horizon": {
+          "episodes": 400,
+          "score": 30.9875,
+          "success_rate": 20.0,
+          "successes": 80,
+          "tasks": 8
+        },
+        "Memory": {
+          "episodes": 300,
+          "score": 8.733333333333333,
+          "success_rate": 7.666666666666666,
+          "successes": 23,
+          "tasks": 6
+        },
+        "Open": {
+          "episodes": 400,
+          "score": 2.3,
+          "success_rate": 2.0,
+          "successes": 8,
+          "tasks": 8
+        },
+        "Precision": {
+          "episodes": 400,
+          "score": 18.475,
+          "success_rate": 11.75,
+          "successes": 47,
+          "tasks": 8
+        }
+      },
       "episodes": 2100,
+      "generalization_halves": {
+        "random": {
+          "episodes": 300,
+          "score": 7.3999999999999995,
+          "success_rate": 3.0,
+          "successes": 9,
+          "tasks": 12
+        },
+        "standard": {
+          "episodes": 300,
+          "score": 21.883333333333336,
+          "success_rate": 15.333333333333332,
+          "successes": 46,
+          "tasks": 12
+        }
+      },
       "in_progress_episodes": 2100,
       "in_progress_success_rate": 10.142857142857142,
       "in_progress_successes": 213,
       "incomplete_tasks": [],
+      "micro_score": 15.290476190476191,
+      "micro_success_rate": 10.142857142857142,
       "official_success_rate": 6.91,
       "per_task": {
         "align_blocks": {
@@ -459,8 +572,8 @@
         }
       },
       "reported_tasks_complete": 42,
-      "score": 15.290476190476191,
-      "success_rate": 10.142857142857142,
+      "score": 15.0275,
+      "success_rate": 10.116666666666665,
       "table_complete": true
     }
   },

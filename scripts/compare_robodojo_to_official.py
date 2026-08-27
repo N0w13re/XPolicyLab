@@ -6,6 +6,8 @@ the leaderboard:
 
   - `X` and `X_random` are one reported task; the first 25 episodes of each are merged.
   - Every other task contributes its first 50 episodes.
+  - Each capability dimension is averaged independently, then the five dimensions are
+    equally weighted for the leaderboard Average.
   - A reported task counts only once its full episode budget is present, so a partial run
     lowers coverage instead of silently lowering the score.
 
@@ -26,6 +28,35 @@ OFFICIAL_SR = {
     "Pi_05": 6.91,
     "G05": 14.88,
     "Xiaomi_Robotics_1": 13.93,
+}
+
+DIMENSIONS = {
+    "Generalization": [
+        "stack_bowls", "push_T", "pack_objects_into_box", "fold_clothes",
+        "hang_mugs", "sweep_blocks", "pour_liquid_into_cup", "make_toast",
+        "arrange_largest_number", "sort_nesting_dolls_by_size",
+        "store_laptop_and_headphones", "stack_blocks",
+    ],
+    "Precision": [
+        "fasten_screws", "plug_in_charger", "insert_tubes",
+        "pour_balls_into_vase", "play_Xylophone", "deposit_coin",
+        "insert_key", "build_tower",
+    ],
+    "Long-Horizon": [
+        "put_bottles_into_dustbin", "fill_pen_holder", "classify_objects",
+        "play_tic_tac_toe", "fill_egg_holder", "organize_table",
+        "make_kong", "play_stacking_toy",
+    ],
+    "Memory": [
+        "cover_blocks", "match_and_pick_from_conveyor", "swap_blocks",
+        "swap_T", "press_by_number", "imitate_sorting_sequence",
+    ],
+    "Open": [
+        "align_blocks", "general_pickup", "stack_blocks_by_language",
+        "solve_equation", "classify_objects_by_language",
+        "pick_from_conveyor_by_image", "store_tools_in_toolbox",
+        "pour_by_language",
+    ],
 }
 
 SEED_RE = re.compile(r"^(\d+)_ckpt_name=")
@@ -123,6 +154,80 @@ def reported_tasks(
     return complete, incomplete
 
 
+def entry_metrics(entries: list[tuple[bool, float]]) -> dict[str, float | int]:
+    successes = sum(1 for success, _ in entries if success)
+    count = len(entries)
+    return {
+        "tasks": 0,
+        "episodes": count,
+        "successes": successes,
+        "success_rate": successes / count * 100 if count else float("nan"),
+        "score": sum(score for _, score in entries) / count * 100
+        if count
+        else float("nan"),
+    }
+
+
+def aggregate_official_metrics(
+    complete: dict[str, list[tuple[bool, float]]],
+    dimensions: dict[str, list[str]] = DIMENSIONS,
+) -> dict[str, dict[str, float | int]]:
+    """Aggregate tasks with the leaderboard's equal weighting across dimensions."""
+    metrics = {}
+    for dimension, tasks in dimensions.items():
+        available = [task for task in tasks if task in complete]
+        entries = [entry for task in available for entry in complete[task]]
+        if not entries:
+            continue
+        metric = entry_metrics(entries)
+        metric["tasks"] = len(available)
+        metrics[dimension] = metric
+
+    all_entries = [entry for entries in complete.values() for entry in entries]
+    micro = entry_metrics(all_entries)
+    micro["tasks"] = len(complete)
+    metrics["micro"] = micro
+
+    dimensions_present = [
+        metrics[name] for name in dimensions if name in metrics
+    ]
+    metrics["average"] = {
+        "dimensions": len(dimensions_present),
+        "success_rate": sum(m["success_rate"] for m in dimensions_present)
+        / len(dimensions_present)
+        if dimensions_present
+        else float("nan"),
+        "score": sum(m["score"] for m in dimensions_present)
+        / len(dimensions_present)
+        if dimensions_present
+        else float("nan"),
+    }
+    return metrics
+
+
+def aggregate_generalization_halves(
+    raw_tasks: dict[str, list[tuple[bool, float]]],
+    generalization_tasks: list[str] = DIMENSIONS["Generalization"],
+) -> dict[str, dict[str, float | int]]:
+    """Report the leaderboard's Gen-Std and Gen-Rand diagnostic splits."""
+    halves = {}
+    for name, suffix in (("standard", ""), ("random", "_random")):
+        available = [
+            f"{task}{suffix}"
+            for task in generalization_tasks
+            if f"{task}{suffix}" in raw_tasks
+        ]
+        entries = [
+            entry
+            for task in available
+            for entry in raw_tasks[task][:EPISODES_PAIRED]
+        ]
+        metric = entry_metrics(entries)
+        metric["tasks"] = len(available)
+        halves[name] = metric
+    return halves
+
+
 def main() -> int:
     args = parse_args()
     root = args.eval_root.resolve()
@@ -137,10 +242,9 @@ def main() -> int:
     for policy in sorted(per_policy):
         complete, incomplete = reported_tasks(per_policy[policy], canonical)
         n_ep = sum(len(v) for v in complete.values())
-        successes = sum(1 for v in complete.values() for s, _ in v if s)
-        score_sum = sum(sc for v in complete.values() for _, sc in v)
-        sr = successes / n_ep * 100 if n_ep else float("nan")
-        score = score_sum / n_ep * 100 if n_ep else float("nan")
+        metrics = aggregate_official_metrics(complete)
+        sr = metrics["average"]["success_rate"]
+        score = metrics["average"]["score"]
         official = OFFICIAL_SR.get(policy)
         table_complete = len(complete) >= OFFICIAL_CELLS
         delta = (
@@ -165,6 +269,14 @@ def main() -> int:
             "episodes": n_ep,
             "success_rate": sr,
             "score": score,
+            "dimension_metrics": {
+                name: metrics[name] for name in DIMENSIONS if name in metrics
+            },
+            "generalization_halves": aggregate_generalization_halves(
+                per_policy[policy]
+            ),
+            "micro_success_rate": metrics["micro"]["success_rate"],
+            "micro_score": metrics["micro"]["score"],
             "official_success_rate": official,
             "table_complete": table_complete,
             "delta": delta,
@@ -192,9 +304,28 @@ def main() -> int:
         )
     print("\nA reported task counts only when its full 50-episode budget is present.")
     print(
-        "`tasks` below 42 is a partial table: SR is the mean of completed cells only, "
+        "`tasks` below 42 is a partial table: dimensions use their completed cells, "
         "and delta vs the published overall rate is withheld."
     )
+    print(
+        "Leaderboard Average equally weights the five capability dimensions; "
+        "micro SR across all episodes is included only in JSON."
+    )
+
+    for policy in sorted(per_policy):
+        info = report[policy]
+        if not info["table_complete"]:
+            continue
+        print(f"\n{policy} official-style capability SR:")
+        for name in DIMENSIONS:
+            metric = info["dimension_metrics"][name]
+            print(f"  {name:16s} {metric['success_rate']:6.2f}%")
+        halves = info["generalization_halves"]
+        print(
+            "  Gen-Std / Gen-Rand "
+            f"{halves['standard']['success_rate']:.2f}% / "
+            f"{halves['random']['success_rate']:.2f}%"
+        )
 
     for policy in sorted(per_policy):
         info = report[policy]
