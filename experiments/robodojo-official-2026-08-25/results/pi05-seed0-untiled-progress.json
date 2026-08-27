@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T09:45+08",
+  "as_of": "2026-08-27T10:01+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -69,24 +69,24 @@
   "eval_clients": 8,
   "all_num_envs_5": true,
   "g05": {
-    "official_cells": 4,
+    "official_cells": 5,
     "completed_cells": {
       "play_stacking_toy": "0/50",
       "classify_objects_by_language": "0/50",
       "imitate_sorting_sequence": "0/50",
-      "classify_objects": "5/50"
+      "classify_objects": "5/50",
+      "fasten_screws": "2/50"
     },
-    "partial_table_sr_percent": 2.5,
-    "in_progress_episodes": "39/380",
-    "in_progress_sr_percent": 10.26,
+    "partial_table_sr_percent": 2.8,
+    "in_progress_episodes": "46/419",
+    "in_progress_sr_percent": 10.98,
     "near": {
-      "fasten_screws": "2/45",
       "pour_by_language": "0/45",
-      "build_tower": "12/15"
+      "build_tower": "15/20"
     },
     "gpus": {
       "0": "build_tower",
-      "1": "fasten_screws",
+      "1": "store_tools_in_toolbox",
       "2": "pour_by_language",
       "3": "cover_blocks",
       "4": "organize_table",
@@ -105,5 +105,5 @@
     "sweep_alive": false,
     "elastic": 3950295
   },
-  "note": "Pi_05 42/42 SR 10.14% vs 6.91 (+3.23). G05 4/42 partial 2.50%; do not delta vs 14.88 until 42/42. Xiaomi still gated."
+  "note": "Pi_05 42/42 SR 10.14% vs 6.91 (+3.23). G05 5/42 partial 2.80%; do not delta vs 14.88 until 42/42. Xiaomi still gated."
 }

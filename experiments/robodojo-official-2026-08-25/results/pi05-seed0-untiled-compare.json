@@ -2,17 +2,16 @@
   "policies": {
     "G05": {
       "delta": null,
-      "episodes": 200,
-      "in_progress_episodes": 380,
-      "in_progress_success_rate": 10.263157894736842,
-      "in_progress_successes": 39,
+      "episodes": 250,
+      "in_progress_episodes": 419,
+      "in_progress_success_rate": 10.978520286396181,
+      "in_progress_successes": 46,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
         "build_tower",
         "cover_blocks",
         "deposit_coin",
-        "fasten_screws",
         "fill_egg_holder",
         "fill_pen_holder",
         "fold_clothes",
@@ -49,10 +48,10 @@
       "official_success_rate": 14.88,
       "per_task": {
         "build_tower": {
-          "episodes": 15,
-          "score": 84.66666666666666,
-          "success_rate": 80.0,
-          "successes": 12
+          "episodes": 20,
+          "score": 80.5,
+          "success_rate": 75.0,
+          "successes": 15
         },
         "classify_objects": {
           "episodes": 50,
@@ -67,21 +66,21 @@
           "successes": 0
         },
         "cover_blocks": {
-          "episodes": 10,
-          "score": 18.0,
-          "success_rate": 10.0,
-          "successes": 1
+          "episodes": 20,
+          "score": 25.75,
+          "success_rate": 20.0,
+          "successes": 4
         },
         "fasten_screws": {
-          "episodes": 45,
-          "score": 26.88888888888889,
-          "success_rate": 4.444444444444445,
+          "episodes": 50,
+          "score": 26.0,
+          "success_rate": 4.0,
           "successes": 2
         },
         "fill_pen_holder": {
-          "episodes": 20,
-          "score": 50.5,
-          "success_rate": 25.0,
+          "episodes": 25,
+          "score": 46.6,
+          "success_rate": 20.0,
           "successes": 5
         },
         "imitate_sorting_sequence": {
@@ -90,10 +89,16 @@
           "success_rate": 0.0,
           "successes": 0
         },
+        "make_kong": {
+          "episodes": 4,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "organize_table": {
-          "episodes": 10,
-          "score": 52.5,
-          "success_rate": 20.0,
+          "episodes": 15,
+          "score": 48.333333333333336,
+          "success_rate": 13.333333333333334,
           "successes": 2
         },
         "play_stacking_toy": {
@@ -103,10 +108,10 @@
           "successes": 0
         },
         "play_tic_tac_toe": {
-          "episodes": 35,
-          "score": 55.85714285714286,
-          "success_rate": 34.285714285714285,
-          "successes": 12
+          "episodes": 40,
+          "score": 54.87499999999999,
+          "success_rate": 32.5,
+          "successes": 13
         },
         "pour_by_language": {
           "episodes": 45,
@@ -115,9 +120,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 4,
-      "score": 5.075,
-      "success_rate": 2.5,
+      "reported_tasks_complete": 5,
+      "score": 9.259999999999998,
+      "success_rate": 2.8000000000000003,
       "table_complete": false
     },
     "Pi_05": {
