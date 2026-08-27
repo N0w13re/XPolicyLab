@@ -1,0 +1,23 @@
+{
+  "as_of": "2026-08-27T11:46+08",
+  "policy": "Xiaomi_Robotics_1",
+  "task": "stack_bowls",
+  "eval_num": 2,
+  "seed": 0,
+  "action_type": "ee",
+  "num_envs": 5,
+  "gpu": 6,
+  "stamp": "2026-08-27_11-37-43",
+  "wall_clock_s": 577,
+  "successes": 2,
+  "episodes": 2,
+  "success_rate": 1.0,
+  "result_json": "/mnt/bn/robotics-data-mx/wenbo/RoboDojo-eval/eval_result/RoboDojo/stack_bowls/Xiaomi_Robotics_1/arx_x5/0_ckpt_name=sim,action_type=ee/2026-08-27_11-37-43/_result.json",
+  "wrist_ymax": {
+    "head": 255.0,
+    "left_wrist": 253.8,
+    "right_wrist": 252.9
+  },
+  "gate_passed": true,
+  "note": "Closed-loop smoke only. Native 42-cell table still 0/42; stack_bowls native budget remains 25+25."
+}

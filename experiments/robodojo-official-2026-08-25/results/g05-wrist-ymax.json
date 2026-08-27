@@ -86,6 +86,23 @@
         "ymax": 231.24,
         "ymean": 93.92
       }
+    },
+    "organize_table": {
+      "head": {
+        "file": "episode_0000049_cam_head_success.mp4",
+        "ymax": 252.0,
+        "ymean": 106.1
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_success.mp4",
+        "ymax": 255.0,
+        "ymean": 101.2
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_success.mp4",
+        "ymax": 255.0,
+        "ymean": 87.6
+      }
     }
   }
 }

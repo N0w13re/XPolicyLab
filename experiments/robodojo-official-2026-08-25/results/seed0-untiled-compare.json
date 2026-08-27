@@ -4,11 +4,11 @@
       "delta": null,
       "dimension_metrics": {
         "Long-Horizon": {
-          "episodes": 200,
-          "score": 26.575,
-          "success_rate": 13.0,
-          "successes": 26,
-          "tasks": 4
+          "episodes": 300,
+          "score": 30.633333333333333,
+          "success_rate": 14.333333333333334,
+          "successes": 43,
+          "tasks": 6
         },
         "Memory": {
           "episodes": 100,
@@ -32,26 +32,26 @@
           "tasks": 1
         }
       },
-      "episodes": 450,
+      "episodes": 550,
       "generalization_halves": {
         "random": {
-          "episodes": 0,
-          "score": NaN,
-          "success_rate": NaN,
+          "episodes": 5,
+          "score": 1.0,
+          "success_rate": 0.0,
           "successes": 0,
-          "tasks": 0
+          "tasks": 1
         },
         "standard": {
-          "episodes": 5,
-          "score": 45.0,
-          "success_rate": 20.0,
+          "episodes": 10,
+          "score": 25.0,
+          "success_rate": 10.0,
           "successes": 1,
           "tasks": 1
         }
       },
-      "in_progress_episodes": 595,
-      "in_progress_success_rate": 12.773109243697478,
-      "in_progress_successes": 76,
+      "in_progress_episodes": 655,
+      "in_progress_success_rate": 12.977099236641221,
+      "in_progress_successes": 85,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -63,10 +63,8 @@
         "hang_mugs",
         "insert_key",
         "insert_tubes",
-        "make_kong",
         "make_toast",
         "match_and_pick_from_conveyor",
-        "organize_table",
         "pack_objects_into_box",
         "pick_from_conveyor_by_image",
         "play_Xylophone",
@@ -87,15 +85,21 @@
         "swap_blocks",
         "sweep_blocks"
       ],
-      "micro_score": 17.1,
-      "micro_success_rate": 7.777777777777778,
+      "micro_score": 21.036363636363635,
+      "micro_success_rate": 9.454545454545455,
       "official_success_rate": 14.88,
       "per_task": {
+        "arrange_largest_number_random": {
+          "episodes": 5,
+          "score": 1.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
         "build_tower": {
-          "episodes": 40,
-          "score": 76.25,
-          "success_rate": 70.0,
-          "successes": 28
+          "episodes": 45,
+          "score": 77.33333333333333,
+          "success_rate": 71.11111111111111,
+          "successes": 32
         },
         "classify_objects": {
           "episodes": 50,
@@ -134,22 +138,28 @@
           "successes": 0
         },
         "make_kong": {
-          "episodes": 36,
-          "score": 22.22222222222222,
-          "success_rate": 22.22222222222222,
-          "successes": 8
+          "episodes": 50,
+          "score": 22.0,
+          "success_rate": 22.0,
+          "successes": 11
         },
         "make_toast": {
-          "episodes": 5,
-          "score": 45.0,
-          "success_rate": 20.0,
+          "episodes": 10,
+          "score": 25.0,
+          "success_rate": 10.0,
           "successes": 1
         },
         "organize_table": {
-          "episodes": 39,
-          "score": 53.84615384615385,
-          "success_rate": 10.256410256410255,
-          "successes": 4
+          "episodes": 50,
+          "score": 55.50000000000001,
+          "success_rate": 12.0,
+          "successes": 6
+        },
+        "pick_from_conveyor_by_image": {
+          "episodes": 10,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
         },
         "play_stacking_toy": {
           "episodes": 50,
@@ -170,15 +180,15 @@
           "successes": 0
         },
         "store_tools_in_toolbox": {
-          "episodes": 25,
+          "episodes": 35,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 9,
-      "score": 15.84375,
-      "success_rate": 6.0,
+      "reported_tasks_complete": 11,
+      "score": 16.858333333333334,
+      "success_rate": 6.333333333333334,
       "table_complete": false
     },
     "Pi_05": {
