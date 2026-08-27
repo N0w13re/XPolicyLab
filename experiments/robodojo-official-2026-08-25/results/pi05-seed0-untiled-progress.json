@@ -1,18 +1,18 @@
 {
-  "as_of": "2026-08-27T06:58+08",
+  "as_of": "2026-08-27T08:18+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 40,
+  "official_cells_complete": 41,
   "official_cells_total": 42,
-  "partial_table_sr_percent": 10.65,
-  "in_progress_sr_percent": 10.39,
-  "in_progress_episodes": "213/2050",
-  "throughput_ep_per_h": 170.8,
-  "elapsed_h": 12.0,
-  "pi05_remain_ep_est": 50,
-  "pi05_remain_h_est": 0.4,
+  "partial_table_sr_percent": 10.39,
+  "in_progress_sr_percent": 10.17,
+  "in_progress_episodes": "213/2095",
+  "throughput_ep_per_h": 157.0,
+  "elapsed_h": 13.33,
+  "pi05_remain_ep_est": 5,
+  "pi05_remain_h_est": 0.15,
   "completed_cells": {
     "build_tower": "29/50",
     "classify_objects": "9/50",
@@ -56,16 +56,43 @@
     "stack_blocks": "3/50",
     "swap_T": "0/50"
   },
+  "wrist_push_T_ep0_YMAX": {"head": 251.0, "left_wrist": 188.6, "right_wrist": 190.0},
   "wrist_swap_T_ep49_YMAX": {"head": 253, "left_wrist": 173, "right_wrist": 194},
   "incomplete_official_cells": [
     "push_T"
   ],
+  "push_T_base_episodes": 20,
+  "push_T_random_episodes": 25,
+  "eval_clients": 8,
+  "all_num_envs_5": true,
   "g05": {
     "official_cells": 0,
-    "in_progress_episodes": "4/87",
-    "running_tasks": ["imitate_sorting_sequence", "pour_by_language", "play_tic_tac_toe", "fasten_screws", "play_stacking_toy", "classify_objects_by_language", "classify_objects"],
-    "play_tic_tac_toe": "2/5"
+    "in_progress_episodes": "12/220",
+    "in_progress_sr_percent": 5.45,
+    "running_tasks": [
+      "fasten_screws",
+      "pour_by_language",
+      "imitate_sorting_sequence",
+      "classify_objects_by_language",
+      "play_stacking_toy",
+      "classify_objects",
+      "play_tic_tac_toe"
+    ]
+  },
+  "xiaomi": {
+    "official_cells": 0,
+    "remaining_gate": "stack_bowls --eval-num 2"
   },
   "pids": {"sweep": 3281259, "elastic": 3950295},
-  "note": "Partial 10.39% is mean of 41 completed Pi_05 cells; do not delta vs official 6.91 until 42/42. Xiaomi still gated."
+  "gpus": {
+    "0": "Pi_05 push_T",
+    "1": "G05 fasten_screws",
+    "2": "G05 pour_by_language",
+    "3": "G05 imitate_sorting_sequence",
+    "4": "G05 classify_objects_by_language",
+    "5": "G05 play_stacking_toy",
+    "6": "G05 classify_objects",
+    "7": "G05 play_tic_tac_toe"
+  },
+  "note": "Partial 10.39% is mean of 41 completed Pi_05 cells; do not delta vs official 6.91 until 42/42. Wrist YMAX >> 30 on push_T. Xiaomi still gated."
 }

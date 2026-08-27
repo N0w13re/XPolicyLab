@@ -3,9 +3,9 @@
     "G05": {
       "delta": null,
       "episodes": 0,
-      "in_progress_episodes": 146,
-      "in_progress_success_rate": 4.10958904109589,
-      "in_progress_successes": 6,
+      "in_progress_episodes": 220,
+      "in_progress_success_rate": 5.454545454545454,
+      "in_progress_successes": 12,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
@@ -53,43 +53,43 @@
       "official_success_rate": 14.88,
       "per_task": {
         "classify_objects": {
-          "episodes": 10,
-          "score": 27.500000000000004,
-          "success_rate": 20.0,
-          "successes": 2
+          "episodes": 20,
+          "score": 25.25,
+          "success_rate": 15.0,
+          "successes": 3
         },
         "classify_objects_by_language": {
-          "episodes": 20,
+          "episodes": 35,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         },
         "fasten_screws": {
-          "episodes": 20,
-          "score": 29.500000000000004,
-          "success_rate": 5.0,
-          "successes": 1
+          "episodes": 25,
+          "score": 31.2,
+          "success_rate": 8.0,
+          "successes": 2
         },
         "imitate_sorting_sequence": {
-          "episodes": 31,
-          "score": 0.8064516129032258,
+          "episodes": 40,
+          "score": 1.875,
           "success_rate": 0.0,
           "successes": 0
         },
         "play_stacking_toy": {
-          "episodes": 30,
-          "score": 0.33333333333333337,
+          "episodes": 45,
+          "score": 0.2222222222222222,
           "success_rate": 0.0,
           "successes": 0
         },
         "play_tic_tac_toe": {
-          "episodes": 15,
-          "score": 51.66666666666667,
-          "success_rate": 20.0,
-          "successes": 3
+          "episodes": 25,
+          "score": 54.2,
+          "success_rate": 28.000000000000004,
+          "successes": 7
         },
         "pour_by_language": {
-          "episodes": 20,
+          "episodes": 30,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -103,8 +103,8 @@
     "Pi_05": {
       "delta": null,
       "episodes": 2050,
-      "in_progress_episodes": 2075,
-      "in_progress_success_rate": 10.265060240963855,
+      "in_progress_episodes": 2095,
+      "in_progress_success_rate": 10.167064439140812,
       "in_progress_successes": 213,
       "incomplete_tasks": [
         "push_T"
@@ -323,6 +323,12 @@
         },
         "press_by_number": {
           "episodes": 50,
+          "score": 0.0,
+          "success_rate": 0.0,
+          "successes": 0
+        },
+        "push_T": {
+          "episodes": 20,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
