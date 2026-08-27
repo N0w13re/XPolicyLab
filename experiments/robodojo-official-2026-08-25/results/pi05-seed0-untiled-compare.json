@@ -3,8 +3,8 @@
     "G05": {
       "delta": null,
       "episodes": 0,
-      "in_progress_episodes": 220,
-      "in_progress_success_rate": 5.454545454545454,
+      "in_progress_episodes": 230,
+      "in_progress_success_rate": 5.217391304347826,
       "in_progress_successes": 12,
       "incomplete_tasks": [
         "align_blocks",
@@ -53,9 +53,9 @@
       "official_success_rate": 14.88,
       "per_task": {
         "classify_objects": {
-          "episodes": 20,
-          "score": 25.25,
-          "success_rate": 15.0,
+          "episodes": 25,
+          "score": 22.0,
+          "success_rate": 12.0,
           "successes": 3
         },
         "classify_objects_by_language": {
@@ -65,9 +65,9 @@
           "successes": 0
         },
         "fasten_screws": {
-          "episodes": 25,
-          "score": 31.2,
-          "success_rate": 8.0,
+          "episodes": 30,
+          "score": 26.666666666666668,
+          "success_rate": 6.666666666666667,
           "successes": 2
         },
         "imitate_sorting_sequence": {
@@ -101,14 +101,12 @@
       "table_complete": false
     },
     "Pi_05": {
-      "delta": null,
-      "episodes": 2050,
-      "in_progress_episodes": 2095,
-      "in_progress_success_rate": 10.167064439140812,
+      "delta": 3.232857142857142,
+      "episodes": 2100,
+      "in_progress_episodes": 2100,
+      "in_progress_success_rate": 10.142857142857142,
       "in_progress_successes": 213,
-      "incomplete_tasks": [
-        "push_T"
-      ],
+      "incomplete_tasks": [],
       "official_success_rate": 6.91,
       "per_task": {
         "align_blocks": {
@@ -328,7 +326,7 @@
           "successes": 0
         },
         "push_T": {
-          "episodes": 20,
+          "episodes": 25,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
@@ -436,10 +434,10 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 41,
-      "score": 15.663414634146342,
-      "success_rate": 10.390243902439025,
-      "table_complete": false
+      "reported_tasks_complete": 42,
+      "score": 15.290476190476191,
+      "success_rate": 10.142857142857142,
+      "table_complete": true
     }
   },
   "seed": 0
