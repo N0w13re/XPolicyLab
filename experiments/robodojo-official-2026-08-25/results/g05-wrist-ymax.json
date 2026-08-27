@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T14:39:00+08:00",
+  "as_of": "2026-08-27T15:44:00+08:00",
   "num_envs": 5,
   "tasks": {
     "play_tic_tac_toe": {
@@ -272,6 +272,91 @@
         "file": "episode_0000049_cam_right_wrist_fail.mp4",
         "ymax": 251.92,
         "ymean": 112.85
+      }
+    },
+    "align_blocks": {
+      "head": {
+        "file": "episode_0000049_cam_head_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 100.7
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_fail.mp4",
+        "ymax": 243.5,
+        "ymean": 95.7
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_fail.mp4",
+        "ymax": 246.9,
+        "ymean": 101.0
+      }
+    },
+    "insert_tubes": {
+      "head": {
+        "file": "episode_0000049_cam_head_fail.mp4",
+        "ymax": 253.0,
+        "ymean": 102.7
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_fail.mp4",
+        "ymax": 233.6,
+        "ymean": 98.6
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_fail.mp4",
+        "ymax": 244.6,
+        "ymean": 112.2
+      }
+    },
+    "play_Xylophone": {
+      "head": {
+        "file": "episode_0000049_cam_head_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 101.4
+      },
+      "left_wrist": {
+        "file": "episode_0000049_cam_left_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 103.9
+      },
+      "right_wrist": {
+        "file": "episode_0000049_cam_right_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 99.0
+      }
+    },
+    "arrange_largest_number": {
+      "head": {
+        "file": "episode_0000024_cam_head_fail.mp4",
+        "ymax": 250.4,
+        "ymean": 101.2
+      },
+      "left_wrist": {
+        "file": "episode_0000024_cam_left_wrist_fail.mp4",
+        "ymax": 240.6,
+        "ymean": 94.3
+      },
+      "right_wrist": {
+        "file": "episode_0000024_cam_right_wrist_fail.mp4",
+        "ymax": 240.4,
+        "ymean": 90.5
+      }
+    },
+    "sort_nesting_dolls_by_size": {
+      "head": {
+        "file": "episode_0000024_cam_head_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 100.6
+      },
+      "left_wrist": {
+        "file": "episode_0000024_cam_left_wrist_fail.mp4",
+        "ymax": 254.7,
+        "ymean": 90.5
+      },
+      "right_wrist": {
+        "file": "episode_0000024_cam_right_wrist_fail.mp4",
+        "ymax": 254.7,
+        "ymean": 92.6
       }
     }
   }

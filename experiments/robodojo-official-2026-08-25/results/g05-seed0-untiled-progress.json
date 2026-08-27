@@ -1,45 +1,48 @@
 {
-  "as_of": "2026-08-27T14:59+08",
+  "as_of": "2026-08-27T15:44+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "G05",
   "seed": 0,
   "num_envs": 5,
-  "official_cells_complete": 22,
+  "official_cells_complete": 27,
   "official_cells_total": 42,
   "table_complete": false,
-  "ours_average_sr_percent": 14.15,
+  "ours_average_sr_percent": 12.92,
   "official_sr_percent": 14.88,
   "delta": null,
   "delta_note": "Withheld until 42/42. Five-dimension partial Average is not comparable to official 14.88.",
   "dimension_sr_percent": {
-    "Generalization": 5.0,
-    "Precision": 34.67,
+    "Generalization": 3.5,
+    "Precision": 30.0,
     "Long-Horizon": 21.5,
     "Memory": 9.6,
     "Open": 0.0
   },
-  "episodes": 1100,
+  "episodes": 1350,
   "new_cells": {
-    "pack_objects_into_box": "0/50",
-    "pour_balls_into_vase": "15/50"
+    "align_blocks": "0/50",
+    "insert_tubes": "22/50",
+    "play_Xylophone": "1/50",
+    "arrange_largest_number": "0/50",
+    "sort_nesting_dolls_by_size": "2/50"
   },
   "gpus": {
-    "0": "align_blocks",
+    "0": "fold_clothes_random",
     "1": "hang_mugs_random",
-    "2": "sort_nesting_dolls_by_size",
-    "3": "play_Xylophone",
+    "2": "store_laptop_and_headphones_random",
+    "3": "pour_liquid_into_cup_random",
     "4": "stack_bowls_random",
-    "5": "insert_tubes",
+    "5": "stack_bowls",
     "6": "sweep_blocks",
-    "7": "arrange_largest_number"
+    "7": "solve_equation"
   },
   "elastic_remaining": {
     "Pi_05": 0,
-    "G05": 26,
+    "G05": 21,
     "Xiaomi_Robotics_1": 54
   },
   "all_num_envs_5": true,
   "pids": {"elastic": 2791870},
   "xiaomi": {"official_cells": 0, "gate_passed": true},
-  "note": "Pi_05 42/42 Average 10.12 vs 6.91. G05 22/42 five-dimension partial Average 14.15 (pack_objects 0/50 pulled Gen to 5%); not vs 14.88. Xiaomi native 0/42."
+  "note": "Pi_05 42/42 Average 10.12 vs 6.91. G05 27/42 five-dimension partial Average 12.92; not vs 14.88. Xiaomi native 0/42."
 }
