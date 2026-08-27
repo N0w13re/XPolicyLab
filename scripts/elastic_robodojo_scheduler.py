@@ -397,6 +397,29 @@ def main() -> int:
         pending: list[tuple[str, str, str]] = []
         per_policy_remaining: dict[str, int] = {}
         smoke_ok = xiaomi_smoke_complete(robodojo_root, args)
+        if (
+            "Xiaomi_Robotics_1" in policies
+            and not smoke_ok
+            and args.xiaomi_smoke_eval_num > 0
+        ):
+            smoke_key = ("Xiaomi_Robotics_1", args.xiaomi_smoke_task)
+            smoke_running = any(
+                j.policy == smoke_key[0] and j.task == smoke_key[1] for j in jobs
+            )
+            if (
+                smoke_key not in given_up
+                and not smoke_running
+                and smoke_key not in elsewhere
+            ):
+                # Run the two-episode compatibility gate on the next free card.
+                # Native cells keep their configured policy priority after it passes.
+                pending.append(
+                    (
+                        smoke_key[0],
+                        smoke_key[1],
+                        str(args.xiaomi_smoke_eval_num),
+                    )
+                )
         for policy in policies:
             action_type = POLICY_ACTION_TYPE.get(policy, "ee")
             remaining = 0
@@ -410,13 +433,6 @@ def main() -> int:
                     per_policy_remaining[policy] = 0
                     continue
                 remaining = 1
-                already = any(
-                    j.policy == policy and j.task == args.xiaomi_smoke_task for j in jobs
-                )
-                if not already and key not in elsewhere:
-                    pending.append(
-                        (policy, args.xiaomi_smoke_task, str(args.xiaomi_smoke_eval_num))
-                    )
                 per_policy_remaining[policy] = remaining
                 continue
             for task in order:
