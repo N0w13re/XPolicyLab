@@ -42,9 +42,9 @@
       "episodes": 1400,
       "generalization_halves": {
         "random": {
-          "episodes": 190,
-          "score": 9.289473684210526,
-          "success_rate": 4.2105263157894735,
+          "episodes": 195,
+          "score": 9.051282051282051,
+          "success_rate": 4.102564102564102,
           "successes": 8,
           "tasks": 10
         },
@@ -56,8 +56,8 @@
           "tasks": 7
         }
       },
-      "in_progress_episodes": 1525,
-      "in_progress_success_rate": 14.557377049180328,
+      "in_progress_episodes": 1530,
+      "in_progress_success_rate": 14.50980392156863,
       "in_progress_successes": 222,
       "incomplete_tasks": [
         "deposit_coin",
@@ -146,8 +146,8 @@
           "successes": 1
         },
         "hang_mugs_random": {
-          "episodes": 20,
-          "score": 3.0,
+          "episodes": 25,
+          "score": 2.4,
           "success_rate": 0.0,
           "successes": 0
         },

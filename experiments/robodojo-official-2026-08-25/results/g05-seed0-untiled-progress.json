@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T16:05+08",
+  "as_of": "2026-08-27T16:10+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "G05",
   "seed": 0,
@@ -19,12 +19,14 @@
     "Open": 0.0
   },
   "episodes": 1400,
-  "new_cells": {
-    "sweep_blocks": "0/50"
+  "paired_halves_done_awaiting_sibling": {
+    "hang_mugs_random": "0/25",
+    "stack_bowls_random": "6/25",
+    "sweep_blocks": "0/50 already merged"
   },
   "gpus": {
     "0": "fold_clothes_random",
-    "1": "hang_mugs_random",
+    "1": "swap_T",
     "2": "store_laptop_and_headphones_random",
     "3": "pour_liquid_into_cup_random",
     "4": "stack_blocks_random",
@@ -34,16 +36,14 @@
   },
   "elastic_remaining": {
     "Pi_05": 0,
-    "G05": 19,
+    "G05": 18,
     "Xiaomi_Robotics_1": 54
   },
   "all_num_envs_5": true,
   "pids": {"elastic": 2791870},
   "xiaomi": {"official_cells": 0, "gate_passed": true},
   "wrist_ymax_new": {
-    "sweep_blocks": "250/250/255",
-    "sweep_blocks_random": "243/246/240",
-    "stack_bowls_random": "245/243/251"
+    "hang_mugs_random": "254/255/255"
   },
-  "note": "Pi_05 42/42 Average 10.12 vs 6.91. G05 28/42 five-dimension partial Average 12.78; not vs 14.88. Xiaomi native 0/42."
+  "note": "Pi_05 42/42 Average 10.12 vs 6.91. G05 28/42 five-dimension partial Average 12.78; not vs 14.88. hang_mugs_random 25/25 done; hang_mugs std not started so no new official cell. Xiaomi native 0/42."
 }
