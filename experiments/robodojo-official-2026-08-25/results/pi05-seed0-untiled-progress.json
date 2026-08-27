@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T09:30+08",
+  "as_of": "2026-08-27T09:45+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -69,20 +69,20 @@
   "eval_clients": 8,
   "all_num_envs_5": true,
   "g05": {
-    "official_cells": 3,
+    "official_cells": 4,
     "completed_cells": {
       "play_stacking_toy": "0/50",
       "classify_objects_by_language": "0/50",
-      "imitate_sorting_sequence": "0/50"
+      "imitate_sorting_sequence": "0/50",
+      "classify_objects": "5/50"
     },
-    "partial_table_sr_percent": 0.0,
-    "in_progress_episodes": "36/350",
-    "in_progress_sr_percent": 10.29,
+    "partial_table_sr_percent": 2.5,
+    "in_progress_episodes": "39/380",
+    "in_progress_sr_percent": 10.26,
     "near": {
-      "classify_objects": "4/45",
-      "build_tower": "12/15",
-      "fasten_screws": "2/40",
-      "pour_by_language": "0/40"
+      "fasten_screws": "2/45",
+      "pour_by_language": "0/45",
+      "build_tower": "12/15"
     },
     "gpus": {
       "0": "build_tower",
@@ -91,7 +91,7 @@
       "3": "cover_blocks",
       "4": "organize_table",
       "5": "fill_pen_holder",
-      "6": "classify_objects",
+      "6": "make_kong",
       "7": "play_tic_tac_toe"
     },
     "wrist_ymax_json": "results/g05-wrist-ymax.json"
@@ -105,5 +105,5 @@
     "sweep_alive": false,
     "elastic": 3950295
   },
-  "note": "Pi_05 42/42 SR 10.14% vs 6.91 (+3.23). G05 3/42 (all 0/50 so far); do not delta vs 14.88 until 42/42. Xiaomi still gated."
+  "note": "Pi_05 42/42 SR 10.14% vs 6.91 (+3.23). G05 4/42 partial 2.50%; do not delta vs 14.88 until 42/42. Xiaomi still gated."
 }

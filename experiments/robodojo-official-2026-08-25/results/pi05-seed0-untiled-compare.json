@@ -2,15 +2,14 @@
   "policies": {
     "G05": {
       "delta": null,
-      "episodes": 150,
-      "in_progress_episodes": 350,
-      "in_progress_success_rate": 10.285714285714285,
-      "in_progress_successes": 36,
+      "episodes": 200,
+      "in_progress_episodes": 380,
+      "in_progress_success_rate": 10.263157894736842,
+      "in_progress_successes": 39,
       "incomplete_tasks": [
         "align_blocks",
         "arrange_largest_number",
         "build_tower",
-        "classify_objects",
         "cover_blocks",
         "deposit_coin",
         "fasten_screws",
@@ -56,10 +55,10 @@
           "successes": 12
         },
         "classify_objects": {
-          "episodes": 45,
-          "score": 16.666666666666664,
-          "success_rate": 8.88888888888889,
-          "successes": 4
+          "episodes": 50,
+          "score": 18.4,
+          "success_rate": 10.0,
+          "successes": 5
         },
         "classify_objects_by_language": {
           "episodes": 50,
@@ -68,22 +67,22 @@
           "successes": 0
         },
         "cover_blocks": {
-          "episodes": 5,
-          "score": 27.999999999999996,
-          "success_rate": 20.0,
+          "episodes": 10,
+          "score": 18.0,
+          "success_rate": 10.0,
           "successes": 1
         },
         "fasten_screws": {
-          "episodes": 40,
-          "score": 26.749999999999996,
-          "success_rate": 5.0,
+          "episodes": 45,
+          "score": 26.88888888888889,
+          "success_rate": 4.444444444444445,
           "successes": 2
         },
         "fill_pen_holder": {
-          "episodes": 15,
-          "score": 50.0,
-          "success_rate": 26.666666666666668,
-          "successes": 4
+          "episodes": 20,
+          "score": 50.5,
+          "success_rate": 25.0,
+          "successes": 5
         },
         "imitate_sorting_sequence": {
           "episodes": 50,
@@ -92,10 +91,10 @@
           "successes": 0
         },
         "organize_table": {
-          "episodes": 5,
-          "score": 45.0,
+          "episodes": 10,
+          "score": 52.5,
           "success_rate": 20.0,
-          "successes": 1
+          "successes": 2
         },
         "play_stacking_toy": {
           "episodes": 50,
@@ -110,15 +109,15 @@
           "successes": 12
         },
         "pour_by_language": {
-          "episodes": 40,
+          "episodes": 45,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 3,
-      "score": 0.6333333333333333,
-      "success_rate": 0.0,
+      "reported_tasks_complete": 4,
+      "score": 5.075,
+      "success_rate": 2.5,
       "table_complete": false
     },
     "Pi_05": {
