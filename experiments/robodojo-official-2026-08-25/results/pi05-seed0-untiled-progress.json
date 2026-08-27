@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T10:01+08",
+  "as_of": "2026-08-27T10:03+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -69,25 +69,26 @@
   "eval_clients": 8,
   "all_num_envs_5": true,
   "g05": {
-    "official_cells": 5,
+    "official_cells": 6,
     "completed_cells": {
       "play_stacking_toy": "0/50",
       "classify_objects_by_language": "0/50",
       "imitate_sorting_sequence": "0/50",
       "classify_objects": "5/50",
-      "fasten_screws": "2/50"
+      "fasten_screws": "2/50",
+      "pour_by_language": "0/50"
     },
-    "partial_table_sr_percent": 2.8,
-    "in_progress_episodes": "46/419",
-    "in_progress_sr_percent": 10.98,
+    "partial_table_sr_percent": 2.33,
+    "in_progress_episodes": "46/428",
+    "in_progress_sr_percent": 10.75,
     "near": {
-      "pour_by_language": "0/45",
-      "build_tower": "15/20"
+      "build_tower": "15/20",
+      "play_tic_tac_toe": "13/40"
     },
     "gpus": {
       "0": "build_tower",
       "1": "store_tools_in_toolbox",
-      "2": "pour_by_language",
+      "2": "make_toast",
       "3": "cover_blocks",
       "4": "organize_table",
       "5": "fill_pen_holder",
@@ -105,5 +106,5 @@
     "sweep_alive": false,
     "elastic": 3950295
   },
-  "note": "Pi_05 42/42 SR 10.14% vs 6.91 (+3.23). G05 5/42 partial 2.80%; do not delta vs 14.88 until 42/42. Xiaomi still gated."
+  "note": "Pi_05 42/42 SR 10.14% vs 6.91 (+3.23). G05 6/42 partial 2.33%; do not delta vs 14.88 until 42/42. Xiaomi still gated."
 }

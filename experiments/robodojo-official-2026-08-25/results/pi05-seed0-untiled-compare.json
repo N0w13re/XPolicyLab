@@ -2,9 +2,9 @@
   "policies": {
     "G05": {
       "delta": null,
-      "episodes": 250,
-      "in_progress_episodes": 419,
-      "in_progress_success_rate": 10.978520286396181,
+      "episodes": 300,
+      "in_progress_episodes": 428,
+      "in_progress_success_rate": 10.74766355140187,
       "in_progress_successes": 46,
       "incomplete_tasks": [
         "align_blocks",
@@ -29,7 +29,6 @@
         "play_tic_tac_toe",
         "plug_in_charger",
         "pour_balls_into_vase",
-        "pour_by_language",
         "pour_liquid_into_cup",
         "press_by_number",
         "push_T",
@@ -96,9 +95,9 @@
           "successes": 0
         },
         "organize_table": {
-          "episodes": 15,
-          "score": 48.333333333333336,
-          "success_rate": 13.333333333333334,
+          "episodes": 19,
+          "score": 43.42105263157895,
+          "success_rate": 10.526315789473683,
           "successes": 2
         },
         "play_stacking_toy": {
@@ -114,15 +113,15 @@
           "successes": 13
         },
         "pour_by_language": {
-          "episodes": 45,
+          "episodes": 50,
           "score": 0.0,
           "success_rate": 0.0,
           "successes": 0
         }
       },
-      "reported_tasks_complete": 5,
-      "score": 9.259999999999998,
-      "success_rate": 2.8000000000000003,
+      "reported_tasks_complete": 6,
+      "score": 7.716666666666666,
+      "success_rate": 2.3333333333333335,
       "table_complete": false
     },
     "Pi_05": {
