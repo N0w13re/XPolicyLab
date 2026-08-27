@@ -2,9 +2,9 @@
   "policies": {
     "G05": {
       "delta": null,
-      "episodes": 0,
-      "in_progress_episodes": 235,
-      "in_progress_success_rate": 5.106382978723404,
+      "episodes": 50,
+      "in_progress_episodes": 249,
+      "in_progress_success_rate": 4.819277108433735,
       "in_progress_successes": 12,
       "incomplete_tasks": [
         "align_blocks",
@@ -30,7 +30,6 @@
         "pack_objects_into_box",
         "pick_from_conveyor_by_image",
         "play_Xylophone",
-        "play_stacking_toy",
         "play_tic_tac_toe",
         "plug_in_charger",
         "pour_balls_into_vase",
@@ -53,9 +52,9 @@
       "official_success_rate": 14.88,
       "per_task": {
         "classify_objects": {
-          "episodes": 25,
-          "score": 22.0,
-          "success_rate": 12.0,
+          "episodes": 30,
+          "score": 18.833333333333336,
+          "success_rate": 10.0,
           "successes": 3
         },
         "classify_objects_by_language": {
@@ -71,14 +70,14 @@
           "successes": 2
         },
         "imitate_sorting_sequence": {
-          "episodes": 40,
-          "score": 1.875,
+          "episodes": 44,
+          "score": 1.8181818181818183,
           "success_rate": 0.0,
           "successes": 0
         },
         "play_stacking_toy": {
-          "episodes": 45,
-          "score": 0.2222222222222222,
+          "episodes": 50,
+          "score": 0.2,
           "success_rate": 0.0,
           "successes": 0
         },
@@ -95,9 +94,9 @@
           "successes": 0
         }
       },
-      "reported_tasks_complete": 0,
-      "score": NaN,
-      "success_rate": NaN,
+      "reported_tasks_complete": 1,
+      "score": 0.2,
+      "success_rate": 0.0,
       "table_complete": false
     },
     "Pi_05": {

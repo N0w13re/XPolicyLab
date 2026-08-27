@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-27T08:31+08",
+  "as_of": "2026-08-27T08:34+08",
   "run_id": "2026-08-26_18-57-47_smoke",
   "policy": "Pi_05",
   "seed": 0,
@@ -69,17 +69,19 @@
   "eval_clients": 8,
   "all_num_envs_5": true,
   "g05": {
-    "official_cells": 0,
-    "in_progress_episodes": "12/235",
-    "in_progress_sr_percent": 5.11,
-    "gpu0_next": "build_tower",
+    "official_cells": 1,
+    "first_cell": "play_stacking_toy 0/50",
+    "partial_table_sr_percent": 0.0,
+    "in_progress_episodes": "12/240",
+    "in_progress_sr_percent": 5.0,
+    "gpu0": "build_tower",
+    "wrist_ymax_json": "results/g05-wrist-ymax.json",
     "running_tasks": [
       "build_tower",
       "fasten_screws",
       "pour_by_language",
       "imitate_sorting_sequence",
       "classify_objects_by_language",
-      "play_stacking_toy",
       "classify_objects",
       "play_tic_tac_toe"
     ]
@@ -93,5 +95,5 @@
     "sweep_alive": false,
     "elastic": 3950295
   },
-  "note": "Pi_05 seed-0 42/42 closed-loop SR 10.14% vs official 6.91 (delta +3.23, within 5 abs). Sweep released 08:27; GPU0 now G05 build_tower. G05/Xiaomi tables not complete."
+  "note": "Pi_05 42/42 SR 10.14% vs 6.91 (+3.23). G05 1/42 (play_stacking_toy 0/50); do not delta vs 14.88 until 42/42. Xiaomi still gated."
 }

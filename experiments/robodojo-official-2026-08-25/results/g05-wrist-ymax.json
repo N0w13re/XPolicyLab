@@ -1,0 +1,57 @@
+{
+  "as_of": "2026-08-27T08:33:57+08:00",
+  "num_envs": 5,
+  "tasks": {
+    "play_tic_tac_toe": {
+      "head": {
+        "file": "episode_0000000_cam_head_success.mp4",
+        "ymax": 253.6,
+        "ymean": 96.3
+      },
+      "left_wrist": {
+        "file": "episode_0000000_cam_left_wrist_success.mp4",
+        "ymax": 255.0,
+        "ymean": 98.8
+      },
+      "right_wrist": {
+        "file": "episode_0000000_cam_right_wrist_success.mp4",
+        "ymax": 255.0,
+        "ymean": 96.6
+      }
+    },
+    "classify_objects": {
+      "head": {
+        "file": "episode_0000000_cam_head_fail.mp4",
+        "ymax": 250.4,
+        "ymean": 97.8
+      },
+      "left_wrist": {
+        "file": "episode_0000000_cam_left_wrist_fail.mp4",
+        "ymax": 255.0,
+        "ymean": 109.8
+      },
+      "right_wrist": {
+        "file": "episode_0000000_cam_right_wrist_fail.mp4",
+        "ymax": 250.9,
+        "ymean": 86.7
+      }
+    },
+    "fasten_screws": {
+      "head": {
+        "file": "episode_0000000_cam_head_fail.mp4",
+        "ymax": 253.0,
+        "ymean": 97.5
+      },
+      "left_wrist": {
+        "file": "episode_0000000_cam_left_wrist_fail.mp4",
+        "ymax": 166.7,
+        "ymean": 91.6
+      },
+      "right_wrist": {
+        "file": "episode_0000000_cam_right_wrist_fail.mp4",
+        "ymax": 242.1,
+        "ymean": 98.6
+      }
+    }
+  }
+}
