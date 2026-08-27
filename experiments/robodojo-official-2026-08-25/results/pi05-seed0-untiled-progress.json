@@ -119,7 +119,7 @@
   "pids": {
     "sweep": 3281259,
     "sweep_alive": false,
-    "elastic": 3950295
+    "elastic": 2791870
   },
   "note": "Pi_05 42/42 official-style Average SR 10.12% vs 6.91 (+3.21); micro SR 10.14%. G05 9/42 partial four-dimension Average 6.00%; do not delta vs 14.88 until 42/42. Xiaomi still gated."
 }

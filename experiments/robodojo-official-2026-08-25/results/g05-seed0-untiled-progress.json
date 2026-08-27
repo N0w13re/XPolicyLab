@@ -53,11 +53,12 @@
   "wrist_ymax_json": "results/g05-wrist-ymax.json",
   "all_num_envs_5": true,
   "pids": {
-    "elastic": 3950295
+    "elastic": 2791870
   },
   "xiaomi": {
     "official_cells": 0,
-    "remaining_gate": "stack_bowls --eval-num 2"
+    "remaining_gate": "stack_bowls --eval-num 2",
+    "gate_priority": "next free GPU before remaining G05 native tasks"
   },
   "note": "Pi_05 42/42 official Average 10.12 vs 6.91 (+3.21). G05 9/42 partial Average 6.00; do not delta vs 14.88. Xiaomi gated."
 }
