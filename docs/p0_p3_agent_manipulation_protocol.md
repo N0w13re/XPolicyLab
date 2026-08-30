@@ -176,6 +176,14 @@ simulator action. If a close→open object-release transition occurs inside a
 Pi_05 chunk, the unused tail of that chunk is discarded so the next target is
 localized and hovered before a fresh chunk is requested.
 
+**Executable boundary:** snapshot every action chunk immediately after
+`get_action` / `get_action_batch`. Every action field sent during that chunk
+must be byte-for-byte equivalent to the snapshot. P1 may stop and discard the
+unused tail of a chunk, but it may not change arm joints, EE poses, grippers, or
+any other action field. Guidance actions are allowed only between chunks and
+must preserve the observed gripper channels. A condition that violates either
+rule is P2, regardless of its adapter name.
+
 ### P3 — Retrain VLA on subgoals, then agent-call (appendix)
 
 Segment demos and train on fine-grained instructions, then let the agent invoke

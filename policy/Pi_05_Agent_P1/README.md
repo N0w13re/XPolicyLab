@@ -6,6 +6,12 @@ episode instruction remain unchanged. A Qwen3-VL locator grounds the language in
 into hover poses. Pi_05 controls grasping, lifting, releasing, and everything
 else in the chunk.
 
+This boundary is enforced at runtime: each Pi_05 chunk is snapshotted when it
+arrives, and every action field is checked before it is sent. P1 may interrupt
+and discard a chunk tail, but cannot rewrite arm joints, EE poses, grippers, or
+any other field. Guidance actions run only between chunks and preserve the
+observed gripper channels.
+
 Language is grounded at both ends of a pick-and-place, because
 `classify_objects_by_language` needs both:
 

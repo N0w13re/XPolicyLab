@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import copy
 import json
 import os
 from typing import Any, Mapping
@@ -1126,6 +1127,34 @@ def _prime_batch(task_env: Any, env_idx_list: list[int] | None = None, mapper: T
             _log_hover_error(observation, arm, hover_xyz, env_idx=env_idx)
 
 
+def _freeze_policy_actions(actions: Any) -> Any:
+    """Snapshot a Pi_05 chunk at the model boundary.
+
+    P1 may interrupt a chunk, but it must never rewrite an action inside it.
+    """
+    return copy.deepcopy(actions)
+
+
+def _assert_policy_action_unchanged(
+    action: Mapping[str, Any],
+    frozen_action: Mapping[str, Any],
+) -> None:
+    """Fail closed if P1 rewrites any field produced by Pi_05."""
+    if action.keys() != frozen_action.keys():
+        raise RuntimeError("P1 must forward every Pi_05 action field unchanged")
+    for key in action:
+        current = np.asarray(action[key])
+        frozen = np.asarray(frozen_action[key])
+        if (
+            current.shape != frozen.shape
+            or current.dtype != frozen.dtype
+            or current.tobytes() != frozen.tobytes()
+        ):
+            raise RuntimeError(
+                f"P1 modified Pi_05 action field {key!r} inside a policy chunk"
+            )
+
+
 def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
     model_client.call(func_name="reset")
     calibration_enabled = _enable_camera_calibration(TASK_ENV)
@@ -1139,7 +1168,9 @@ def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
         obs = TASK_ENV.get_obs()
         model_client.call(func_name="update_obs", obs=obs)
         actions = model_client.call(func_name="get_action")
+        frozen_actions = _freeze_policy_actions(actions)
         for action_idx, action in enumerate(actions):
+            _assert_policy_action_unchanged(action, frozen_actions[action_idx])
             TASK_ENV.take_action(action)
             if TASK_ENV.is_episode_end() or action_idx + 1 == len(actions):
                 break
@@ -1177,10 +1208,18 @@ def eval_one_episode_batch(TASK_ENV: Any, model_client: Any) -> None:
         obs_list = TASK_ENV.get_obs_batch(env_idx_list)
         model_client.call(func_name="update_obs_batch", obs=obs_list)
         actions = model_client.call(func_name="get_action_batch", obs=env_idx_list)
+        frozen_actions = _freeze_policy_actions(actions)
 
         chunk_size = len(actions[0])
         for action_idx in range(chunk_size):
             current_action_list = [env_actions[action_idx] for env_actions in actions]
+            frozen_action_list = [
+                env_actions[action_idx] for env_actions in frozen_actions
+            ]
+            for action, frozen_action in zip(
+                current_action_list, frozen_action_list
+            ):
+                _assert_policy_action_unchanged(action, frozen_action)
             TASK_ENV.take_action_batch(current_action_list, env_idx_list)
             if TASK_ENV.is_episode_end() or action_idx + 1 == chunk_size:
                 break
@@ -1188,6 +1227,7 @@ def eval_one_episode_batch(TASK_ENV: Any, model_client: Any) -> None:
             running = set(TASK_ENV.get_running_env_idx_list())
             active_batch_idx = [i for i, env_idx in enumerate(env_idx_list) if env_idx in running]
             actions = [actions[i] for i in active_batch_idx]
+            frozen_actions = [frozen_actions[i] for i in active_batch_idx]
             env_idx_list = [env_idx_list[i] for i in active_batch_idx]
             if not env_idx_list:
                 break

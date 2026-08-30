@@ -529,3 +529,50 @@ def test_no_guidance_action_ever_commands_a_gripper(monkeypatch) -> None:
     # Final reset, which previously forced both grippers open.
     action, _, _ = _make_reset_action(_FakeTaskEnv(), 0, carrying)
     _assert_grippers_untouched(action, carrying)
+
+
+def test_policy_chunk_guard_accepts_exact_pi05_action() -> None:
+    from XPolicyLab.policy.Pi_05_Agent_P1.deploy import (
+        _assert_policy_action_unchanged,
+        _freeze_policy_actions,
+    )
+
+    actions = [
+        {
+            "left_arm_joint_state": np.array([0.1, 0.2], dtype=np.float32),
+            "left_ee_joint_state": np.array([0.7], dtype=np.float32),
+        }
+    ]
+    frozen = _freeze_policy_actions(actions)
+
+    _assert_policy_action_unchanged(actions[0], frozen[0])
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda action: action["left_arm_joint_state"].__setitem__(0, 9.0),
+        lambda action: action["left_ee_joint_state"].__setitem__(0, 0.0),
+        lambda action: action.__setitem__(
+            "left_ee_pose",
+            np.zeros(7, dtype=np.float32),
+        ),
+    ],
+)
+def test_policy_chunk_guard_rejects_any_rewrite(mutation) -> None:
+    from XPolicyLab.policy.Pi_05_Agent_P1.deploy import (
+        _assert_policy_action_unchanged,
+        _freeze_policy_actions,
+    )
+
+    actions = [
+        {
+            "left_arm_joint_state": np.array([0.1, 0.2], dtype=np.float32),
+            "left_ee_joint_state": np.array([0.7], dtype=np.float32),
+        }
+    ]
+    frozen = _freeze_policy_actions(actions)
+    mutation(actions[0])
+
+    with pytest.raises(RuntimeError, match="P1"):
+        _assert_policy_action_unchanged(actions[0], frozen[0])
