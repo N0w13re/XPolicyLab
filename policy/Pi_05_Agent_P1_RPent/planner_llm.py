@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import random
 import time
 from typing import Any
 from uuid import uuid4
@@ -13,6 +14,58 @@ DEFAULT_GPT_ENDPOINT = "https://aidp.bytedance.net/api/modelhub/online/v2/crawl"
 DEFAULT_GPT_API_VERSION = "2024-03-01-preview"
 DEFAULT_GPT_MODEL = "gpt-5.5-2026-04-24"
 QWEN_ONLY_CHAT_KEYS = ("enable_thinking",)
+
+# AIDP answers a busy vendor pool with HTTP 429 that can persist for minutes, so
+# the ladder is capped per attempt and bounded in total rather than short.
+DEFAULT_GPT_MAX_RETRIES = 12
+DEFAULT_GPT_RETRY_CAP_S = 120.0
+DEFAULT_GPT_RETRY_BUDGET_S = 1800.0
+DEFAULT_GPT_RETRY_JITTER = 0.1
+TRANSIENT_ERROR_HINTS = (
+    "apiconnectionerror",
+    "apitimeouterror",
+    "connectionerror",
+    "internalservererror",
+    "timeout",
+)
+
+
+def _status_code(error: Exception) -> int | None:
+    status = getattr(error, "status_code", None)
+    if isinstance(status, int):
+        return status
+    response = getattr(error, "response", None)
+    status = getattr(response, "status_code", None)
+    return status if isinstance(status, int) else None
+
+
+def _retry_after_seconds(error: Exception) -> float | None:
+    response = getattr(error, "response", None)
+    headers = getattr(response, "headers", None)
+    if headers is None:
+        return None
+    try:
+        raw = headers.get("retry-after") or headers.get("Retry-After")
+    except AttributeError:
+        return None
+    if raw is None:
+        return None
+    try:
+        seconds = float(raw)
+    except (TypeError, ValueError):
+        return None
+    return seconds if seconds >= 0 else None
+
+
+def _is_retryable(error: Exception) -> bool:
+    status = _status_code(error)
+    if status is not None:
+        return status == 429 or 500 <= status < 600
+    # Transport failures carry no status; the request never reached the model.
+    if isinstance(error, (TimeoutError, ConnectionError)):
+        return True
+    name = type(error).__name__.lower()
+    return any(hint in name for hint in TRANSIENT_ERROR_HINTS)
 
 
 def qwen_api_key() -> str:
@@ -80,7 +133,42 @@ class AzureOpenAIPlannerClient:
             or DEFAULT_GPT_MODEL
         )
         self.logid = os.environ.get("RPENT_GPT_LOGID", "").strip() or uuid4().hex
-        self.max_retries = max(0, int(os.environ.get("RPENT_GPT_MAX_RETRIES", "8")))
+        self.max_retries = max(
+            0,
+            int(
+                os.environ.get("RPENT_GPT_MAX_RETRIES", str(DEFAULT_GPT_MAX_RETRIES))
+            ),
+        )
+        self.retry_cap_s = max(
+            0.0,
+            float(
+                os.environ.get("RPENT_GPT_RETRY_CAP_S", str(DEFAULT_GPT_RETRY_CAP_S))
+            ),
+        )
+        self.retry_budget_s = max(
+            0.0,
+            float(
+                os.environ.get(
+                    "RPENT_GPT_RETRY_BUDGET_S", str(DEFAULT_GPT_RETRY_BUDGET_S)
+                )
+            ),
+        )
+        self.retry_jitter = max(
+            0.0,
+            float(
+                os.environ.get("RPENT_GPT_RETRY_JITTER", str(DEFAULT_GPT_RETRY_JITTER))
+            ),
+        )
+
+    def _retry_delay(self, attempt: int, error: Exception) -> float:
+        """Vendor-requested delay when offered, else capped exponential backoff."""
+        retry_after = _retry_after_seconds(error)
+        if retry_after is not None:
+            return retry_after
+        delay = min(self.retry_cap_s, 2.0**attempt)
+        if self.retry_jitter:
+            delay += delay * random.uniform(0.0, self.retry_jitter)
+        return delay
 
     def available(self) -> bool:
         return bool(self.api_key)
@@ -133,6 +221,7 @@ class AzureOpenAIPlannerClient:
         headers.setdefault("X-TT-LOGID", self.logid)
         payload["extra_headers"] = headers
         last_error: Exception | None = None
+        waited_s = 0.0
         for attempt in range(self.max_retries + 1):
             try:
                 response = self._client().chat.completions.create(**payload)
@@ -141,16 +230,23 @@ class AzureOpenAIPlannerClient:
                 return dict(response)
             except Exception as exc:
                 last_error = exc
-                status = getattr(exc, "status_code", None)
-                retryable = status == 429 or (
-                    isinstance(status, int) and 500 <= status < 600
-                )
-                if not retryable or attempt >= self.max_retries:
+                if not _is_retryable(exc) or attempt >= self.max_retries:
                     raise
-                wait_s = min(32.0, 2.0**attempt)
+                wait_s = self._retry_delay(attempt, exc)
+                if waited_s + wait_s > self.retry_budget_s:
+                    print(
+                        f"[P1-RPent] GPT retry budget {self.retry_budget_s:.0f}s "
+                        f"exhausted after {waited_s:.0f}s; giving up",
+                        flush=True,
+                    )
+                    raise
+                waited_s += wait_s
+                status = _status_code(exc)
+                reason = f"HTTP {status}" if status else type(exc).__name__
                 print(
                     f"[P1-RPent] GPT retry {attempt + 1}/{self.max_retries} "
-                    f"after HTTP {status}; sleeping {wait_s:.0f}s",
+                    f"after {reason}; sleeping {wait_s:.0f}s "
+                    f"(waited {waited_s:.0f}s/{self.retry_budget_s:.0f}s)",
                     flush=True,
                 )
                 time.sleep(wait_s)

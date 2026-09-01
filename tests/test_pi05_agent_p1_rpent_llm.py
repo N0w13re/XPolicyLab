@@ -22,6 +22,10 @@ def _clear_llm_env(monkeypatch):
         "RPENT_GPT_LOGID",
         "RPENT_GPT_MAX_TOKENS",
         "RPENT_GPT_TEMPERATURE",
+        "RPENT_GPT_MAX_RETRIES",
+        "RPENT_GPT_RETRY_CAP_S",
+        "RPENT_GPT_RETRY_BUDGET_S",
+        "RPENT_GPT_RETRY_JITTER",
         "QWEN_MODEL",
         "QWEN_BASE_URL",
     ):
@@ -213,6 +217,173 @@ def test_azure_client_retries_rate_limit_then_succeeds(monkeypatch):
     assert captured["calls"] == 2
     assert slept == [1.0]
     assert result["choices"][0]["message"]["content"] == '{"label": "ok"}'
+
+
+def _install_flaky_openai(monkeypatch, captured, failures):
+    """Fail the first len(failures) calls, then return a normal response."""
+    fake_openai = _install_fake_openai(monkeypatch, captured)
+    good_response = fake_openai.AzureOpenAI().chat.completions.create
+    captured["calls"] = 0
+
+    def flaky_create(**kwargs):
+        index = captured["calls"]
+        captured["calls"] += 1
+        if index < len(failures):
+            raise failures[index]
+        return good_response(**kwargs)
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            return flaky_create(**kwargs)
+
+    class FakeChat:
+        completions = FakeCompletions()
+
+    class FakeAzureOpenAI:
+        def __init__(self, **kwargs):
+            captured["init"] = kwargs
+            self.chat = FakeChat()
+
+    fake_openai.AzureOpenAI = FakeAzureOpenAI
+    return fake_openai
+
+
+def _rate_limit_error(retry_after=None):
+    class RateLimitError(Exception):
+        status_code = 429
+
+    error = RateLimitError("vendor resource pool exhausted")
+    if retry_after is not None:
+        error.response = types.SimpleNamespace(
+            headers={"retry-after": str(retry_after)}
+        )
+    return error
+
+
+def test_azure_client_waits_for_retry_after_header(monkeypatch):
+    _clear_llm_env(monkeypatch)
+    monkeypatch.setenv("RPENT_GPT_API_KEY", "gpt-test-key")
+    monkeypatch.setenv("RPENT_GPT_RETRY_JITTER", "0")
+    slept = []
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm.time.sleep",
+        lambda seconds: slept.append(seconds),
+    )
+    captured = {}
+    _install_flaky_openai(monkeypatch, captured, [_rate_limit_error(retry_after=45)])
+
+    from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm import (
+        AzureOpenAIPlannerClient,
+    )
+
+    AzureOpenAIPlannerClient().chat([{"role": "user", "content": "hi"}])
+    assert slept == [45.0]
+
+
+def test_azure_client_retries_transient_connection_errors(monkeypatch):
+    _clear_llm_env(monkeypatch)
+    monkeypatch.setenv("RPENT_GPT_API_KEY", "gpt-test-key")
+    monkeypatch.setenv("RPENT_GPT_RETRY_JITTER", "0")
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm.time.sleep",
+        lambda seconds: None,
+    )
+
+    class APIConnectionError(Exception):
+        """No status_code, mirroring the openai SDK transport error."""
+
+    captured = {}
+    _install_flaky_openai(
+        monkeypatch,
+        captured,
+        [APIConnectionError("connection reset"), TimeoutError("read timeout")],
+    )
+
+    from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm import (
+        AzureOpenAIPlannerClient,
+    )
+
+    result = AzureOpenAIPlannerClient().chat([{"role": "user", "content": "hi"}])
+    assert captured["calls"] == 3
+    assert result["choices"][0]["message"]["content"] == '{"label": "ok"}'
+
+
+def test_azure_client_backoff_is_capped_for_long_outages(monkeypatch):
+    _clear_llm_env(monkeypatch)
+    monkeypatch.setenv("RPENT_GPT_API_KEY", "gpt-test-key")
+    monkeypatch.setenv("RPENT_GPT_MAX_RETRIES", "8")
+    monkeypatch.setenv("RPENT_GPT_RETRY_CAP_S", "60")
+    monkeypatch.setenv("RPENT_GPT_RETRY_JITTER", "0")
+    slept = []
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm.time.sleep",
+        lambda seconds: slept.append(seconds),
+    )
+    captured = {}
+    _install_flaky_openai(
+        monkeypatch, captured, [_rate_limit_error() for _ in range(8)]
+    )
+
+    from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm import (
+        AzureOpenAIPlannerClient,
+    )
+
+    AzureOpenAIPlannerClient().chat([{"role": "user", "content": "hi"}])
+    assert slept == [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 60.0, 60.0]
+    # A capped-but-long ladder must survive a multi-minute vendor outage.
+    assert sum(slept) >= 180.0
+
+
+def test_azure_client_stops_retrying_once_wait_budget_is_spent(monkeypatch):
+    _clear_llm_env(monkeypatch)
+    monkeypatch.setenv("RPENT_GPT_API_KEY", "gpt-test-key")
+    monkeypatch.setenv("RPENT_GPT_MAX_RETRIES", "50")
+    monkeypatch.setenv("RPENT_GPT_RETRY_CAP_S", "10")
+    monkeypatch.setenv("RPENT_GPT_RETRY_BUDGET_S", "25")
+    monkeypatch.setenv("RPENT_GPT_RETRY_JITTER", "0")
+    slept = []
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm.time.sleep",
+        lambda seconds: slept.append(seconds),
+    )
+    captured = {}
+    _install_flaky_openai(
+        monkeypatch, captured, [_rate_limit_error() for _ in range(50)]
+    )
+
+    from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm import (
+        AzureOpenAIPlannerClient,
+    )
+
+    with pytest.raises(Exception) as excinfo:
+        AzureOpenAIPlannerClient().chat([{"role": "user", "content": "hi"}])
+    assert sum(slept) <= 25.0
+    assert "429" in str(excinfo.value) or "resource pool" in str(excinfo.value)
+
+
+def test_azure_client_does_not_retry_client_errors(monkeypatch):
+    _clear_llm_env(monkeypatch)
+    monkeypatch.setenv("RPENT_GPT_API_KEY", "gpt-test-key")
+    slept = []
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm.time.sleep",
+        lambda seconds: slept.append(seconds),
+    )
+
+    class BadRequestError(Exception):
+        status_code = 400
+
+    captured = {}
+    _install_flaky_openai(monkeypatch, captured, [BadRequestError("bad tool schema")])
+
+    from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm import (
+        AzureOpenAIPlannerClient,
+    )
+
+    with pytest.raises(BadRequestError):
+        AzureOpenAIPlannerClient().chat([{"role": "user", "content": "hi"}])
+    assert captured["calls"] == 1
+    assert slept == []
 
 
 def test_deploy_uses_factory_client(monkeypatch):
