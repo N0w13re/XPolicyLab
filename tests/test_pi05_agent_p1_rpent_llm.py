@@ -175,6 +175,7 @@ def test_azure_client_retries_rate_limit_then_succeeds(monkeypatch):
     _clear_llm_env(monkeypatch)
     monkeypatch.setenv("RPENT_GPT_API_KEY", "gpt-test-key")
     monkeypatch.setenv("RPENT_GPT_MAX_RETRIES", "2")
+    monkeypatch.setenv("RPENT_GPT_RETRY_JITTER", "0")
     captured = {"calls": 0}
     slept = []
     monkeypatch.setattr(
