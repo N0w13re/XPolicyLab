@@ -167,6 +167,54 @@ def test_azure_client_omits_qwen_thinking_and_default_temperature(monkeypatch):
     assert "temperature" not in create
 
 
+def test_azure_client_retries_rate_limit_then_succeeds(monkeypatch):
+    _clear_llm_env(monkeypatch)
+    monkeypatch.setenv("RPENT_GPT_API_KEY", "gpt-test-key")
+    monkeypatch.setenv("RPENT_GPT_MAX_RETRIES", "2")
+    captured = {"calls": 0}
+    slept = []
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm.time.sleep",
+        lambda seconds: slept.append(seconds),
+    )
+
+    class RateLimitError(Exception):
+        status_code = 429
+
+    fake_openai = _install_fake_openai(monkeypatch, captured)
+    original_create = fake_openai.AzureOpenAI().chat.completions.create
+
+    def flaky_create(**kwargs):
+        captured["calls"] += 1
+        if captured["calls"] == 1:
+            raise RateLimitError("pool exhausted")
+        return original_create(**kwargs)
+
+    fake_openai.AzureOpenAI().chat.completions.create = flaky_create
+    # Patch the class method used by new client instances.
+    class FakeCompletions:
+        def create(self, **kwargs):
+            return flaky_create(**kwargs)
+
+    class FakeChat:
+        completions = FakeCompletions()
+
+    class FakeAzureOpenAI:
+        def __init__(self, **kwargs):
+            captured["init"] = kwargs
+            self.chat = FakeChat()
+
+    fake_openai.AzureOpenAI = FakeAzureOpenAI
+    from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm import (
+        AzureOpenAIPlannerClient,
+    )
+
+    result = AzureOpenAIPlannerClient().chat([{"role": "user", "content": "hi"}])
+    assert captured["calls"] == 2
+    assert slept == [1.0]
+    assert result["choices"][0]["message"]["content"] == '{"label": "ok"}'
+
+
 def test_deploy_uses_factory_client(monkeypatch):
     _clear_llm_env(monkeypatch)
     monkeypatch.setenv("RPENT_LLM_BACKEND", "gpt")

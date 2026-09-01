@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import time
 from typing import Any
 from uuid import uuid4
 
@@ -79,6 +80,7 @@ class AzureOpenAIPlannerClient:
             or DEFAULT_GPT_MODEL
         )
         self.logid = os.environ.get("RPENT_GPT_LOGID", "").strip() or uuid4().hex
+        self.max_retries = max(0, int(os.environ.get("RPENT_GPT_MAX_RETRIES", "8")))
 
     def available(self) -> bool:
         return bool(self.api_key)
@@ -130,10 +132,29 @@ class AzureOpenAIPlannerClient:
         headers = dict(payload.pop("extra_headers", {}) or {})
         headers.setdefault("X-TT-LOGID", self.logid)
         payload["extra_headers"] = headers
-        response = self._client().chat.completions.create(**payload)
-        if hasattr(response, "model_dump"):
-            return response.model_dump()
-        return dict(response)
+        last_error: Exception | None = None
+        for attempt in range(self.max_retries + 1):
+            try:
+                response = self._client().chat.completions.create(**payload)
+                if hasattr(response, "model_dump"):
+                    return response.model_dump()
+                return dict(response)
+            except Exception as exc:
+                last_error = exc
+                status = getattr(exc, "status_code", None)
+                retryable = status == 429 or (
+                    isinstance(status, int) and 500 <= status < 600
+                )
+                if not retryable or attempt >= self.max_retries:
+                    raise
+                wait_s = min(32.0, 2.0**attempt)
+                print(
+                    f"[P1-RPent] GPT retry {attempt + 1}/{self.max_retries} "
+                    f"after HTTP {status}; sleeping {wait_s:.0f}s",
+                    flush=True,
+                )
+                time.sleep(wait_s)
+        raise RuntimeError(f"GPT request failed: {last_error}") from last_error
 
     def message_text_and_tools(
         self, result: dict[str, Any]
