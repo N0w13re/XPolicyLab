@@ -17,6 +17,7 @@ from .prompt_versions import (
     rpent_v1_system_prompt,
     rpent_v1_user_prompt,
 )
+from .planner_llm import AzureOpenAIPlannerClient
 from .qwen_client import QwenClient
 from .resources import (
     list_resource_dir,
@@ -351,7 +352,11 @@ def _tool_message(tool_call_id: str, name: str, result: dict[str, Any]) -> dict[
 
 
 class RpentPlanner:
-    def __init__(self, primitives: RpentPrimitives, qwen: QwenClient | None = None):
+    def __init__(
+        self,
+        primitives: RpentPrimitives,
+        qwen: QwenClient | AzureOpenAIPlannerClient | None = None,
+    ):
         self.primitives = primitives
         self.qwen = qwen or primitives.qwen
         self.max_turns = max(1, int(os.environ.get("RPENT_MAX_TURNS", "120")))

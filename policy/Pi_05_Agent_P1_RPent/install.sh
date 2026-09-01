@@ -11,5 +11,5 @@ fi
 bash "${SCRIPT_DIR}/../Pi_05/install.sh"
 uv pip install \
     --python "${SCRIPT_DIR}/../Pi_05/openpi/.venv/bin/python" \
-    pillow websocket-client
+    pillow websocket-client openai
 echo "[INSTALL] Pi_05_Agent_P1_RPent uses Pi_05's uv environment."

@@ -34,7 +34,18 @@ cleanup() {
 }
 trap cleanup EXIT
 
+_rpent_backend="$(printf '%s' "${RPENT_LLM_BACKEND:-}" | tr '[:upper:]' '[:lower:]')"
+_rpent_has_gpt_key="${RPENT_GPT_API_KEY:-${AZURE_OPENAI_API_KEY:-}}"
+_rpent_skip_local_qwen=0
+case "${_rpent_backend}" in
+    azure|azure_openai|gpt|openai) _rpent_skip_local_qwen=1 ;;
+esac
+if [[ -n "${_rpent_has_gpt_key}" && -z "${DASHSCOPE_API_KEY:-${QWEN_API_KEY:-}}" ]]; then
+    _rpent_skip_local_qwen=1
+fi
+
 if [[ "${EVAL_ENV_TYPE:-sim}" != "debug" ]] \
+    && [[ "${_rpent_skip_local_qwen}" -eq 0 ]] \
     && [[ -z "${DASHSCOPE_API_KEY:-${QWEN_API_KEY:-}}" ]]; then
     # shellcheck source=start_local_qwen.sh
     source "${SCRIPT_DIR}/start_local_qwen.sh"

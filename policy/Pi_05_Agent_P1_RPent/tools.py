@@ -26,7 +26,6 @@ from .geometry import (
     sample_world_xyz as sample_xyz,
 )
 from .manipulation import ManipulationLedger
-from .qwen_client import QwenClient
 from .robot_profile import (
     pregrasp_quaternion,
 )
@@ -208,7 +207,7 @@ class RpentPrimitives:
         self,
         task_env: Any,
         model_client: Any,
-        qwen: QwenClient,
+        qwen: Any,
         env_idx: int = 0,
         trace: EpisodeTrace | None = None,
     ) -> None:
@@ -372,7 +371,10 @@ class RpentPrimitives:
             parts.append(
                 {
                     "type": "image_url",
-                    "image_url": {"url": encode_image_data_url(image)},
+                    "image_url": {
+                        "url": encode_image_data_url(image),
+                        "detail": "auto",
+                    },
                 }
             )
         return parts
@@ -426,7 +428,10 @@ class RpentPrimitives:
                     "content": [
                         {
                             "type": "image_url",
-                            "image_url": {"url": encode_image_data_url(image)},
+                            "image_url": {
+                        "url": encode_image_data_url(image),
+                        "detail": "auto",
+                    },
                         },
                         {"type": "text", "text": user_text},
                     ],

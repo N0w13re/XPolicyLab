@@ -6,7 +6,7 @@ import os
 from typing import Any
 
 from .planner import RpentPlanner
-from .qwen_client import QwenClient
+from .planner_llm import create_planner_llm
 from .tools import RpentPrimitives, enable_camera_calibration
 
 
@@ -52,9 +52,9 @@ def _passthrough_pi05(task_env: Any, model_client: Any) -> None:
 def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
     model_client.call(func_name="reset")
     enable_camera_calibration(TASK_ENV)
-    qwen = QwenClient()
+    qwen = create_planner_llm()
     if not qwen.available() and os.environ.get("EVAL_ENV_TYPE") == "debug":
-        print("[P1-RPent] debug fallback: no Qwen key, Pi_05 passthrough", flush=True)
+        print("[P1-RPent] debug fallback: no planner LLM key, Pi_05 passthrough", flush=True)
         _passthrough_pi05(TASK_ENV, model_client)
         return
     primitives = RpentPrimitives(TASK_ENV, model_client, qwen)
@@ -73,9 +73,9 @@ def eval_one_episode_batch(TASK_ENV: Any, model_client: Any) -> None:
     """Single-env planner loop; layout-18 probes use --num-envs 1."""
     model_client.call(func_name="reset")
     enable_camera_calibration(TASK_ENV)
-    qwen = QwenClient()
+    qwen = create_planner_llm()
     if not qwen.available() and os.environ.get("EVAL_ENV_TYPE") == "debug":
-        print("[P1-RPent] debug fallback: no Qwen key, Pi_05 passthrough", flush=True)
+        print("[P1-RPent] debug fallback: no planner LLM key, Pi_05 passthrough", flush=True)
         while not TASK_ENV.is_episode_end():
             env_idx_list = TASK_ENV.get_running_env_idx_list()
             if not env_idx_list:

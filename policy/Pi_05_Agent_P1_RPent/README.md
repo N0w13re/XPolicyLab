@@ -120,13 +120,18 @@ cd XPolicyLab/policy/Pi_05_Agent_P1_RPent
 bash install.sh
 ```
 
-The adapter has no additional model dependencies beyond Pi_05. Qwen is called
-through the standard library HTTP client.
+The adapter has no additional model dependencies beyond Pi_05 and, for the
+Azure GPT backend, the `openai` package. Qwen is called through the standard
+library HTTP client; GPT uses `AzureOpenAI`.
 
-## Qwen API
+## Planner LLM
 
-By default, when neither API-key variable is present, `eval.sh` starts the
-already-installed local checkpoint at
+Planner and vision calls (`ground`, `verify_state`) share one backend. Default
+is Qwen. Set `RPENT_LLM_BACKEND=gpt` (or only a GPT key) to use ByteDance AIDP
+Azure OpenAI for the same loop.
+
+By default, when neither Qwen nor GPT credentials are present, `eval.sh` starts
+the already-installed local checkpoint at
 `../Qwen3-VL-4B-Instruct` through an OpenAI-compatible localhost endpoint. It
 uses `policy/G05/G05/.venv` and GPU 2 by default:
 
@@ -136,7 +141,7 @@ export RPENT_QWEN_PYTHON=policy/G05/G05/.venv/bin/python
 export RPENT_QWEN_GPU=2
 ```
 
-Alternatively, set either API-key variable to use a remote endpoint:
+Remote Qwen:
 
 ```bash
 export DASHSCOPE_API_KEY=...
@@ -144,7 +149,24 @@ export DASHSCOPE_API_KEY=...
 export QWEN_API_KEY=...
 ```
 
-Optional settings:
+Remote GPT (planning + vision). Put the key in the environment only; do not
+commit it:
+
+```bash
+export RPENT_LLM_BACKEND=gpt
+export RPENT_GPT_API_KEY=...
+export RPENT_GPT_ENDPOINT=https://aidp.bytedance.net/api/modelhub/online/v2/crawl
+export RPENT_GPT_API_VERSION=2024-03-01-preview
+export RPENT_GPT_MODEL=gpt-5.5-2026-04-24
+# optional
+export RPENT_GPT_LOGID=...
+export RPENT_GPT_MAX_TOKENS=4096
+```
+
+`AZURE_OPENAI_API_KEY` and `AZURE_OPENAI_ENDPOINT` are also accepted. GPT mode
+does not start the local Qwen server.
+
+Optional Qwen / loop settings:
 
 ```bash
 export QWEN_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -212,7 +234,7 @@ EVAL_ENV_TYPE=debug \
 
 ## Known Limitations
 
-- Grasp and placement verification uses Qwen over fresh RGB views. It avoids
+- Grasp and placement verification uses the selected planner LLM over fresh RGB views. It avoids
   privileged simulator poses but can still produce perception errors.
 - The planner is single-environment. Use `--num-envs 1` for fixed-layout
   development.

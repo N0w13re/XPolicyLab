@@ -28,6 +28,22 @@ def _model_name() -> str:
     return os.environ.get("QWEN_MODEL", "qwen3-vl-plus")
 
 
+def parse_chat_message(result: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
+    choices = result.get("choices") or []
+    if not choices:
+        raise RuntimeError(f"Planner LLM returned no choices: {result!r}")
+    message = choices[0].get("message") or {}
+    content = message.get("content") or ""
+    if isinstance(content, list):
+        content = "".join(
+            part.get("text", "")
+            for part in content
+            if isinstance(part, dict)
+        )
+    tool_calls = message.get("tool_calls") or []
+    return str(content), list(tool_calls)
+
+
 class QwenClient:
     """Thin chat.completions wrapper. No OpenAI SDK required."""
 
@@ -111,16 +127,4 @@ class QwenClient:
     def message_text_and_tools(
         self, result: dict[str, Any]
     ) -> tuple[str, list[dict[str, Any]]]:
-        choices = result.get("choices") or []
-        if not choices:
-            raise RuntimeError(f"Qwen returned no choices: {result!r}")
-        message = choices[0].get("message") or {}
-        content = message.get("content") or ""
-        if isinstance(content, list):
-            content = "".join(
-                part.get("text", "")
-                for part in content
-                if isinstance(part, dict)
-            )
-        tool_calls = message.get("tool_calls") or []
-        return str(content), list(tool_calls)
+        return parse_chat_message(result)
