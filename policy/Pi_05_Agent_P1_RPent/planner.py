@@ -14,6 +14,8 @@ from .prompt_versions import (
     RPENT_V0_UPSTREAM_REPOSITORY,
     rpent_v0_system_prompt,
     rpent_v0_user_prompt,
+    rpent_v1_system_prompt,
+    rpent_v1_user_prompt,
 )
 from .qwen_client import QwenClient
 from .resources import (
@@ -29,46 +31,9 @@ DEFAULT_PLANNER_PROMPT_VERSION = "v1"
 PLANNER_PROMPT_VERSION = DEFAULT_PLANNER_PROMPT_VERSION
 
 
-SYSTEM_PROMPT_V1 = """You are the low-frequency planner in a Harness-VLA robot
-agent. The episode is a single attempt: never reset or read simulator layout
-files, reward internals, object poses, or privileged labels. Use only the live
-instruction, current RGB images, camera-derived coordinates, and robot
-proprioception.
-
-Division of labor:
-- You decompose the task and choose targets, arms, local Pi_05 prompts, retries,
-  and recovery.
-- Analytic tools ground one requested visual target and move the robot.
-- Frozen Pi_05 is a retryable contact-rich manipulation primitive and always
-  receives the original full episode instruction it was trained with.
-- Every state-advancing tool returns fresh head, left-wrist, and right-wrist
-  images. Inspect them before choosing the next action.
-
-Rules:
-1. Inspect the initial state and images before moving.
-2. Call ground with one specific visual query, then query its exact recorded
-   world map. Never invent coordinates or mix RGB and depth from different steps.
-3. Choose an exposed surface point from several valid depth samples and add the
-   required EEF/TCP and safety offset explicitly.
-4. Grounding reports geometric reachability only; it never selects the acting
-   arm and never transfers an object between arms. If carrying_arm is set, do
-   not move the empty arm merely because it can reach the grounded destination.
-5. Stage a reachable arm above a target, inspect the wrist view, then call
-   pi05_act. Its focus identifies the current phase to the harness but does
-   not replace the full episode instruction supplied to Pi_05.
-6. pi05_act only reports candidate evidence. Use verify_state(gate="grasp")
-   after checking that the target left its source and moves with the TCP.
-7. Ground the destination or a temporary placement region, move the carrying
-   arm there while preserving its grip, inspect the result, then call release.
-8. If a grasp misses, re-localize/restage and retry. If the carrying arm cannot
-   reach a grounded destination, call Pi_05 again so it can continue the full
-   instruction; do not command the empty arm to the destination.
-9. After placement, inspect the scene and verify the object left the gripper.
-10. Follow every final-state requirement in the live instruction. Your finish
-   claim never overrides official environment termination.
-11. A failed move is a hard gate: do not continue as if it reached the target.
-12. Call exactly one tool per turn."""
-
+SYSTEM_PROMPT_V1 = rpent_v1_system_prompt(
+    task_name="classify_objects_by_language",
+)
 SYSTEM_PROMPT = SYSTEM_PROMPT_V1
 RECIPE_DIR = Path(__file__).with_name("recipes")
 
@@ -170,9 +135,9 @@ TOOLS_SPEC = [
         "function": {
             "name": "ground",
             "description": (
-                "Ground exactly one planner-requested target in one RGB view. "
-                "Returns bbox pixels and same-step depth/world-map summaries; "
-                "it does not choose an arm."
+                "Ground exactly one planner-requested target in the head RGB view. "
+                "Returns bbox pixels and same-step surface geometry; it does not "
+                "choose an arm or compute an EEF hover target."
             ),
             "parameters": {
                 "type": "object",
@@ -190,13 +155,6 @@ TOOLS_SPEC = [
                         "type": "string",
                         "enum": ["center", "lower_center"],
                         "default": "center",
-                    },
-                    "clearance": {
-                        "type": "number",
-                        "description": (
-                            "Optional height above the support plane in metres. "
-                            "Omit to use the configured 0.20 m default."
-                        ),
                     },
                 },
                 "required": ["query"],
@@ -424,22 +382,27 @@ class RpentPlanner:
     def _prompt_config(self) -> dict[str, Any]:
         if self.prompt_version == "v1":
             task_env = self.primitives.task_env
+            task_name = self._task_name()
             seed = str(
                 getattr(task_env, "seed", None)
                 or os.environ.get("EVAL_SEED", "0")
             )
-            resources = planner_resources(self._task_name(), seed)
+            task_config = str(
+                getattr(task_env, "task_config", None)
+                or os.environ.get("RPENT_TASK_CONFIG", "RoboDojo")
+            )
+            resources = planner_resources(task_name, seed)
             recipe_text = "\n\n".join(
                 f"[{item['support']} recipe: {item['path']}]\n{item['content']}"
                 for item in resources["recipes"]
             )
             opening_prompt = (
-                "Required startup order:\n"
-                "1. Apply the complete registered-tool guide below.\n"
-                "2. Inspect the live step-0 state and images.\n"
-                "3. Use any listed task recipe only as a prior.\n"
-                "4. Use memory only when available.\n\n"
-                "REGISTERED-TOOL GUIDE:\n"
+                rpent_v1_user_prompt(
+                    task_name=task_name,
+                    seed=seed,
+                    task_config=task_config,
+                ).rstrip()
+                + "\n\nREGISTERED-TOOL GUIDE:\n"
                 + resources["guide"]
                 + "\n\nTASK RECIPE:\n"
                 + (recipe_text or "No task recipe is available.")
@@ -449,7 +412,10 @@ class RpentPlanner:
             return {
                 "prompt_version": "v1",
                 "prompt_source": "XPolicyLab RoboDojo adaptation",
-                "system_prompt": SYSTEM_PROMPT_V1,
+                "system_prompt": rpent_v1_system_prompt(
+                    task_name=task_name,
+                    seed=seed,
+                ),
                 "opening_prompt": opening_prompt,
                 **resources,
             }
@@ -512,7 +478,6 @@ class RpentPlanner:
                 str(arguments["query"]),
                 camera=str(arguments.get("camera", "head")),
                 anchor=str(arguments.get("anchor", "center")),
-                clearance=arguments.get("clearance"),
             )
         elif name == "move_to":
             result = self.primitives.move_to(

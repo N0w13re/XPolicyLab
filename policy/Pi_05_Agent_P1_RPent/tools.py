@@ -28,7 +28,6 @@ from .geometry import (
 from .manipulation import ManipulationLedger
 from .qwen_client import QwenClient
 from .robot_profile import (
-    default_clearance,
     pregrasp_quaternion,
 )
 from .trace import EpisodeTrace
@@ -514,12 +513,14 @@ class RpentPrimitives:
         query: str,
         camera: str = "head",
         anchor: str = "center",
-        clearance: float | None = None,
     ) -> dict[str, Any]:
+        self.last_grounding = None
+        self.last_label = None
         if camera != "head":
             raise ValueError(
-                "World projection currently supports camera='head'; use the "
-                "returned camera images directly for wrist verification."
+                "ground is head-only for semantic target binding (camera='head'); "
+                "refine wrist geometry with sample_world_xyz or query_world_map "
+                "at the exact step, view, and resolution for the same candidate."
             )
         observation = self._obs()
         instruction = str(
@@ -566,20 +567,6 @@ class RpentPrimitives:
             "bbox_rc": list(bbox_rc),
             "anchor_world_xyz": anchor_sample["xyz"],
             "world_summary": world_summary,
-            "suggested_hover_xyz": (
-                None
-                if world_summary["median_xyz"] is None
-                else [
-                    world_summary["median_xyz"][0],
-                    world_summary["median_xyz"][1],
-                    world_summary["median_xyz"][2]
-                    + (
-                        default_clearance()
-                        if clearance is None
-                        else float(clearance)
-                    ),
-                ]
-            ),
             "carrying_arm": self.ledger.holding_arm,
         }
         self.last_grounding = result

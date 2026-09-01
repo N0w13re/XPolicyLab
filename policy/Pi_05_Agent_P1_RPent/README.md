@@ -35,8 +35,10 @@ not know about categories, baskets, or benchmark rewards.
 The planner calls exactly one structured tool per turn:
 
 - `view_env_state`: inspect one immutable RGB-D state
-- `ground`: locate one target and bind its bbox to a same-step world map
-- `sample_world_xyz` / `query_world_map`: derive robust metric geometry
+- `ground`: locate one target in the head view and bind its bbox to same-step
+  surface geometry (no EEF hover target; planner adds clearance before `move_to`)
+- `sample_world_xyz` / `query_world_map`: derive robust metric geometry, including
+  wrist-view refinement for the same grounded candidate at the exact step/view
 - `move_to`: execute a CuRobo collision-checked joint path to an EEF pose
 - `rotate_wrist`: rotate one wrist at fixed EEF position
 - `pi05_act`: run a short prefix of frozen Pi_05 with the full instruction
@@ -62,9 +64,14 @@ Planner prompts are explicitly versioned:
   RPent has no RoboDojo prompt, and this text refers to RoboTwin, LingBot-VLA,
   recipes, memory, and upstream-only tools.
 - `v1` is the current XPolicyLab RoboDojo/Pi_05 adaptation and remains the
-  default. It loads the generic guide, exact task/seed curated resources when
-  present, the legacy task recipe as an experimental prior, and the memory
-  index. Missing curated resources remain supported and are recorded in trace.
+  default. It preserves the upstream RPent section structure and strategy with
+  only RoboDojo, Pi_05, local resource, and `pi05_act` horizon substitutions.
+  Head-view `ground` reports bbox and same-step surface geometry only; the
+  planner adds EEF/TCP clearance before `move_to`, and wrist refinement uses
+  `sample_world_xyz` / `query_world_map`. It loads the generic guide, exact
+  task/seed curated resources when present, the legacy task recipe as an
+  experimental prior, and the memory index. Missing curated resources remain
+  supported and are recorded in trace.
 
 Select a version with `RPENT_PLANNER_PROMPT_VERSION=v0|v1`. Each new trace
 records a `planner_config` event containing the selected version, exact system
@@ -151,8 +158,10 @@ export RPENT_RECORD_EVERY_PI05_ACTION=1
 export RPENT_STOP_AFTER_FIRST_PI05=1
 ```
 
-`RPENT_APPROACH_CLEARANCE_M` controls the default hover offset above sampled
-object geometry. `RPENT_PI05_EXECUTION_HORIZON` limits how many
+`RPENT_APPROACH_CLEARANCE_M` is the default hover offset the planner should add
+above sampled object geometry before `move_to`. `ground` does not accept a
+clearance parameter and does not return a suggested hover pose.
+`RPENT_PI05_EXECUTION_HORIZON` limits how many
 actions are executed from each Pi_05-generated chunk before re-observing and
 requesting a new chunk; the model still generates its native 50-action chunk.
 `RPENT_RECORD_EVERY_PI05_ACTION=1` is a diagnostic option that records a camera

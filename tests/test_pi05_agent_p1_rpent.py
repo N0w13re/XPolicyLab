@@ -14,6 +14,7 @@ from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner import (
 )
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.prompt_versions import (
     RPENT_V0_UPSTREAM_COMMIT,
+    rpent_v1_system_prompt,
 )
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.deploy import (
     _mark_incomplete_episode_failed,
@@ -456,6 +457,46 @@ def test_default_system_prompt_preserves_upstream_rpent_strategy():
     assert "lingbot_act" not in prompt
 
 
+def test_v1_system_prompt_uses_instruction_not_task_language():
+    prompt = rpent_v1_system_prompt(task_name="classify_objects_by_language")
+
+    assert "current instruction" in prompt
+    assert "task_language" not in prompt
+
+
+def test_guide_rpent_preserves_upstream_operational_sections():
+    guide_path = (
+        Path(__file__).resolve().parents[1]
+        / "policy/Pi_05_Agent_P1_RPent/guides/GUIDE_RPENT.md"
+    )
+    guide = guide_path.read_text(encoding="utf-8")
+
+    for heading in (
+        "## Registered tools",
+        "## Observation and geometry",
+        "## VLA and primitives",
+        "## Analytic execution safeguards",
+        "### Planner outcome and residual motion",
+        "### Guarded low approaches",
+        "### Wrist rotation and swept volume",
+        "### Physical state shaping before VLA",
+        "## Observable gates",
+        "## Recovery and budget",
+    ):
+        assert heading in guide, f"missing guide section {heading!r}"
+
+    assert "ground` is head-only" in guide
+    assert "sample_world_xyz" in guide
+    assert "query_world_map" in guide
+    assert "pi05_act" in guide
+    assert "verify_state" in guide
+    assert "return_home" in guide
+    assert "left_ee_pose" in guide
+    assert "RoboTwin" not in guide
+    assert "lingbot_act" not in guide
+    assert "qpos14" not in guide
+
+
 def test_ground_tool_schema_has_no_clearance_parameter():
     properties = _ground_tool_parameters()["properties"]
     assert "clearance" not in properties
@@ -489,6 +530,27 @@ def test_ground_result_has_no_suggested_hover_xyz(tmp_path):
     )
 
     assert "suggested_hover_xyz" not in result
+
+
+def test_rejected_wrist_grounding_clears_stale_binding(tmp_path):
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+    primitives.last_grounding = {"query": "stale target"}
+    primitives.last_label = "stale target"
+
+    with pytest.raises(ValueError, match="camera='head'") as excinfo:
+        primitives.ground("one requested target", camera="right_wrist")
+
+    message = str(excinfo.value)
+    assert "head-only" in message
+    assert "sample_world_xyz" in message
+    assert "query_world_map" in message
+    assert primitives.last_grounding is None
+    assert primitives.last_label is None
 
 
 def test_move_does_not_use_rectangular_workspace_as_authority(tmp_path):
@@ -537,7 +599,7 @@ def test_ground_returns_one_target_and_geometric_reachability(tmp_path):
     assert result["label"] == "requested target"
     assert len(result["anchor_world_xyz"]) == 3
     assert result["world_summary"]["valid_samples"] > 0
-    assert result["suggested_hover_xyz"][2] == pytest.approx(1.008)
+    assert result["world_summary"]["median_xyz"][2] == pytest.approx(0.808)
     assert result["carrying_arm"] is None
 
 
