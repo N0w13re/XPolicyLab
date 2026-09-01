@@ -308,19 +308,21 @@ closed: also require visible target motion, elevation, or an emptied source.
 Never call a primitive just to test whether it helps. For planner residuals,
 guarded low approaches, physical state shaping, and wrist-sweep safety, follow
 guides/GUIDE_RPENT.md and re-observe after every primitive. Add EEF/TCP and
-safety clearance yourself before move_to; ground reports surface geometry only.""",
+safety clearance yourself before move_to; ground reports identity and bbox
+pixels only.""",
     ),
     (
         "PERCEPTION",
         """Use the head view as semantic authority for identity,
 distractors, destinations, language relations, and global progress. Call ground
-only on the head view to bind one target identity and same-step surface geometry.
-Use the matching current wrist view to refine geometry for that same chosen
-candidate with sample_world_xyz or query_world_map at the exact step, view, and
-resolution; do not let it silently switch to a look-alike. Pair RGB and world
-maps from the same step, view, and resolution. World maps are [row,col] -> [x,y,z]
-metres and may contain NaN; visible surface points are not automatically object
-centers. The planner adds EEF/TCP and safety clearance before move_to.
+only on the head view to bind one target identity. ground returns identity and bbox pixels only;
+choose interior [row,col] pixels, then call sample_world_xyz or query_world_map
+at the exact step, view, and resolution. Use the matching current
+wrist view to refine geometry with sample_world_xyz or query_world_map for that
+same chosen candidate; do not let it silently switch to a look-alike. Pair RGB and world
+maps from the same step, view, and resolution. World maps are [row,col] ->
+[x,y,z] metres and may contain NaN; visible surface points are not automatically
+object centers. The planner adds EEF/TCP and safety clearance before move_to.
 Relocalize after occlusion, contact, or substantial arm/object motion.""",
     ),
     (

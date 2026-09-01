@@ -137,8 +137,9 @@ TOOLS_SPEC = [
             "name": "ground",
             "description": (
                 "Ground exactly one planner-requested target in the head RGB view. "
-                "Returns bbox pixels and same-step surface geometry; it does not "
-                "choose an arm or compute an EEF hover target."
+                "Returns identity, normalized bbox, and same-step pixel bbox only. "
+                "You must choose interior [row,col] pixels and call "
+                "sample_world_xyz or query_world_map for geometry."
             ),
             "parameters": {
                 "type": "object",
@@ -151,11 +152,6 @@ TOOLS_SPEC = [
                         "type": "string",
                         "enum": ["head"],
                         "default": "head",
-                    },
-                    "anchor": {
-                        "type": "string",
-                        "enum": ["center", "lower_center"],
-                        "default": "center",
                     },
                 },
                 "required": ["query"],
@@ -482,7 +478,6 @@ class RpentPlanner:
             result = self.primitives.ground(
                 str(arguments["query"]),
                 camera=str(arguments.get("camera", "head")),
-                anchor=str(arguments.get("anchor", "center")),
             )
         elif name == "move_to":
             result = self.primitives.move_to(

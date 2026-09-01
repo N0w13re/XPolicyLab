@@ -19,7 +19,6 @@ from PIL import Image
 
 from .env_state import EnvStateStore
 from .geometry import (
-    bbox_anchor,
     bbox_to_pixels,
     get_camera,
     query_world_map as summarize_world_map,
@@ -517,7 +516,6 @@ class RpentPrimitives:
         self,
         query: str,
         camera: str = "head",
-        anchor: str = "center",
     ) -> dict[str, Any]:
         self.last_grounding = None
         self.last_label = None
@@ -548,30 +546,18 @@ class RpentPrimitives:
                 "bbox_2d": None,
                 "env_state_step": record.step,
                 "bbox_rc": None,
-                "world_summary": None,
+                "image_shape": list(image.shape[:2]),
                 "carrying_arm": self.ledger.holding_arm,
             }
-        pixel = bbox_anchor(bbox, image.shape, anchor)
         bbox_rc = bbox_to_pixels(bbox, image.shape)
-        world_summary = summarize_world_map(
-            record.views[camera].world_xyz,
-            bbox_rc,
-        )
-        anchor_sample = sample_xyz(
-            record.views[camera].world_xyz,
-            [pixel[1], pixel[0]],
-        )
         self.last_label = None if label is None else str(label)
         result = {
             "query": query,
             "label": label,
             "bbox_2d": bbox,
-            "anchor": anchor,
-            "anchor_pixel": pixel.round(2).tolist(),
             "env_state_step": record.step,
             "bbox_rc": list(bbox_rc),
-            "anchor_world_xyz": anchor_sample["xyz"],
-            "world_summary": world_summary,
+            "image_shape": list(image.shape[:2]),
             "carrying_arm": self.ledger.holding_arm,
         }
         self.last_grounding = result

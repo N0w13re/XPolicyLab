@@ -21,11 +21,13 @@ result before the next mutation.
 Start with `view_env_state(step=0)`. Its complete instruction is authoritative.
 Head views identify objects, distractors, destinations, global relations, and
 completed subgoals. `ground` is head-only: it binds one requested target identity
-to a bounding box and same-step surface geometry. It does not choose an arm and
-does not compute an EEF hover target. Wrist views refine grasp, contact,
-insertion, and release geometry for the same head-selected candidate using
-`sample_world_xyz` or `query_world_map` at the exact step, view, and resolution;
-never call `ground` on a wrist view.
+to a bounding box. It does not choose a point, query geometry, choose an arm, or
+compute an EEF hover target. Select several interior `[row,col]` pixels from its
+returned `bbox_rc`, then call `sample_world_xyz`, or pass `bbox_rc` to
+`query_world_map`, at the returned `env_state_step`. Wrist views refine grasp,
+contact, insertion, and release geometry for the same head-selected candidate
+using those geometry tools at the exact step, view, and resolution; never call
+`ground` on a wrist view.
 
 World maps use `[row,col]`, contain world-frame `[x,y,z]` metres, and may contain
 NaN. Query the exact step/view/resolution whose RGB supplied the pixels. Sample

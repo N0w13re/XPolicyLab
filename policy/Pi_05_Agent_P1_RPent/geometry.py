@@ -146,27 +146,6 @@ def query_world_map(
     }
 
 
-def bbox_anchor(
-    bbox_1000: Sequence[float],
-    image_shape: Sequence[int],
-    mode: str,
-) -> np.ndarray:
-    if len(bbox_1000) != 4:
-        raise ValueError(f"Expected [x0, y0, x1, y1], got {bbox_1000}.")
-    x0, y0, x1, y1 = np.clip(np.asarray(bbox_1000, dtype=np.float64), 0.0, 1000.0)
-    if x1 <= x0 or y1 <= y0:
-        raise ValueError(f"Invalid normalized bounding box: {bbox_1000}.")
-    height, width = int(image_shape[0]), int(image_shape[1])
-    x = 0.5 * (x0 + x1) * width / 1000.0
-    if mode == "center":
-        y = 0.5 * (y0 + y1) * height / 1000.0
-    elif mode == "lower_center":
-        y = (0.15 * y0 + 0.85 * y1) * height / 1000.0
-    else:
-        raise ValueError("anchor must be 'center' or 'lower_center'")
-    return np.array([x, y], dtype=np.float64)
-
-
 def get_camera(
     observation: Mapping[str, Any], camera_name: str
 ) -> tuple[str, Mapping[str, Any]]:

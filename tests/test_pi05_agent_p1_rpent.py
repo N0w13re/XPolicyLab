@@ -464,6 +464,15 @@ def test_v1_system_prompt_uses_instruction_not_task_language():
     assert "task_language" not in prompt
 
 
+def test_v1_prompt_requires_planner_to_choose_pixels_after_grounding():
+    prompt = rpent_v1_system_prompt(task_name="general_pickup")
+
+    assert "ground returns identity and bbox pixels only" in prompt
+    assert "choose interior [row,col] pixels" in prompt
+    assert "sample_world_xyz" in prompt
+    assert "query_world_map" in prompt
+
+
 def test_guide_rpent_preserves_upstream_operational_sections():
     guide_path = (
         Path(__file__).resolve().parents[1]
@@ -500,9 +509,10 @@ def test_guide_rpent_preserves_upstream_operational_sections():
 def test_ground_tool_schema_has_no_clearance_parameter():
     properties = _ground_tool_parameters()["properties"]
     assert "clearance" not in properties
+    assert "anchor" not in properties
 
 
-def test_ground_result_has_no_suggested_hover_xyz(tmp_path):
+def test_ground_result_contains_only_semantic_binding_not_geometry(tmp_path):
     observation = _observation(right_gripper=0.1)
     observation["vision"]["cam_head"]["intrinsic_matrix"] = np.array(
         [[615.0, 0.0, 8.0], [0.0, 615.0, 6.0], [0.0, 0.0, 1.0]]
@@ -526,10 +536,15 @@ def test_ground_result_has_no_suggested_hover_xyz(tmp_path):
     result = primitives.ground(
         "one requested target",
         camera="head",
-        anchor="lower_center",
     )
 
     assert "suggested_hover_xyz" not in result
+    assert "anchor_pixel" not in result
+    assert "anchor_world_xyz" not in result
+    assert "world_summary" not in result
+    assert result["bbox_rc"] == [3, 6, 6, 8]
+    assert result["image_shape"] == [12, 16]
+    assert result["env_state_step"] == 0
 
 
 def test_rejected_wrist_grounding_clears_stale_binding(tmp_path):
@@ -568,7 +583,7 @@ def test_move_does_not_use_rectangular_workspace_as_authority(tmp_path):
     assert env.actions
 
 
-def test_ground_returns_one_target_and_geometric_reachability(tmp_path):
+def test_ground_returns_one_target_and_bbox_for_explicit_geometry_query(tmp_path):
     observation = _observation(right_gripper=0.1)
     observation["vision"]["cam_head"]["intrinsic_matrix"] = np.array(
         [[615.0, 0.0, 8.0], [0.0, 615.0, 6.0], [0.0, 0.0, 1.0]]
@@ -589,17 +604,13 @@ def test_ground_returns_one_target_and_geometric_reachability(tmp_path):
         trace=EpisodeTrace(tmp_path),
     )
 
-    result = primitives.ground(
-        "one requested target",
-        camera="head",
-        anchor="lower_center",
-    )
+    result = primitives.ground("one requested target", camera="head")
 
     assert result["query"] == "one requested target"
     assert result["label"] == "requested target"
-    assert len(result["anchor_world_xyz"]) == 3
-    assert result["world_summary"]["valid_samples"] > 0
-    assert result["world_summary"]["median_xyz"][2] == pytest.approx(0.808)
+    assert result["bbox_2d"] == [400, 300, 500, 500]
+    assert result["bbox_rc"] == [3, 6, 6, 8]
+    assert result["image_shape"] == [12, 16]
     assert result["carrying_arm"] is None
 
 
@@ -714,7 +725,7 @@ def test_release_requires_visual_hold_verification(tmp_path):
     assert result["error"] == "release_requires_reached_carry_move"
 
 
-def test_ground_uses_bbox_center_by_default(tmp_path):
+def test_ground_does_not_choose_a_bbox_point(tmp_path):
     observation = _observation()
     observation["vision"]["cam_head"]["intrinsic_matrix"] = np.eye(3)
     observation["vision"]["cam_head"]["extrinsics_matrix"] = np.eye(4)
@@ -726,8 +737,10 @@ def test_ground_uses_bbox_center_by_default(tmp_path):
     )
     result = primitives.ground("one requested target")
 
-    assert result["anchor"] == "center"
-    assert result["anchor_pixel"] == [7.2, 4.8]
+    assert result["bbox_rc"] == [3, 6, 6, 8]
+    assert result["image_shape"] == [12, 16]
+    assert "anchor" not in result
+    assert "anchor_pixel" not in result
     assert result["env_state_step"] == 0
 
 
@@ -1180,8 +1193,6 @@ def test_trace_viewer_manifest_converts_ground_bbox_to_video_pixels(tmp_path):
             "result": {
                 "label": "mint green scissors",
                 "bbox_2d": [100, 200, 600, 800],
-                "anchor": "lower_center",
-                "anchor_pixel": [224.0, 336.0],
             },
         },
         {
@@ -1217,8 +1228,8 @@ def test_trace_viewer_manifest_converts_ground_bbox_to_video_pixels(tmp_path):
         "camera": "head",
         "bbox_1000": [100.0, 200.0, 600.0, 800.0],
         "bbox_pixel": [64.0, 96.0, 384.0, 384.0],
-        "anchor": "lower_center",
-        "anchor_pixel": [224.0, 336.0],
+        "anchor": None,
+        "anchor_pixel": None,
         "query": "green scissors",
         "label": "mint green scissors",
     }
