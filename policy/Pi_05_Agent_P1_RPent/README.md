@@ -163,10 +163,17 @@ export RPENT_GPT_MODEL=gpt-5.5-2026-04-24
 # optional
 export RPENT_GPT_LOGID=...
 export RPENT_GPT_MAX_TOKENS=4096
+export RPENT_GPT_MAX_RETRIES=12
+export RPENT_GPT_RETRY_CAP_S=120
+export RPENT_GPT_RETRY_BUDGET_S=1800
 ```
 
 `AZURE_OPENAI_API_KEY` and `AZURE_OPENAI_ENDPOINT` are also accepted. GPT mode
-does not start the local Qwen server.
+does not start the local Qwen server. HTTP 429/5xx and transient transport
+errors use capped exponential backoff, honor a numeric `Retry-After` header,
+and stop once either `RPENT_GPT_MAX_RETRIES` or the total
+`RPENT_GPT_RETRY_BUDGET_S` wait budget is exhausted. Set
+`RPENT_GPT_RETRY_JITTER=0` only for deterministic diagnostics.
 
 Optional Qwen / loop settings:
 
