@@ -40,11 +40,9 @@ The planner calls exactly one structured tool per turn:
   planner-selected head pixels and wrist-view refinement for the same candidate
   at the exact step/view
 - `move_to`: execute a CuRobo collision-checked joint path to an EEF pose
-- `pregrasp`: open one gripper and hold the fingertips 0.12-0.30 m above a
-  measured object (plus the EEF-to-TCP offset), scaled by the object's own
-  height
-  point, using the top-down pre-grasp orientation and the arm on the object's
-  side, so Pi_05 sees the intended object rather than a distractor
+- `pregrasp`: open one gripper at a look-at hover aimed at the sampled object
+  point. If the overhead pose is unreachable, search tilted retreats toward the
+  robot and the other arm without changing that look-at target
 - `rotate_wrist`: rotate one wrist at fixed EEF position
 - `pi05_act`: run a short prefix of frozen Pi_05 with the full instruction
 - `set_gripper`: explicitly firm or open one gripper
