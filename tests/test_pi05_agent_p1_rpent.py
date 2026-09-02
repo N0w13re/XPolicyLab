@@ -1129,6 +1129,75 @@ def test_trace_viewer_collection_uses_result_layout_after_skipped_layout(tmp_pat
     assert manifests["pickup:video:0000030"]["episode"]["index"] == 1
 
 
+def test_trace_viewer_collection_skips_unscored_episode(tmp_path):
+    trace_root = tmp_path / "trace"
+    video_dir = tmp_path / "video"
+    video_dir.mkdir()
+    (trace_root / "episodes.json").parent.mkdir(parents=True)
+    (trace_root / "episodes.json").write_text(
+        json.dumps({"layout_ids": [28, 29, 30, 31]})
+    )
+    for trace_index in range(3):
+        episode_dir = trace_root / f"episode_{trace_index:07d}"
+        episode_dir.mkdir()
+        events = [
+            {
+                "type": "tool_result",
+                "step": 0,
+                "tool": "observe",
+                "arguments": {},
+                "result": {"instruction": "Pick up tape."},
+            },
+            {
+                "type": "tool_frame_range",
+                "step": 0,
+                "turn": 0,
+                "tool": "observe",
+                "env_step_start": 0,
+                "env_step_end": 0,
+                "cameras": {
+                    camera: {"start": 0, "end": 1}
+                    for camera in ("head", "left_wrist", "right_wrist")
+                },
+            },
+        ]
+        (episode_dir / "transcript.jsonl").write_text(
+            "".join(json.dumps(event) + "\n" for event in events)
+        )
+        if trace_index == 2:
+            # The last episode is still running: it has a trace but no verdict
+            # and no videos yet.
+            continue
+        for camera in ("head", "left_wrist", "right_wrist"):
+            (
+                video_dir
+                / f"episode_{trace_index:07d}_cam_{camera}_fail.mp4"
+            ).write_bytes(b"mp4")
+    (video_dir / "_result.json").write_text(
+        json.dumps(
+            {
+                "details": {
+                    "0": {"layout_id": 28, "success": False, "score": 0},
+                    "1": {"layout_id": 30, "success": False, "score": 0},
+                }
+            }
+        )
+    )
+
+    collection, _, _ = build_collection(
+        [("pickup", trace_root, video_dir)],
+        probe=lambda path: {
+            "fps": 25.0,
+            "frame_count": 1,
+            "duration": 0.04,
+            "width": 640,
+            "height": 480,
+        },
+    )
+
+    assert [episode["layout_id"] for episode in collection["episodes"]] == [28, 30]
+
+
 def test_trace_viewer_manifest_marks_tools_without_environment_actions(tmp_path):
     trace_dir = tmp_path / "trace"
     video_dir = tmp_path / "video"

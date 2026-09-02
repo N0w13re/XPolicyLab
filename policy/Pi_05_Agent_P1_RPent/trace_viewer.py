@@ -343,6 +343,13 @@ def build_collection(
             layout_id = episode_start.get("layout_id")
             if layout_id is None:
                 layout_id = detail.get("layout_id")
+            if layout_id is None and result_details:
+                # Only scored episodes reach the result details, so a trace
+                # without one is still running. The planned layout list has
+                # drifted past it whenever the run skipped an unstable layout,
+                # so guessing from it would label the episode with a layout
+                # another episode already owns.
+                continue
             if layout_id is None and trace_index < len(episode_map):
                 layout_id = episode_map[trace_index]
             if layout_id is None:
