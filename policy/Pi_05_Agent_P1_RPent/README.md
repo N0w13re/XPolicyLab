@@ -64,18 +64,21 @@ Planner prompts are explicitly versioned:
   `f29a69c9ab42876cf876f749a0eb3c216a470a2f`. It is an archival baseline:
   RPent has no RoboDojo prompt, and this text refers to RoboTwin, LingBot-VLA,
   recipes, memory, and upstream-only tools.
-- `v1` is the current XPolicyLab RoboDojo/Pi_05 adaptation and remains the
-  default. It preserves the upstream RPent section structure and strategy with
-  only RoboDojo, Pi_05, local resource, and `pi05_act` horizon substitutions.
-  Head-view `ground` reports identity and bbox pixels only; the planner selects
-  interior `[row,col]` pixels, queries them through `sample_world_xyz` or
-  `query_world_map`, then adds EEF/TCP clearance before `move_to`. Wrist
-  refinement uses the same geometry tools. It loads the generic guide, exact
-  task/seed curated resources when present, the legacy task recipe as an
-  experimental prior, and the memory index. Missing curated resources remain
-  supported and are recorded in trace.
+- `v1` is the first XPolicyLab RoboDojo/Pi_05 adaptation. It preserves the
+  upstream RPent section structure with RoboDojo, Pi_05, local resource, and
+  `pi05_act` horizon substitutions, and treats head-view `ground` as identity
+  plus bbox pixels.
+- `v2` is the current default. It keeps the v1 tool names and resource loading,
+  and aligns strategy with upstream RoboTwin RPent: this stack has no SAM3 and
+  no `segment` tool; identity comes from the head RGB; optional `ground` is an
+  LLM bbox aid, not SAM3; the planner must query `sample_world_xyz` or
+  `query_world_map` before using metric xyz; grasp with `pi05_act`; `move_to`
+  only after a verified hold, with planner-added EEF/TCP clearance. It loads
+  the generic guide, exact task/seed curated resources when present, the
+  legacy task recipe as an experimental prior, and the memory index. Missing
+  curated resources remain supported and are recorded in trace.
 
-Select a version with `RPENT_PLANNER_PROMPT_VERSION=v0|v1`. Each new trace
+Select a version with `RPENT_PLANNER_PROMPT_VERSION=v0|v1|v2`. Each new trace
 records a `planner_config` event containing the selected version, exact system
 and opening prompts, recipe text/path when applicable, and provenance; every
 `planner_turn` repeats the version.

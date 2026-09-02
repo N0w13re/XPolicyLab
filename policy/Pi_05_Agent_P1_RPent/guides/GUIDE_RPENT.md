@@ -19,15 +19,19 @@ result before the next mutation.
 ## Observation and geometry
 
 Start with `view_env_state(step=0)`. Its complete instruction is authoritative.
+This runtime has no SAM3 service and no `segment` tool; do not wait for a mask.
 Head views identify objects, distractors, destinations, global relations, and
-completed subgoals. `ground` is head-only: it binds one requested target identity
+completed subgoals. Optional `ground` is a language-to-bbox aid from the planner
+vision model, not SAM3. It is head-only: it binds one requested target identity
 to a bounding box. It does not choose a point, query geometry, choose an arm, or
-compute an EEF hover target. Select several interior `[row,col]` pixels from its
-returned `bbox_rc`, then call `sample_world_xyz`, or pass `bbox_rc` to
-`query_world_map`, at the returned `env_state_step`. Wrist views refine grasp,
-contact, insertion, and release geometry for the same head-selected candidate
-using those geometry tools at the exact step, view, and resolution; never call
-`ground` on a wrist view.
+compute an EEF hover target. After identity is bound, select several interior
+`[row,col]` pixels from the image or from the returned `bbox_rc`, then call
+`sample_world_xyz`, or pass `bbox_rc` to `query_world_map`, at the returned
+`env_state_step`. Do not skip from `ground` straight to `pi05_act` or `move_to`
+when metric xyz will be needed. Wrist views refine grasp, contact, insertion,
+and release geometry for the same head-selected candidate using those geometry
+tools at the exact step, view, and resolution; never call `ground` on a wrist
+view.
 
 World maps use `[row,col]`, contain world-frame `[x,y,z]` metres, and may contain
 NaN. Query the exact step/view/resolution whose RGB supplied the pixels. Sample
@@ -51,10 +55,14 @@ recipe's chunk cadence as a prior. Shorten to one chunk near contact,
 instability, or completion. Preserve useful continuous Pi_05 behavior for
 bimanual, articulated, hanging, insertion, and tool phases.
 
-Use `move_to` for verified free-space transport, staging, retreat, or one small
-correction. Preserve the gripper and orientation while holding unless a change
-is intentional. A planned motion, closed gripper, or completed `pi05_act` call is
-not proof that the semantic subgoal succeeded.
+Prefer `pi05_act` for grasp. Do not use empty-gripper `move_to` to pre-position
+over a sampled object surface; a surface xyz is not an EEF contact target.
+Use `move_to` only after a verified hold for free-space transport, staging,
+retreat, or one small correction. Re-query destination xyz after the grasp,
+then add EEF/TCP and safety clearance before `move_to`. Preserve the gripper
+and orientation while holding unless a change is intentional. A planned motion,
+closed gripper, or completed `pi05_act` call is not proof that the semantic
+subgoal succeeded.
 
 ## Analytic execution safeguards
 

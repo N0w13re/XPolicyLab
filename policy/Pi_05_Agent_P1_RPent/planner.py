@@ -16,6 +16,8 @@ from .prompt_versions import (
     rpent_v0_user_prompt,
     rpent_v1_system_prompt,
     rpent_v1_user_prompt,
+    rpent_v2_system_prompt,
+    rpent_v2_user_prompt,
 )
 from .planner_llm import AzureOpenAIPlannerClient
 from .qwen_client import QwenClient
@@ -28,14 +30,15 @@ from .resources import (
 from .tools import RpentPrimitives
 
 
-DEFAULT_PLANNER_PROMPT_VERSION = "v1"
+DEFAULT_PLANNER_PROMPT_VERSION = "v2"
 PLANNER_PROMPT_VERSION = DEFAULT_PLANNER_PROMPT_VERSION
+SUPPORTED_PLANNER_PROMPT_VERSIONS = ("v0", "v1", "v2")
 
 
-SYSTEM_PROMPT_V1 = rpent_v1_system_prompt(
+SYSTEM_PROMPT_V2 = rpent_v2_system_prompt(
     task_name="classify_objects_by_language",
 )
-SYSTEM_PROMPT = SYSTEM_PROMPT_V1
+SYSTEM_PROMPT = SYSTEM_PROMPT_V2
 RECIPE_DIR = Path(__file__).with_name("recipes")
 
 
@@ -359,9 +362,9 @@ class RpentPlanner:
         self.prompt_version = os.environ.get(
             "RPENT_PLANNER_PROMPT_VERSION", DEFAULT_PLANNER_PROMPT_VERSION
         ).strip()
-        if self.prompt_version not in {"v0", "v1"}:
+        if self.prompt_version not in SUPPORTED_PLANNER_PROMPT_VERSIONS:
             raise ValueError(
-                "RPENT_PLANNER_PROMPT_VERSION must be one of: v0, v1"
+                "RPENT_PLANNER_PROMPT_VERSION must be one of: v0, v1, v2"
             )
         self.successful_mutations: list[dict[str, Any]] = []
 
@@ -381,7 +384,7 @@ class RpentPlanner:
         return recipe_path, recipe_path.read_text(encoding="utf-8").strip()
 
     def _prompt_config(self) -> dict[str, Any]:
-        if self.prompt_version == "v1":
+        if self.prompt_version in {"v1", "v2"}:
             task_env = self.primitives.task_env
             task_name = self._task_name()
             seed = str(
@@ -397,8 +400,18 @@ class RpentPlanner:
                 f"[{item['support']} recipe: {item['path']}]\n{item['content']}"
                 for item in resources["recipes"]
             )
+            if self.prompt_version == "v2":
+                user_prompt = rpent_v2_user_prompt
+                system_prompt = rpent_v2_system_prompt
+                prompt_source = (
+                    "XPolicyLab RoboDojo v2: no SAM3, VLA grasp, post-hold move_to"
+                )
+            else:
+                user_prompt = rpent_v1_user_prompt
+                system_prompt = rpent_v1_system_prompt
+                prompt_source = "XPolicyLab RoboDojo adaptation"
             opening_prompt = (
-                rpent_v1_user_prompt(
+                user_prompt(
                     task_name=task_name,
                     seed=seed,
                     task_config=task_config,
@@ -411,9 +424,9 @@ class RpentPlanner:
                 + (resources["memory"] or "No curated memory is available.")
             )
             return {
-                "prompt_version": "v1",
-                "prompt_source": "XPolicyLab RoboDojo adaptation",
-                "system_prompt": rpent_v1_system_prompt(
+                "prompt_version": self.prompt_version,
+                "prompt_source": prompt_source,
+                "system_prompt": system_prompt(
                     task_name=task_name,
                     seed=seed,
                 ),

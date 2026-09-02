@@ -15,6 +15,8 @@ from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner import (
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.prompt_versions import (
     RPENT_V0_UPSTREAM_COMMIT,
     rpent_v1_system_prompt,
+    rpent_v2_system_prompt,
+    rpent_v2_user_prompt,
 )
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.deploy import (
     _mark_incomplete_episode_failed,
@@ -473,6 +475,29 @@ def test_v1_prompt_requires_planner_to_choose_pixels_after_grounding():
     assert "query_world_map" in prompt
 
 
+def test_v2_prompt_aligns_with_robotwin_no_sam3_and_post_hold_move_to():
+    prompt = rpent_v2_system_prompt(task_name="general_pickup")
+    opening = rpent_v2_user_prompt(
+        task_name="general_pickup",
+        seed="0",
+        task_config="RoboDojo",
+    )
+
+    assert "no SAM3 service and no segment tool" in prompt
+    assert "not SAM3" in prompt
+    assert "Do not use empty-gripper" in prompt
+    assert "Use move_to only after a verified hold" in prompt
+    assert "choose several interior [row,col] pixels" in prompt
+    assert "sample_world_xyz" in prompt
+    assert "query_world_map" in prompt
+    assert "There is no SAM3" in opening
+    assert "grasp with pi05_act" in opening
+    assert "verified hold use move_to" in opening
+    assert "segment(" not in prompt
+    assert "lingbot_act" not in prompt
+    assert "RoboTwin" not in prompt
+
+
 def test_guide_rpent_preserves_upstream_operational_sections():
     guide_path = (
         Path(__file__).resolve().parents[1]
@@ -494,7 +519,10 @@ def test_guide_rpent_preserves_upstream_operational_sections():
     ):
         assert heading in guide, f"missing guide section {heading!r}"
 
-    assert "ground` is head-only" in guide
+    assert "no SAM3 service and no `segment` tool" in guide
+    assert "ground` is a language-to-bbox aid" in guide
+    assert "Do not use empty-gripper `move_to`" in guide
+    assert "Use `move_to` only after a verified hold" in guide
     assert "sample_world_xyz" in guide
     assert "query_world_map" in guide
     assert "pi05_act" in guide
@@ -832,7 +860,7 @@ def test_planner_frame_range_includes_tool_and_post_tool_observation(tmp_path):
         for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
     ]
     config = next(event for event in events if event["type"] == "planner_config")
-    assert config["prompt_version"] == "v1"
+    assert config["prompt_version"] == "v2"
     assert config["system_prompt"] == SYSTEM_PROMPT
     turns = [event for event in events if event["type"] == "planner_turn"]
     assert turns
@@ -1375,7 +1403,8 @@ def test_old_image_turns_are_compacted_but_latest_is_retained(tmp_path):
     ) == 3
 
 
-def test_planner_v1_injects_matching_task_recipe_and_records_it(tmp_path):
+def test_planner_v1_injects_matching_task_recipe_and_records_it(tmp_path, monkeypatch):
+    monkeypatch.setenv("RPENT_PLANNER_PROMPT_VERSION", "v1")
     env = _FakeEnv([_observation()])
     env.task_name = "classify_objects_by_language"
     qwen = _FinishingQwen()
@@ -1399,6 +1428,36 @@ def test_planner_v1_injects_matching_task_recipe_and_records_it(tmp_path):
     ]
     config = next(event for event in events if event["type"] == "planner_config")
     assert config["prompt_version"] == "v1"
+    assert config["recipe_path"].endswith(
+        "recipes/classify_objects_by_language.md"
+    )
+    assert config["recipe"].startswith("# Classify Objects by Language")
+
+
+def test_planner_v2_injects_matching_task_recipe_and_records_it(tmp_path):
+    env = _FakeEnv([_observation()])
+    env.task_name = "classify_objects_by_language"
+    qwen = _FinishingQwen()
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        qwen,
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    RpentPlanner(primitives, qwen).run()
+
+    assert qwen.messages is not None
+    prompt = json.dumps(qwen.messages, ensure_ascii=False)
+    assert "There is no SAM3" in prompt
+    assert "TASK RECIPE:" in prompt
+    assert "Complete all instances of one class" in prompt
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
+    ]
+    config = next(event for event in events if event["type"] == "planner_config")
+    assert config["prompt_version"] == "v2"
     assert config["recipe_path"].endswith(
         "recipes/classify_objects_by_language.md"
     )
@@ -1535,7 +1594,7 @@ def test_planner_rejects_unknown_prompt_version(tmp_path, monkeypatch):
     try:
         RpentPlanner(primitives, _UnusedQwen())
     except ValueError as exc:
-        assert "must be one of: v0, v1" in str(exc)
+        assert "must be one of: v0, v1, v2" in str(exc)
     else:
         raise AssertionError("unknown prompt version was accepted")
 
