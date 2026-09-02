@@ -1033,6 +1033,41 @@ class RpentPrimitives:
             "carrying_arm": result["candidate_arm"],
         }
 
+    def hold_position(self, steps: int = 10) -> dict[str, Any]:
+        """Advance the simulator while preserving both policy arms and grippers."""
+        requested_steps = int(steps)
+        if requested_steps < 1:
+            raise ValueError("hold_position steps must be at least 1")
+        observation = self._obs()
+        left_pose = _state_vector(observation["state"], "left_ee_pose", 7)
+        action = self._build_ee_action(
+            observation,
+            left_pose[:3],
+            "left",
+            orientation=left_pose[3:],
+        )
+        executed_steps = 0
+        for _ in range(requested_steps):
+            if self.task_env.is_episode_end():
+                break
+            self._take(copy.deepcopy(action))
+            executed_steps += 1
+        final_observation = self._obs()
+        return {
+            "requested_steps": requested_steps,
+            "executed_steps": executed_steps,
+            "stop_reason": (
+                "episode_end"
+                if self.task_env.is_episode_end()
+                else "interval_complete"
+            ),
+            "held_left_ee_pose": action["left_ee_pose"].round(5).tolist(),
+            "held_right_ee_pose": action["right_ee_pose"].round(5).tolist(),
+            "held_left_gripper": float(action["left_ee_joint_state"][0]),
+            "held_right_gripper": float(action["right_ee_joint_state"][0]),
+            **self.snapshot(final_observation),
+        }
+
     def set_gripper(
         self,
         arm: str,

@@ -19,6 +19,8 @@ from XPolicyLab.policy.Pi_05_Agent_P1_RPent.prompt_versions import (
     rpent_v2_user_prompt,
     rpent_v3_system_prompt,
     rpent_v3_user_prompt,
+    rpent_v4_system_prompt,
+    rpent_v4_user_prompt,
 )
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.deploy import (
     _mark_incomplete_episode_failed,
@@ -280,6 +282,35 @@ class _ToolSequenceQwen:
         return message["content"], message["tool_calls"]
 
 
+def _instruction_contract(
+    *,
+    prerequisites_satisfied=True,
+    allowed_tools=None,
+    current_phase="act",
+):
+    return {
+        "objective": "complete the instruction",
+        "success_condition": "the requested result is visibly complete",
+        "actors": ["robot", "environment"],
+        "phase_plan": [
+            {
+                "name": current_phase,
+                "goal": "make progress",
+                "responsible_actor": "robot",
+                "entry_condition": "phase prerequisites hold",
+                "completion_evidence": "the phase result is visible",
+            }
+        ],
+        "current_phase": current_phase,
+        "current_phase_prerequisites": (
+            [] if prerequisites_satisfied else ["external event completes"]
+        ),
+        "prerequisites_satisfied": prerequisites_satisfied,
+        "evidence": ["fresh head image inspected"],
+        "allowed_tools": allowed_tools or ["pi05_act", "pregrasp"],
+    }
+
+
 class _FrameRecordingEnv(_FakeEnv):
     def __init__(self, observations):
         super().__init__(observations)
@@ -429,6 +460,92 @@ def test_release_requires_an_explicit_arm(tmp_path):
     assert not env.actions
 
 
+def test_hold_position_advances_steps_without_changing_pose_or_grippers(tmp_path):
+    start = _observation(left_gripper=0.2, right_gripper=0.8)
+    env = _FakeEnv([start])
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    result = primitives.hold_position(steps=3)
+
+    assert result["executed_steps"] == 3
+    assert len(env.actions) == 3
+    for action in env.actions:
+        np.testing.assert_allclose(action["left_ee_pose"], start["state"]["left_ee_pose"])
+        np.testing.assert_allclose(action["right_ee_pose"], start["state"]["right_ee_pose"])
+        np.testing.assert_allclose(action["left_ee_joint_state"], [0.2])
+        np.testing.assert_allclose(action["right_ee_joint_state"], [0.8])
+
+
+def test_v4_contract_blocks_motion_during_pending_external_event(tmp_path):
+    env = _FakeEnv([_observation()])
+    qwen = _ToolSequenceQwen(
+        [
+            ("pregrasp", {"object_xyz": [-0.2, -0.1, 0.8]}),
+            (
+                "understand_instruction",
+                _instruction_contract(
+                    prerequisites_satisfied=False,
+                    allowed_tools=["hold_position"],
+                    current_phase="wait_for_external_event",
+                ),
+            ),
+            ("pi05_act", {"focus": "wait", "execution_horizon": 4}),
+            ("hold_position", {"steps": 2}),
+            (
+                "understand_instruction",
+                _instruction_contract(
+                    prerequisites_satisfied=True,
+                    allowed_tools=["pi05_act"],
+                    current_phase="perform_task",
+                ),
+            ),
+            ("pi05_act", {"focus": "perform the active phase", "execution_horizon": 4}),
+            ("finish", {"status": "test", "summary": "done"}),
+        ]
+    )
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(action_horizon=1),
+        qwen,
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    RpentPlanner(primitives, qwen).run()
+
+    assert len(env.actions) == 3
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
+    ]
+    blocked = [
+        event
+        for event in events
+        if event["type"] == "tool_result" and event["result"].get("blocked_tool")
+    ]
+    assert [event["result"]["blocked_tool"] for event in blocked] == [
+        "pregrasp",
+        "pi05_act",
+    ]
+    contracts = [
+        event
+        for event in events
+        if event["type"] == "tool_result"
+        and event["tool"] == "understand_instruction"
+    ]
+    assert [event["result"]["contract_revision"] for event in contracts] == [1, 2]
+    hold = next(
+        event
+        for event in events
+        if event["type"] == "tool_result" and event["tool"] == "hold_position"
+    )
+    assert hold["result"]["executed_steps"] == 2
+
+
 _UPSTREAM_RPENT_SECTION_TITLES = (
     "ROLE",
     "READ ORDER",
@@ -448,7 +565,7 @@ def test_default_system_prompt_preserves_upstream_rpent_strategy():
     for title in _UPSTREAM_RPENT_SECTION_TITLES:
         assert title in prompt, f"missing upstream section {title!r}"
 
-    assert "head view as semantic authority" in prompt
+    assert "head view for actors, identity, distractors" in prompt
     assert "wrist view to refine geometry" in prompt
     assert "sample_world_xyz" in prompt
     assert "query_world_map" in prompt
@@ -536,9 +653,31 @@ def test_v3_prompt_requires_measured_pregrasp_before_the_pi05_grasp():
     assert "RoboTwin" not in prompt
 
 
-def test_v3_is_the_default_prompt_version():
-    assert PLANNER_PROMPT_VERSION == "v3"
-    assert SYSTEM_PROMPT == rpent_v3_system_prompt(
+def test_v4_prompt_is_instruction_first_and_not_grasp_first():
+    prompt = rpent_v4_system_prompt(task_name="make_kong")
+    opening = rpent_v4_user_prompt(
+        task_name="make_kong",
+        seed="0",
+        task_config="RoboDojo",
+    )
+
+    assert "INSTRUCTION UNDERSTANDING" in prompt
+    assert "call understand_instruction" in prompt
+    assert "Generic manipulation playbooks are" in prompt
+    assert "subordinate to the instruction" in prompt
+    assert "While false, no task manipulation is permitted" in prompt
+    assert "hold_position, understand_instruction updates" in prompt
+    assert "Never use pi05_act as an" in prompt
+    assert "idle action" in prompt
+    assert "Analytic geometry is optional and phase-dependent" in prompt
+    assert "Do not assume the" in opening
+    assert "task begins with a grasp" in opening
+    assert "above the measured object with pregrasp" not in opening
+
+
+def test_v4_is_the_default_prompt_version():
+    assert PLANNER_PROMPT_VERSION == "v4"
+    assert SYSTEM_PROMPT == rpent_v4_system_prompt(
         task_name="classify_objects_by_language"
     )
 
@@ -564,6 +703,7 @@ def test_planner_dispatches_pregrasp_from_a_sampled_object_point(tmp_path):
     env = _FakeEnv([_observation()])
     qwen = _ToolSequenceQwen(
         [
+            ("understand_instruction", _instruction_contract()),
             ("pregrasp", {"object_xyz": [-0.24, -0.18, 0.78], "clearance_m": 0.18}),
             ("finish", {"status": "test", "summary": "done"}),
         ]
@@ -807,7 +947,9 @@ def test_guide_rpent_preserves_upstream_operational_sections():
     assert "query_world_map" in guide
     assert "pi05_act" in guide
     assert "verify_state" not in guide
-    assert "No tool judges a gate for you" in guide
+    assert "No tool judges visual evidence for you" in guide
+    assert "`understand_instruction` before any motion" in guide
+    assert "`hold_position` in short intervals" in guide
     assert "`render` captures a fresh state without moving the robot" in guide
     assert "return_home" in guide
     assert "left_ee_pose" in guide
@@ -1087,7 +1229,7 @@ def test_planner_frame_range_includes_tool_and_post_tool_observation(tmp_path):
         for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
     ]
     config = next(event for event in events if event["type"] == "planner_config")
-    assert config["prompt_version"] == "v3"
+    assert config["prompt_version"] == "v4"
     assert config["system_prompt"] == SYSTEM_PROMPT
     turns = [event for event in events if event["type"] == "planner_turn"]
     assert turns
@@ -1807,6 +1949,7 @@ def test_planner_can_stop_after_first_completed_pi05_call(tmp_path, monkeypatch)
             return message["content"], message["tool_calls"]
 
     monkeypatch.setenv("RPENT_STOP_AFTER_FIRST_PI05", "1")
+    monkeypatch.setenv("RPENT_PLANNER_PROMPT_VERSION", "v3")
     env = _FakeEnv([_observation()])
     qwen = Pi05ThenFinishQwen()
     primitives = RpentPrimitives(

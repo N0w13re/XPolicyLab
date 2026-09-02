@@ -20,6 +20,8 @@ from .prompt_versions import (
     rpent_v2_user_prompt,
     rpent_v3_system_prompt,
     rpent_v3_user_prompt,
+    rpent_v4_system_prompt,
+    rpent_v4_user_prompt,
 )
 from .planner_llm import AzureOpenAIPlannerClient
 from .qwen_client import QwenClient
@@ -32,9 +34,9 @@ from .resources import (
 from .tools import RpentPrimitives
 
 
-DEFAULT_PLANNER_PROMPT_VERSION = "v3"
+DEFAULT_PLANNER_PROMPT_VERSION = "v4"
 PLANNER_PROMPT_VERSION = DEFAULT_PLANNER_PROMPT_VERSION
-SUPPORTED_PLANNER_PROMPT_VERSIONS = ("v0", "v1", "v2", "v3")
+SUPPORTED_PLANNER_PROMPT_VERSIONS = ("v0", "v1", "v2", "v3", "v4")
 
 
 SYSTEM_PROMPT_V2 = rpent_v2_system_prompt(
@@ -43,7 +45,10 @@ SYSTEM_PROMPT_V2 = rpent_v2_system_prompt(
 SYSTEM_PROMPT_V3 = rpent_v3_system_prompt(
     task_name="classify_objects_by_language",
 )
-SYSTEM_PROMPT = SYSTEM_PROMPT_V3
+SYSTEM_PROMPT_V4 = rpent_v4_system_prompt(
+    task_name="classify_objects_by_language",
+)
+SYSTEM_PROMPT = SYSTEM_PROMPT_V4
 RECIPE_DIR = Path(__file__).with_name("recipes")
 
 
@@ -107,6 +112,85 @@ TOOLS_SPEC = [
     {
         "type": "function",
         "function": {
+            "name": "understand_instruction",
+            "description": (
+                "Create or update the mandatory instruction contract before "
+                "any task motion. Record semantic phases, prerequisites, "
+                "observable evidence, and tools allowed in the current phase."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "objective": {"type": "string"},
+                    "success_condition": {"type": "string"},
+                    "actors": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "phase_plan": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "goal": {"type": "string"},
+                                "responsible_actor": {"type": "string"},
+                                "entry_condition": {"type": "string"},
+                                "completion_evidence": {"type": "string"},
+                            },
+                            "required": [
+                                "name",
+                                "goal",
+                                "responsible_actor",
+                                "entry_condition",
+                                "completion_evidence",
+                            ],
+                        },
+                    },
+                    "current_phase": {"type": "string"},
+                    "current_phase_prerequisites": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "prerequisites_satisfied": {"type": "boolean"},
+                    "evidence": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "allowed_tools": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "hold_position",
+                                "pi05_act",
+                                "pregrasp",
+                                "move_to",
+                                "rotate_wrist",
+                                "set_gripper",
+                                "release",
+                                "return_home",
+                            ],
+                        },
+                    },
+                },
+                "required": [
+                    "objective",
+                    "success_condition",
+                    "actors",
+                    "phase_plan",
+                    "current_phase",
+                    "current_phase_prerequisites",
+                    "prerequisites_satisfied",
+                    "evidence",
+                    "allowed_tools",
+                ],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "sample_world_xyz",
             "description": "Sample robust world XYZ around [row,col] pixels from one recorded view.",
             "parameters": {
@@ -147,6 +231,28 @@ TOOLS_SPEC = [
                     "step": {"type": "integer", "default": -1},
                 },
                 "required": ["view", "bbox"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "hold_position",
+            "description": (
+                "Advance the simulator while holding both policy arms and "
+                "grippers at their current state. Use for a pending external "
+                "event; unlike observation, this consumes native steps."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "steps": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 20,
+                        "default": 10,
+                    },
+                },
             },
         },
     },
@@ -381,6 +487,7 @@ class RpentPlanner:
                 + ", ".join(SUPPORTED_PLANNER_PROMPT_VERSIONS)
             )
         self.successful_mutations: list[dict[str, Any]] = []
+        self.instruction_contract: dict[str, Any] | None = None
 
     def _task_name(self) -> str:
         return str(
@@ -398,7 +505,7 @@ class RpentPlanner:
         return recipe_path, recipe_path.read_text(encoding="utf-8").strip()
 
     def _prompt_config(self) -> dict[str, Any]:
-        if self.prompt_version in {"v1", "v2", "v3"}:
+        if self.prompt_version in {"v1", "v2", "v3", "v4"}:
             task_env = self.primitives.task_env
             task_name = self._task_name()
             seed = str(
@@ -414,7 +521,13 @@ class RpentPlanner:
                 f"[{item['support']} recipe: {item['path']}]\n{item['content']}"
                 for item in resources["recipes"]
             )
-            if self.prompt_version == "v3":
+            if self.prompt_version == "v4":
+                user_prompt = rpent_v4_user_prompt
+                system_prompt = rpent_v4_system_prompt
+                prompt_source = (
+                    "XPolicyLab RoboDojo v4: instruction-first phase contract"
+                )
+            elif self.prompt_version == "v3":
                 user_prompt = rpent_v3_user_prompt
                 system_prompt = rpent_v3_system_prompt
                 prompt_source = (
@@ -478,7 +591,93 @@ class RpentPlanner:
             ).rstrip(),
         }
 
+    def _instruction_contract_result(
+        self, arguments: dict[str, Any]
+    ) -> dict[str, Any]:
+        contract = {
+            key: arguments[key]
+            for key in (
+                "objective",
+                "success_condition",
+                "actors",
+                "phase_plan",
+                "current_phase",
+                "current_phase_prerequisites",
+                "prerequisites_satisfied",
+                "evidence",
+                "allowed_tools",
+            )
+        }
+        contract["instruction"] = self.primitives.snapshot().get("instruction")
+        contract["contract_revision"] = (
+            1
+            if self.instruction_contract is None
+            else int(self.instruction_contract["contract_revision"]) + 1
+        )
+        self.instruction_contract = contract
+        return {
+            "accepted": True,
+            **contract,
+            "next_action_rule": (
+                "Only hold_position or observation is permitted until fresh "
+                "evidence satisfies the prerequisites."
+                if not contract["prerequisites_satisfied"]
+                else "Choose only from allowed_tools for the current phase."
+            ),
+        }
+
+    def _v4_motion_gate(self, name: str) -> dict[str, Any] | None:
+        if self.prompt_version != "v4":
+            return None
+        if self.instruction_contract is None:
+            return {
+                "error": (
+                    "v4 requires understand_instruction before any robot "
+                    "motion"
+                ),
+                "blocked_tool": name,
+            }
+        if name == "hold_position":
+            return None
+        if not self.instruction_contract["prerequisites_satisfied"]:
+            return {
+                "error": (
+                    "current phase prerequisites are pending; only "
+                    "hold_position and observation are permitted"
+                ),
+                "blocked_tool": name,
+                "current_phase": self.instruction_contract["current_phase"],
+                "pending_prerequisites": self.instruction_contract[
+                    "current_phase_prerequisites"
+                ],
+            }
+        allowed_tools = set(self.instruction_contract["allowed_tools"])
+        contract_name = "pi05_act" if name == "pi05_pick" else name
+        if contract_name not in allowed_tools:
+            return {
+                "error": "tool is not allowed by the current instruction phase",
+                "blocked_tool": name,
+                "current_phase": self.instruction_contract["current_phase"],
+                "allowed_tools": sorted(allowed_tools),
+            }
+        return None
+
     def _dispatch(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        motion_tools = {
+            "hold_position",
+            "move_to",
+            "pregrasp",
+            "pi05_act",
+            "pi05_pick",
+            "rotate_wrist",
+            "set_gripper",
+            "release",
+            "return_home",
+        }
+        if name in motion_tools:
+            blocked = self._v4_motion_gate(name)
+            if blocked is not None:
+                return self.primitives.record_tool_result(name, arguments, blocked)
         if name == "list_dir":
             result = list_resource_dir(
                 str(arguments["scope"]),
@@ -496,6 +695,8 @@ class RpentPlanner:
             result = self.primitives.view_env_state(int(arguments.get("step", -1)))
         elif name == "render":
             result = self.primitives.observe()
+        elif name == "understand_instruction":
+            result = self._instruction_contract_result(arguments)
         elif name == "sample_world_xyz":
             result = self.primitives.sample_world_xyz(
                 str(arguments["view"]),
@@ -508,6 +709,10 @@ class RpentPlanner:
                 str(arguments["view"]),
                 list(arguments["bbox"]),
                 int(arguments.get("step", -1)),
+            )
+        elif name == "hold_position":
+            result = self.primitives.hold_position(
+                steps=int(arguments.get("steps", 10)),
             )
         elif name == "move_to":
             result = self.primitives.move_to(
@@ -675,6 +880,7 @@ class RpentPlanner:
             if (
                 name
                 in {
+                    "hold_position",
                     "move_to",
                     "rotate_wrist",
                     "pi05_act",

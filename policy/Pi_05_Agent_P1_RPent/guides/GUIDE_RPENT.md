@@ -8,16 +8,33 @@ geometry, and compact execution rules needed to apply it.
 
 - Resources: `list_dir`, `read_text_file`
 - Observation: `view_env_state`, `render`, `sample_world_xyz`, `query_world_map`
-- Control: `pi05_act`, `pregrasp`, `move_to`, `rotate_wrist`, `set_gripper`,
-  `release`, `return_home`
+- Understanding: `understand_instruction`
+- Control: `hold_position`, `pi05_act`, `pregrasp`, `move_to`, `rotate_wrist`,
+  `set_gripper`, `release`, `return_home`
 - Terminal: `finish`
 
-No tool judges a gate for you. Gates below are satisfied by your own reading of
-fresh images; the runtime never blocks a motion on a recorded verification.
+No tool judges visual evidence for you. Gates below are satisfied by your own
+reading of fresh images. Under v4, the runtime does enforce the recorded
+instruction contract: motion is blocked before understanding, while a
+prerequisite is pending, or when the active phase does not allow that tool.
 
 Use no legacy command protocol or direct Env/VLA client. Tool schemas are
 authoritative for arguments. Issue one mutation at a time and inspect its fresh
 result before the next mutation.
+
+## Instruction contract and waiting
+
+Under v4, call `understand_instruction` before any motion and update it at each
+phase transition. Record the instruction's actors, ordered phases, current
+prerequisites, observable evidence, and phase-allowed tools. Generic manipulation
+patterns cannot override that contract.
+
+If progress depends on another actor or an environment event, use
+`hold_position` in short intervals. It preserves the current policy-arm poses and
+gripper states while consuming native actions, allowing interactive scene
+trajectories to advance. Observation tools do not advance simulation. Do not use
+`pi05_act` as an idle command. After the external event, verify the resulting
+scene from fresh images, update the contract, and rebind any geometry.
 
 ## Observation and geometry
 

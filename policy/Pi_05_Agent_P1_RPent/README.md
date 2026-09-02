@@ -36,6 +36,9 @@ The planner calls exactly one structured tool per turn:
 
 - `view_env_state`: inspect one immutable RGB-D state
 - `render`: capture a fresh RGB-D state without moving the robot
+- `understand_instruction`: create or update the v4 phase contract before motion
+- `hold_position`: preserve both policy arms and grippers while advancing the
+  simulator for a pending external event
 - `sample_world_xyz` / `query_world_map`: derive robust metric geometry from
   planner-selected head pixels and wrist-view refinement for the same candidate
   at the exact step/view
@@ -53,10 +56,10 @@ The planner calls exactly one structured tool per turn:
 Metric depth and camera calibration are converted into a dense per-view
 `world_xyz` map. Fixed support-plane projection and rectangular arm
 reachability are not used as execution authority. Following upstream RoboTwin
-RPent, no tool adjudicates an observable gate and no primitive is blocked on a
-recorded verdict: tool results report gripper values and motion residuals, and
-the planner judges grasp, transport, and placement from the fresh images it
-already receives.
+RPent, tool results report gripper values and motion residuals while the planner
+judges task evidence from fresh images. In v4 the runtime additionally blocks
+motion until an instruction contract exists, while prerequisites are pending,
+or when a tool is not allowed by the active phase.
 
 Every tool result is followed by fresh labeled camera images. A persistent
 trace is written under `RPENT_TRACE_DIR`, containing `transcript.jsonl` and one
@@ -83,7 +86,7 @@ Planner prompts are explicitly versioned:
   resources when present, the legacy task recipe as an experimental prior, and
   the memory index. Missing curated resources remain supported and are
   recorded in trace.
-- `v3` is the current default and differs from v2 only in the grasp. Pi_05 never
+- `v3` differs from v2 only in the grasp. Pi_05 never
   receives our measured coordinates and binds its own target, so on RoboDojo
   layouts with several plausible objects it regularly grasps a distractor. v3
   therefore requires the measured geometry to position the arm before the
@@ -92,8 +95,16 @@ Planner prompts are explicitly versioned:
   that the intended object is centred under the open gripper, and only then
   run `pi05_act` for the descent and closure. Transport after a verified hold
   is unchanged.
+- `v4` is the current default. It first compiles the exact instruction into a
+  structured contract containing actors, ordered phases, prerequisites,
+  observable evidence, and phase-allowed tools. The runtime rejects motion
+  before this contract and blocks manipulation while an external or earlier
+  phase prerequisite remains pending. `hold_position` advances interactive
+  scenes without using Pi_05 as an idle policy. Geometry and `pregrasp` are
+  conditional skills for an active ambiguous-grasp phase rather than a global
+  opening sequence.
 
-Select a version with `RPENT_PLANNER_PROMPT_VERSION=v0|v1|v2|v3`. Each new trace
+Select a version with `RPENT_PLANNER_PROMPT_VERSION=v0|v1|v2|v3|v4`. Each new trace
 records a `planner_config` event containing the selected version, exact system
 and opening prompts, recipe text/path when applicable, and provenance; every
 `planner_turn` repeats the version.
