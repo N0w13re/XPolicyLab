@@ -236,6 +236,40 @@ class _ObserveThenFinishQwen:
         return message["content"], message["tool_calls"]
 
 
+class _ToolSequenceQwen:
+    def __init__(self, calls):
+        self.calls = list(calls)
+        self.index = 0
+
+    def chat(self, messages, **kwargs):
+        del messages, kwargs
+        name, arguments = self.calls[min(self.index, len(self.calls) - 1)]
+        self.index += 1
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": "",
+                        "tool_calls": [
+                            {
+                                "id": f"{name}_call_{self.index}",
+                                "type": "function",
+                                "function": {
+                                    "name": name,
+                                    "arguments": json.dumps(arguments),
+                                },
+                            }
+                        ],
+                    }
+                }
+            ]
+        }
+
+    def message_text_and_tools(self, result):
+        message = result["choices"][0]["message"]
+        return message["content"], message["tool_calls"]
+
+
 class _FrameRecordingEnv(_FakeEnv):
     def __init__(self, observations):
         super().__init__(observations)
@@ -494,6 +528,7 @@ def test_guide_rpent_preserves_upstream_operational_sections():
     assert "pi05_act" in guide
     assert "verify_state" not in guide
     assert "No tool judges a gate for you" in guide
+    assert "`render` captures a fresh state without moving the robot" in guide
     assert "return_home" in guide
     assert "left_ee_pose" in guide
     assert "RoboTwin" not in guide
@@ -504,6 +539,44 @@ def test_guide_rpent_preserves_upstream_operational_sections():
 def test_ground_is_not_a_registered_planner_tool():
     names = [tool["function"]["name"] for tool in TOOLS_SPEC]
     assert "ground" not in names
+
+
+def test_render_is_registered_and_takes_no_arguments():
+    render = next(
+        tool for tool in TOOLS_SPEC if tool["function"]["name"] == "render"
+    )
+
+    assert render["function"]["parameters"]["properties"] == {}
+    assert "required" not in render["function"]["parameters"]
+
+
+def test_render_captures_a_fresh_state_without_moving_the_robot(tmp_path):
+    env = _FakeEnv([_observation(), _observation(left_z=0.95)])
+    qwen = _ToolSequenceQwen(
+        [("render", {}), ("finish", {"status": "test", "summary": "done"})]
+    )
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        qwen,
+        trace=EpisodeTrace(tmp_path),
+    )
+    before = len(primitives.env_states)
+
+    RpentPlanner(primitives, qwen).run()
+
+    assert not env.actions
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
+    ]
+    render = next(
+        event
+        for event in events
+        if event["type"] == "tool_result" and event["tool"] == "render"
+    )
+    assert render["result"]["env_state_step"] >= before
+    assert set(render["result"]["views"]) == {"head", "left_wrist", "right_wrist"}
 
 
 def test_no_detector_primitive_remains_on_the_runtime(tmp_path):

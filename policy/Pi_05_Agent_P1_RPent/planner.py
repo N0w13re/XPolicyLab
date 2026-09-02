@@ -91,6 +91,17 @@ TOOLS_SPEC = [
     {
         "type": "function",
         "function": {
+            "name": "render",
+            "description": (
+                "Capture a fresh synchronized RGB-D observation as a new "
+                "immutable environment state. This does not move the robot."
+            ),
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "sample_world_xyz",
             "description": "Sample robust world XYZ around [row,col] pixels from one recorded view.",
             "parameters": {
@@ -425,6 +436,8 @@ class RpentPlanner:
             if len(self.primitives.env_states) == 0:
                 self.primitives.observe()
             result = self.primitives.view_env_state(int(arguments.get("step", -1)))
+        elif name == "render":
+            result = self.primitives.observe()
         elif name == "sample_world_xyz":
             result = self.primitives.sample_world_xyz(
                 str(arguments["view"]),

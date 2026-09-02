@@ -35,6 +35,7 @@ not know about categories, baskets, or benchmark rewards.
 The planner calls exactly one structured tool per turn:
 
 - `view_env_state`: inspect one immutable RGB-D state
+- `render`: capture a fresh RGB-D state without moving the robot
 - `sample_world_xyz` / `query_world_map`: derive robust metric geometry from
   planner-selected head pixels and wrist-view refinement for the same candidate
   at the exact step/view

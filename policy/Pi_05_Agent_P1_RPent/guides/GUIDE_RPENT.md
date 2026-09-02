@@ -7,7 +7,7 @@ geometry, and compact execution rules needed to apply it.
 ## Registered tools
 
 - Resources: `list_dir`, `read_text_file`
-- Observation: `view_env_state`, `sample_world_xyz`, `query_world_map`
+- Observation: `view_env_state`, `render`, `sample_world_xyz`, `query_world_map`
 - Control: `pi05_act`, `move_to`, `rotate_wrist`, `set_gripper`, `release`,
   `return_home`
 - Terminal: `finish`
@@ -35,7 +35,9 @@ candidate using those geometry tools at the exact step, view, and resolution.
 World maps use `[row,col]`, contain world-frame `[x,y,z]` metres, and may contain
 NaN. Query the exact step/view/resolution whose RGB supplied the pixels. Sample
 several interior pixels and use robust geometry; an exposed surface point is not
-necessarily an object center. Re-observe after occlusion or physical change.
+necessarily an object center. Re-observe after occlusion or physical change:
+`render` captures a fresh state without moving the robot, while
+`view_env_state` only re-reads a state that already exists.
 
 The arx_x5 observation exposes `left_ee_pose` and `right_ee_pose` (xyz plus
 `[qw,qx,qy,qz]`) and normalized gripper values in `left_ee_joint_state` and
