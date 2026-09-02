@@ -186,9 +186,11 @@ TOOLS_SPEC = [
         "function": {
             "name": "pregrasp",
             "description": (
-                "Open one gripper and hold it above a measured object xyz using "
-                "the top-down pre-grasp orientation. Use this before the Pi_05 "
-                "grasp so the intended object dominates the wrist view."
+                "Open one gripper and hold the fingertips above a measured "
+                "object xyz using the top-down pre-grasp orientation. The tool "
+                "adds the EEF-to-TCP offset; clearance_m is fingertip height "
+                "above the surface. Use this before the Pi_05 grasp so the "
+                "intended object dominates the wrist view."
             ),
             "parameters": {
                 "type": "object",
@@ -210,9 +212,11 @@ TOOLS_SPEC = [
                         "minimum": 0.12,
                         "maximum": 0.30,
                         "description": (
-                            "Metres added above the measured object surface. "
-                            "Scale by the object's own height: 0.12 for short "
-                            "objects, up to 0.30 for tall ones. Never below 0.12."
+                            "Fingertip height in metres above the measured "
+                            "object surface. Scale by the object's own height: "
+                            "0.12 for short objects, up to 0.30 for tall ones. "
+                            "Never below 0.12. Do not add the EEF/TCP offset; "
+                            "pregrasp already does."
                         ),
                     },
                     "substeps": {"type": "integer", "minimum": 1, "default": 25},

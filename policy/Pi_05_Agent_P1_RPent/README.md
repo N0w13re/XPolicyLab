@@ -40,8 +40,9 @@ The planner calls exactly one structured tool per turn:
   planner-selected head pixels and wrist-view refinement for the same candidate
   at the exact step/view
 - `move_to`: execute a CuRobo collision-checked joint path to an EEF pose
-- `pregrasp`: open one gripper and hold it 0.12-0.30 m above a measured object,
-  scaled by the object's own height
+- `pregrasp`: open one gripper and hold the fingertips 0.12-0.30 m above a
+  measured object (plus the EEF-to-TCP offset), scaled by the object's own
+  height
   point, using the top-down pre-grasp orientation and the arm on the object's
   side, so Pi_05 sees the intended object rather than a distractor
 - `rotate_wrist`: rotate one wrist at fixed EEF position
@@ -210,9 +211,10 @@ export RPENT_STOP_AFTER_FIRST_PI05=1
 
 `RPENT_APPROACH_CLEARANCE_M` is the offset the planner should add above
 explicitly sampled geometry before `move_to`. `RPENT_PREGRASP_CLEARANCE_M` is
-the default `pregrasp` hover when the planner omits `clearance_m`; the prompt
+the default fingertip hover when the planner omits `clearance_m`; the prompt
 requires 0.12-0.30 m scaled by object height, and the tool clamps into that
-range.
+range then adds `RPENT_EEF_TCP_OFFSET_M` (default 0.145 m on arx_x5) so the
+flange is not placed at the fingertip height.
 `RPENT_PI05_EXECUTION_HORIZON` limits how many
 actions are executed from each Pi_05-generated chunk before re-observing and
 requesting a new chunk; the model still generates its native 50-action chunk.

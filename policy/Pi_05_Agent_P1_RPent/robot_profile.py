@@ -23,6 +23,17 @@ def default_clearance() -> float:
 
 PREGRASP_CLEARANCE_MIN_M = 0.12
 PREGRASP_CLEARANCE_MAX_M = 0.30
+# arx_x5 robot_config.yml: ee_link=link6, gripper_bias=0.145. Under the
+# top-down pregrasp quaternion the fingers hang along world -Z, so this
+# offset must be added to EEF z or clearance_m is measured at the flange.
+DEFAULT_EEF_TCP_OFFSET_M = 0.145
+
+
+def eef_tcp_offset() -> float:
+    """Link6/EEF to TCP distance used when converting surface clearance to EEF z."""
+    import os
+
+    return float(os.environ.get("RPENT_EEF_TCP_OFFSET_M", str(DEFAULT_EEF_TCP_OFFSET_M)))
 
 
 def clamp_pregrasp_clearance(clearance_m: float) -> float:
@@ -36,9 +47,10 @@ def clamp_pregrasp_clearance(clearance_m: float) -> float:
 def default_pregrasp_clearance() -> float:
     """Height held above a measured object before Pi_05 takes the contact.
 
-    The added hover is 0.12-0.30 m according to the object's own height. The
-    default is the floor for a short object; taller objects need more so the
-    fingers and TCP stay clear of the body.
+    The added hover is 0.12-0.30 m at the fingertips, according to the
+    object's own height. The default is the floor for a short object. The
+    tool also adds the EEF-to-TCP offset so the flange does not sit at that
+    height.
     """
     import os
 

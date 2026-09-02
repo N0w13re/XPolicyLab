@@ -31,6 +31,7 @@ from XPolicyLab.policy.Pi_05_Agent_P1_RPent.geometry import (
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.robot_profile import (
     default_clearance,
     default_pregrasp_clearance,
+    eef_tcp_offset,
     pregrasp_quaternion,
 )
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.tools import RpentPrimitives
@@ -584,8 +585,10 @@ def test_planner_dispatches_pregrasp_from_a_sampled_object_point(tmp_path):
     )
     assert pregrasp["result"]["arm"] == "left"
     assert pregrasp["result"]["clearance_m"] == 0.18
+    assert pregrasp["result"]["tcp_offset_m"] == eef_tcp_offset()
     np.testing.assert_allclose(
-        pregrasp["result"]["pregrasp_xyz"], [-0.24, -0.18, 0.96]
+        pregrasp["result"]["pregrasp_xyz"],
+        [-0.24, -0.18, 0.78 + 0.18 + eef_tcp_offset()],
     )
 
 
@@ -598,12 +601,14 @@ def test_pregrasp_hovers_above_the_object_with_an_open_top_down_gripper(tmp_path
         trace=EpisodeTrace(tmp_path),
     )
 
+    hover_z = 0.78 + 0.12 + eef_tcp_offset()
     result = primitives.pregrasp([-0.24, -0.18, 0.78], clearance_m=0.12)
 
     assert result["arm"] == "left"
     assert result["object_xyz"] == [-0.24, -0.18, 0.78]
-    np.testing.assert_allclose(result["pregrasp_xyz"], [-0.24, -0.18, 0.90])
-    np.testing.assert_allclose(result["target_xyz"], [-0.24, -0.18, 0.90])
+    assert result["tcp_offset_m"] == eef_tcp_offset()
+    np.testing.assert_allclose(result["pregrasp_xyz"], [-0.24, -0.18, hover_z])
+    np.testing.assert_allclose(result["target_xyz"], [-0.24, -0.18, hover_z])
     np.testing.assert_allclose(
         result["pregrasp_quat"], pregrasp_quaternion("left"), atol=1e-5
     )
@@ -625,7 +630,8 @@ def test_pregrasp_defaults_to_the_arm_on_the_objects_side(tmp_path, monkeypatch)
     assert result["arm"] == "right"
     assert result["clearance_m"] == default_pregrasp_clearance()
     np.testing.assert_allclose(
-        result["pregrasp_xyz"][2], 0.77 + default_pregrasp_clearance()
+        result["pregrasp_xyz"][2],
+        0.77 + default_pregrasp_clearance() + eef_tcp_offset(),
     )
 
 
@@ -649,9 +655,13 @@ def test_pregrasp_clamps_clearance_to_object_height_range(tmp_path):
     too_high = primitives.pregrasp([-0.24, -0.18, 0.78], clearance_m=0.40)
 
     assert too_low["clearance_m"] == 0.12
-    np.testing.assert_allclose(too_low["pregrasp_xyz"], [-0.24, -0.18, 0.90])
+    np.testing.assert_allclose(
+        too_low["pregrasp_xyz"], [-0.24, -0.18, 0.78 + 0.12 + eef_tcp_offset()]
+    )
     assert too_high["clearance_m"] == 0.30
-    np.testing.assert_allclose(too_high["pregrasp_xyz"], [-0.24, -0.18, 1.08])
+    np.testing.assert_allclose(
+        too_high["pregrasp_xyz"], [-0.24, -0.18, 0.78 + 0.30 + eef_tcp_offset()]
+    )
 
 
 def test_pregrasp_rejects_geometry_that_never_resolved(tmp_path):

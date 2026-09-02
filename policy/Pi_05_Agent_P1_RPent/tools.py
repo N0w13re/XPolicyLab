@@ -27,6 +27,7 @@ from .geometry import (
 from .robot_profile import (
     clamp_pregrasp_clearance,
     default_pregrasp_clearance,
+    eef_tcp_offset,
     pregrasp_quaternion,
 )
 from .trace import EpisodeTrace
@@ -798,7 +799,10 @@ class RpentPrimitives:
         if not requested > 0.0:
             raise ValueError("pregrasp clearance must be positive")
         clearance = clamp_pregrasp_clearance(requested)
-        approach = target + np.array([0.0, 0.0, clearance], dtype=np.float32)
+        tcp_offset = eef_tcp_offset()
+        approach = target + np.array(
+            [0.0, 0.0, clearance + tcp_offset], dtype=np.float32
+        )
         orientation = pregrasp_quaternion(selected)
         result = self.move_to(
             xyz=approach.tolist(),
@@ -810,13 +814,14 @@ class RpentPrimitives:
         print(
             f"[P1-RPent] pregrasp arm={selected} "
             f"object_xyz={target.round(4).tolist()} clearance_m={clearance:.3f} "
-            f"error_m={result.get('final_error_m')}",
+            f"tcp_offset_m={tcp_offset:.3f} error_m={result.get('final_error_m')}",
             flush=True,
         )
         return {
             **result,
             "object_xyz": [round(float(value), 4) for value in target],
             "clearance_m": round(clearance, 4),
+            "tcp_offset_m": round(tcp_offset, 4),
             "pregrasp_xyz": [round(float(value), 4) for value in approach],
             "pregrasp_quat": [round(float(value), 5) for value in orientation],
         }

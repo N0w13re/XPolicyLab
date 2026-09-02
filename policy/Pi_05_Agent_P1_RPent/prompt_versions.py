@@ -695,9 +695,9 @@ for measured transport, staging, retreat, or one small geometric correction. A
 verified hold means the target left its source and moves with the TCP; gripper
 closure alone is not enough. Never transport because a gripper merely looks
 closed. Never call a primitive just to test whether it helps. Do not send a raw
-object surface point as a move_to contact target; pregrasp adds clearance_m
-(0.12-0.30 m from the object's height) for you, and for a destination you add
-EEF/TCP and safety clearance yourself.
+object surface point as a move_to contact target; pregrasp adds the EEF/TCP
+offset plus clearance_m (0.12-0.30 m fingertip height from the object's height)
+for you, and for a destination you add EEF/TCP and safety clearance yourself.
 Re-query destination xyz after the grasp because the scene moved. For planner
 residuals, guarded low approaches, physical state shaping, and wrist-sweep
 safety, follow guides/GUIDE_RPENT.md and re-observe after every primitive.""",
