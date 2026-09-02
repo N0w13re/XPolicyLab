@@ -21,6 +21,18 @@ def default_clearance() -> float:
     return float(os.environ.get("RPENT_APPROACH_CLEARANCE_M", "0.20"))
 
 
+def default_pregrasp_clearance() -> float:
+    """Height held above a measured object before Pi_05 takes the contact.
+
+    Transport clearance is deliberately generous, but a pre-grasp hover has to
+    stay low enough that the object fills the wrist view. The earlier P1-gaze
+    loop hovered 0.10 m above the table for the same reason.
+    """
+    import os
+
+    return float(os.environ.get("RPENT_PREGRASP_CLEARANCE_M", "0.12"))
+
+
 def pregrasp_quaternion(arm: str) -> np.ndarray:
     try:
         quaternion = _PREGRASP_QUATERNIONS[arm].copy()

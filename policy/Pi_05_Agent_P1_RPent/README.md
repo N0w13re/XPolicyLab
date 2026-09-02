@@ -40,6 +40,9 @@ The planner calls exactly one structured tool per turn:
   planner-selected head pixels and wrist-view refinement for the same candidate
   at the exact step/view
 - `move_to`: execute a CuRobo collision-checked joint path to an EEF pose
+- `pregrasp`: open one gripper and hold it one clearance above a measured object
+  point, using the top-down pre-grasp orientation and the arm on the object's
+  side, so Pi_05 sees the intended object rather than a distractor
 - `rotate_wrist`: rotate one wrist at fixed EEF position
 - `pi05_act`: run a short prefix of frozen Pi_05 with the full instruction
 - `set_gripper`: explicitly firm or open one gripper
@@ -69,7 +72,7 @@ Planner prompts are explicitly versioned:
   upstream RPent section structure with RoboDojo, Pi_05, local resource, and
   `pi05_act` horizon substitutions, and treats head-view `ground` as identity
   plus bbox pixels.
-- `v2` is the current default. It keeps v1 resource loading and aligns the
+- `v2` keeps v1 resource loading and aligns the
   registered tools with upstream RoboTwin RPent: no SAM3, no `segment`, no
   `ground`, and no `verify_state`. Identity comes from the head RGB; the
   planner picks `[row,col]` pixels and queries `sample_world_xyz` or
@@ -80,8 +83,16 @@ Planner prompts are explicitly versioned:
   resources when present, the legacy task recipe as an experimental prior, and
   the memory index. Missing curated resources remain supported and are
   recorded in trace.
+- `v3` is the current default and differs from v2 only in the grasp. Pi_05 never
+  receives our measured coordinates and binds its own target, so on RoboDojo
+  layouts with several plausible objects it regularly grasps a distractor. v3
+  therefore requires the measured geometry to position the arm before the
+  contact: sample the object xyz, call `pregrasp`, confirm on the fresh wrist
+  image that the intended object is centred under the open gripper, and only
+  then run `pi05_act` for the descent and closure. Transport after a verified
+  hold is unchanged.
 
-Select a version with `RPENT_PLANNER_PROMPT_VERSION=v0|v1|v2`. Each new trace
+Select a version with `RPENT_PLANNER_PROMPT_VERSION=v0|v1|v2|v3`. Each new trace
 records a `planner_config` event containing the selected version, exact system
 and opening prompts, recipe text/path when applicable, and provenance; every
 `planner_turn` repeats the version.
@@ -195,8 +206,10 @@ export RPENT_RECORD_EVERY_PI05_ACTION=1
 export RPENT_STOP_AFTER_FIRST_PI05=1
 ```
 
-`RPENT_APPROACH_CLEARANCE_M` is the default hover offset the planner should add
-above explicitly sampled object geometry before `move_to`.
+`RPENT_APPROACH_CLEARANCE_M` is the offset the planner should add above
+explicitly sampled geometry before `move_to`. `RPENT_PREGRASP_CLEARANCE_M` is
+the lower hover `pregrasp` holds above a measured object, chosen so the object
+still fills the wrist view when Pi_05 takes the contact.
 `RPENT_PI05_EXECUTION_HORIZON` limits how many
 actions are executed from each Pi_05-generated chunk before re-observing and
 requesting a new chunk; the model still generates its native 50-action chunk.

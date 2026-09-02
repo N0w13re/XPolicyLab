@@ -25,6 +25,7 @@ from .geometry import (
     sample_world_xyz as sample_xyz,
 )
 from .robot_profile import (
+    default_pregrasp_clearance,
     pregrasp_quaternion,
 )
 from .trace import EpisodeTrace
@@ -767,6 +768,56 @@ class RpentPrimitives:
             **self.snapshot(final_observation),
         }
         return result
+
+    def pregrasp(
+        self,
+        object_xyz: list[float],
+        arm: str | None = None,
+        clearance_m: float | None = None,
+        substeps: int = 25,
+    ) -> dict[str, Any]:
+        """Open one gripper and hold it above a sampled object point.
+
+        Pi_05 chooses its own target from the wrist and head images, so it can
+        bind a distractor when several plausible objects share the view. Placing
+        the open gripper above the measured object first makes the intended
+        object dominate the wrist image before Pi_05 takes over the contact.
+        """
+        target = np.asarray(object_xyz, dtype=np.float32).reshape(-1)[:3]
+        if target.shape[0] != 3 or not np.isfinite(target).all():
+            raise ValueError("pregrasp requires a finite object xyz")
+        selected = arm or ("left" if float(target[0]) < 0.0 else "right")
+        if selected not in {"left", "right"}:
+            raise ValueError("arm must be 'left' or 'right'")
+        clearance = (
+            default_pregrasp_clearance()
+            if clearance_m is None
+            else float(clearance_m)
+        )
+        if not clearance > 0.0:
+            raise ValueError("pregrasp clearance must be positive")
+        approach = target + np.array([0.0, 0.0, clearance], dtype=np.float32)
+        orientation = pregrasp_quaternion(selected)
+        result = self.move_to(
+            xyz=approach.tolist(),
+            arm=selected,
+            gripper=_gripper_open_command(),
+            quat=orientation.tolist(),
+            substeps=substeps,
+        )
+        print(
+            f"[P1-RPent] pregrasp arm={selected} "
+            f"object_xyz={target.round(4).tolist()} clearance_m={clearance:.3f} "
+            f"error_m={result.get('final_error_m')}",
+            flush=True,
+        )
+        return {
+            **result,
+            "object_xyz": [round(float(value), 4) for value in target],
+            "clearance_m": round(clearance, 4),
+            "pregrasp_xyz": [round(float(value), 4) for value in approach],
+            "pregrasp_quat": [round(float(value), 5) for value in orientation],
+        }
 
     def rotate_wrist(
         self,

@@ -18,6 +18,8 @@ from .prompt_versions import (
     rpent_v1_user_prompt,
     rpent_v2_system_prompt,
     rpent_v2_user_prompt,
+    rpent_v3_system_prompt,
+    rpent_v3_user_prompt,
 )
 from .planner_llm import AzureOpenAIPlannerClient
 from .qwen_client import QwenClient
@@ -30,15 +32,18 @@ from .resources import (
 from .tools import RpentPrimitives
 
 
-DEFAULT_PLANNER_PROMPT_VERSION = "v2"
+DEFAULT_PLANNER_PROMPT_VERSION = "v3"
 PLANNER_PROMPT_VERSION = DEFAULT_PLANNER_PROMPT_VERSION
-SUPPORTED_PLANNER_PROMPT_VERSIONS = ("v0", "v1", "v2")
+SUPPORTED_PLANNER_PROMPT_VERSIONS = ("v0", "v1", "v2", "v3")
 
 
 SYSTEM_PROMPT_V2 = rpent_v2_system_prompt(
     task_name="classify_objects_by_language",
 )
-SYSTEM_PROMPT = SYSTEM_PROMPT_V2
+SYSTEM_PROMPT_V3 = rpent_v3_system_prompt(
+    task_name="classify_objects_by_language",
+)
+SYSTEM_PROMPT = SYSTEM_PROMPT_V3
 RECIPE_DIR = Path(__file__).with_name("recipes")
 
 
@@ -173,6 +178,37 @@ TOOLS_SPEC = [
                     "substeps": {"type": "integer", "minimum": 1, "default": 25},
                 },
                     "required": ["xyz", "arm"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "pregrasp",
+            "description": (
+                "Open one gripper and hold it above a measured object xyz using "
+                "the top-down pre-grasp orientation. Use this before the Pi_05 "
+                "grasp so the intended object dominates the wrist view."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "object_xyz": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                        "description": "Measured object point from sampled geometry.",
+                    },
+                    "arm": {
+                        "type": "string",
+                        "enum": ["left", "right"],
+                        "description": "Defaults to the arm on the object's side.",
+                    },
+                    "clearance_m": {"type": "number", "minimum": 0.02},
+                    "substeps": {"type": "integer", "minimum": 1, "default": 25},
+                },
+                "required": ["object_xyz"],
             },
         },
     },
@@ -326,7 +362,8 @@ class RpentPlanner:
         ).strip()
         if self.prompt_version not in SUPPORTED_PLANNER_PROMPT_VERSIONS:
             raise ValueError(
-                "RPENT_PLANNER_PROMPT_VERSION must be one of: v0, v1, v2"
+                "RPENT_PLANNER_PROMPT_VERSION must be one of: "
+                + ", ".join(SUPPORTED_PLANNER_PROMPT_VERSIONS)
             )
         self.successful_mutations: list[dict[str, Any]] = []
 
@@ -346,7 +383,7 @@ class RpentPlanner:
         return recipe_path, recipe_path.read_text(encoding="utf-8").strip()
 
     def _prompt_config(self) -> dict[str, Any]:
-        if self.prompt_version in {"v1", "v2"}:
+        if self.prompt_version in {"v1", "v2", "v3"}:
             task_env = self.primitives.task_env
             task_name = self._task_name()
             seed = str(
@@ -362,7 +399,13 @@ class RpentPlanner:
                 f"[{item['support']} recipe: {item['path']}]\n{item['content']}"
                 for item in resources["recipes"]
             )
-            if self.prompt_version == "v2":
+            if self.prompt_version == "v3":
+                user_prompt = rpent_v3_user_prompt
+                system_prompt = rpent_v3_system_prompt
+                prompt_source = (
+                    "XPolicyLab RoboDojo v3: measured pregrasp, then Pi_05 grasp"
+                )
+            elif self.prompt_version == "v2":
                 user_prompt = rpent_v2_user_prompt
                 system_prompt = rpent_v2_system_prompt
                 prompt_source = (
@@ -457,6 +500,13 @@ class RpentPlanner:
                 arm=arguments.get("arm"),
                 gripper=arguments.get("gripper"),
                 quat=arguments.get("quat"),
+                substeps=int(arguments.get("substeps", 25)),
+            )
+        elif name == "pregrasp":
+            result = self.primitives.pregrasp(
+                object_xyz=arguments["object_xyz"],
+                arm=arguments.get("arm"),
+                clearance_m=arguments.get("clearance_m"),
                 substeps=int(arguments.get("substeps", 25)),
             )
         elif name == "pi05_act":

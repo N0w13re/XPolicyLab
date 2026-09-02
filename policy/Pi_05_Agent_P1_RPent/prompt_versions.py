@@ -608,3 +608,149 @@ def rpent_v2_user_prompt(
             "task_config": task_config,
         },
     )
+
+
+def _override_sections(
+    base: tuple[tuple[str, str], ...],
+    overrides: dict[str, str],
+) -> tuple[tuple[str, str], ...]:
+    """Replace named sections, keeping the base order and rejecting typos."""
+    unknown = set(overrides) - {title for title, _ in base}
+    if unknown:
+        raise KeyError(f"Unknown prompt sections: {sorted(unknown)}")
+    return tuple(
+        (title, overrides.get(title, body)) for title, body in base
+    )
+
+
+_RPENT_V3_SYSTEM_SECTIONS = _override_sections(
+    _RPENT_V2_SYSTEM_SECTIONS,
+    {
+        "CONDITIONAL TASK-FAMILY PLAYBOOKS": """Apply a playbook only when the
+current instruction and observed goal match it:
+
+- Pick/place or spatial relation: bind manipulated object, reference or
+  destination, requested relation, and arm separately. Query world-map xyz for
+  the object and the destination before grasping. Position the open gripper
+  above the measured object with pregrasp, confirm on the fresh wrist image
+  that the intended object is centred under the gripper, then grasp with
+  pi05_act. Require a verified hold before any transport move_to. Release only
+  when the object is supported at the correct destination/relation; then verify
+  separation, stability, and arm clearance.
+- Button or short contact: distinguish the physical control from nearby visual
+  markings, make one guarded contact, and immediately check for the intended
+  change.
+- Articulated object: establish affordance contact, retain contact while moving
+  in the mechanism's direction, and verify lid/door/hinge state change before
+  releasing. Do not apply long actuation rules to a momentary button press.
+- Ranking or stacking: follow the language-specified order. Mark each correct
+  relation protected and keep later paths and actions away from it. Ranking
+  does not imply vertical stacking or analytic per-object control.
+- Bimanual or multi-object: track each hand's content and ownership. Preserve
+  useful continuous Pi_05 coordination; for a true handover, verify receiver hold
+  before giver release. A task name alone does not prove that handover is
+  required.
+- Orientation or hold: verify the requested orientation while the object stays
+  controlled. Do not release when the language requires holding, lifting,
+  shaking, or maintaining a pose.
+- Container: distinguish an interior from a rim or nearby support. Release only
+  after the object body crosses the opening and is internally supported. Do not
+  apply containment rules to a pad, plate, scale, skillet, or stand.""",
+        "PI_05 AND PRIMITIVE CONTROL": """Pi_05 receives images and the
+instruction only; it never receives your measured coordinates, and it binds its
+own target. With several plausible objects in view it regularly grasps a
+distractor. Your geometry is the only way to constrain that choice, so approach
+first and let Pi_05 own the contact.
+
+Before the grasp of a measured object, call pregrasp with the sampled object
+xyz. It opens the gripper, applies the top-down pre-grasp orientation, and holds
+the wrist one clearance above the object; the arm defaults to the object's side
+of the table. Then re-observe and read the fresh wrist image: the intended
+object must be centred under the open gripper and clearly closer than any
+distractor. Only then call pi05_act for the descent and closure. If the wrist
+image shows a distractor centred, the residual is large, or planning failed,
+correct the approach before touching anything, because Pi_05 will grasp what it
+sees.
+
+Every pi05_act uses the exact complete current instruction. Pi_05 always
+receives the full episode instruction; focus records the current phase only.
+Execute short prefixes (execution_horizon default 20) near contact, near
+success, instability, or for a small correction; two chunks for ordinary stable
+progress; three only for a recipe-supported continuity-sensitive phase already
+moving correctly. When Pi_05 has correct contact and visible progress, avoid
+interrupting it with speculative primitives. Repeated pi05_act calls are allowed;
+after an unproductive chunk, use fresh evidence to choose whether to continue,
+shorten the next prefix, or improve binding, visibility, or physical staging
+first.
+
+Pi_05 owns grasp/re-grasp, receiving-arm grasp, bimanual coordination,
+insertion, hanging, tool use, and contact-rich motion. Analytic motion owns
+free-space geometry: pregrasp before a grasp, and move_to after a verified hold
+for measured transport, staging, retreat, or one small geometric correction. A
+verified hold means the target left its source and moves with the TCP; gripper
+closure alone is not enough. Never transport because a gripper merely looks
+closed. Never call a primitive just to test whether it helps. Do not send a raw
+object surface point as a move_to contact target; pregrasp adds the clearance
+for you, and for a destination you add EEF/TCP and safety clearance yourself.
+Re-query destination xyz after the grasp because the scene moved. For planner
+residuals, guarded low approaches, physical state shaping, and wrist-sweep
+safety, follow guides/GUIDE_RPENT.md and re-observe after every primitive.""",
+        "PERCEPTION": """This RoboDojo runtime has no SAM3 service, no segment tool, and no ground tool.
+Do not wait for a mask, detector bbox, or missing segmenter.
+Bind identity yourself from the current head RGB in view_env_state. Use the head view as semantic authority
+for identity, distractors, destinations, language relations, and
+global progress.
+
+Choose several interior [row,col] pixels on that same head view, then call
+sample_world_xyz, or pass a bbox of those pixels to query_world_map, at the
+exact step, view, and resolution. Metric xyz is required before a grasp, not
+optional: it is what pregrasp uses to put the correct object under the gripper.
+Never skip from a visual bind straight to pi05_act. Use the matching current
+wrist view to refine geometry with sample_world_xyz or query_world_map for that
+same chosen candidate; do not let it silently switch to a look-alike. Pair RGB
+and world maps from the same step, view, and resolution. World maps are
+[row,col] -> [x,y,z] metres and may contain NaN; visible surface points are not
+automatically object centers. Relocalize after occlusion, contact, or
+substantial arm/object motion.""",
+    },
+)
+
+
+_RPENT_V3_USER_SECTIONS = _override_sections(
+    _RPENT_V2_USER_SECTIONS,
+    {
+        "BEGIN": """Follow the required read order. There is no SAM3 and no
+ground tool. Bind the current task's targets from the head image, query
+world-map xyz for the object and destination, place the open gripper above the
+measured object with pregrasp, confirm on the fresh wrist image that the
+intended object is centred, grasp with pi05_act, then after a verified hold use
+move_to for transport. After each action verify its observable gate, preserve
+achieved relations, and use the complete current instruction unchanged for every
+pi05_act.""",
+    },
+)
+
+
+def rpent_v3_system_prompt(*, task_name: str, seed: str = "0") -> str:
+    """Render the pre-grasp-first prompt: geometry positions the arm, then Pi_05 grasps."""
+    return _render_sections(
+        _RPENT_V3_SYSTEM_SECTIONS,
+        {"task_name": task_name, "seed": seed},
+    )
+
+
+def rpent_v3_user_prompt(
+    *,
+    task_name: str,
+    seed: str,
+    task_config: str,
+) -> str:
+    """Render the pre-grasp-first RoboDojo user prompt."""
+    return _render_sections(
+        _RPENT_V3_USER_SECTIONS,
+        {
+            "task_name": task_name,
+            "seed": seed,
+            "task_config": task_config,
+        },
+    )

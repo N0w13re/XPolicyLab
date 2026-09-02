@@ -423,7 +423,7 @@ header{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--pa
 .segment{flex:0 1 0;min-width:2px;border-right:1px solid #0d1117;opacity:.75}.segment.active{opacity:1;outline:2px solid white;z-index:1}
 .segment.zero-step{flex:0 0 20px;background:repeating-linear-gradient(135deg,#6e40aa 0 4px,#3d2b5f 4px 8px)}
 #playhead{position:absolute;top:0;bottom:0;width:2px;background:white;box-shadow:0 0 5px #000;pointer-events:none;z-index:2}
-.ground{background:#8957e5}.query_world_map,.sample_world_xyz{background:#6e40aa}.move_to{background:#1f6feb}.pi05_pick,.pi05_act{background:#d29922}.release{background:#f85149}.set_gripper{background:#db6d28}.observe,.view_env_state{background:#238636}.verify_state{background:#2ea043}.rotate_wrist{background:#bc8cff}.return_home{background:#388bfd}.finish{background:#8b949e}
+.ground{background:#8957e5}.query_world_map,.sample_world_xyz{background:#6e40aa}.move_to{background:#1f6feb}.pregrasp{background:#3fb950}.pi05_pick,.pi05_act{background:#d29922}.release{background:#f85149}.set_gripper{background:#db6d28}.observe,.view_env_state{background:#238636}.verify_state{background:#2ea043}.rotate_wrist{background:#bc8cff}.return_home{background:#388bfd}.finish{background:#8b949e}
 #layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 82px)}
 aside{overflow:auto;border-right:1px solid var(--line);background:var(--panel)}
 .tool{padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer}.tool:hover,.tool.active{background:#21262d}.tool b{margin-right:8px}.tool small{display:block;color:var(--muted)}
@@ -452,10 +452,10 @@ main{overflow:auto;padding:14px}.videos{display:grid;grid-template-columns:repea
   </div>
 </main></div>
 <script>
-const colors=['observe','view_env_state','ground','sample_world_xyz','query_world_map','move_to','rotate_wrist','pi05_pick','pi05_act','verify_state','set_gripper','release','return_home','finish'];
+const colors=['observe','view_env_state','ground','sample_world_xyz','query_world_map','move_to','pregrasp','rotate_wrist','pi05_pick','pi05_act','verify_state','set_gripper','release','return_home','finish'];
 let collection, manifest, selected=0, playMode='paused', resumeMode='tool', episodeFrames=1, stopFrame=0, animationFrame=null, playbackGeneration=0;
 const videoEls={}, overlayEls={}, depthEls={};
-const highlightedKeys=new Set(['instruction','query','focus','model_instruction','tool','candidate_evidence','candidate_arm','carrying_arm','hold_state','holding_arm','last_gate','last_gate_passed','label','anchor','bbox_2d','bbox_rc','anchor_world_xyz','median_xyz','suggested_hover_xyz','target_xyz','target_quat','plan_status','execution_mode','final_eef_pose','final_error_m','final_orientation_error_rad','eval_success','success','stop_reason','evidence']);
+const highlightedKeys=new Set(['instruction','query','focus','model_instruction','tool','candidate_evidence','candidate_arm','carrying_arm','hold_state','holding_arm','last_gate','last_gate_passed','label','anchor','bbox_2d','bbox_rc','anchor_world_xyz','median_xyz','object_xyz','pregrasp_xyz','clearance_m','target_xyz','target_quat','plan_status','execution_mode','final_eef_pose','final_error_m','final_orientation_error_rad','eval_success','success','stop_reason','evidence']);
 const head=()=>videoEls.head || Object.values(videoEls)[0];
 const bounds=(tool,cam='head')=>tool.cameras[cam] || Object.values(tool.cameras)[0] || {start:0,end:1};
 const fps=(cam='head')=>(manifest.videos[cam]||Object.values(manifest.videos)[0]).fps;

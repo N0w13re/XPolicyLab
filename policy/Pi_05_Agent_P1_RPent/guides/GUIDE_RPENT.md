@@ -8,8 +8,8 @@ geometry, and compact execution rules needed to apply it.
 
 - Resources: `list_dir`, `read_text_file`
 - Observation: `view_env_state`, `render`, `sample_world_xyz`, `query_world_map`
-- Control: `pi05_act`, `move_to`, `rotate_wrist`, `set_gripper`, `release`,
-  `return_home`
+- Control: `pi05_act`, `pregrasp`, `move_to`, `rotate_wrist`, `set_gripper`,
+  `release`, `return_home`
 - Terminal: `finish`
 
 No tool judges a gate for you. Gates below are satisfied by your own reading of
@@ -56,9 +56,15 @@ recipe's chunk cadence as a prior. Shorten to one chunk near contact,
 instability, or completion. Preserve useful continuous Pi_05 behavior for
 bimanual, articulated, hanging, insertion, and tool phases.
 
-Prefer `pi05_act` for grasp. Do not use empty-gripper `move_to` to pre-position
-over a sampled object surface; a surface xyz is not an EEF contact target.
-Use `move_to` only after a verified hold for free-space transport, staging,
+Pi_05 owns the contact of a grasp. Whether you position the empty gripper before
+that contact is the system prompt's decision, so follow it. When the prompt asks
+for pre-positioning, use `pregrasp` with a measured object xyz rather than a raw
+`move_to`: it opens the gripper, applies the top-down pre-grasp orientation, and
+adds the clearance, because a surface xyz is not an EEF contact target. Then
+re-observe and confirm on the wrist image that the intended object, not a
+distractor, sits under the gripper.
+
+Use `move_to` after a verified hold for free-space transport, staging,
 retreat, or one small correction. Re-query destination xyz after the grasp,
 then add EEF/TCP and safety clearance before `move_to`. Preserve the gripper
 and orientation while holding unless a change is intentional. A planned motion,
@@ -109,8 +115,8 @@ may shape one major physical variable before returning control to Pi_05. Example
 include lifting a verified hold to safe clearance, one small safe-height wrist
 rotation, or moving a held object to an unobstructed staging pose. Re-observe
 after the primitive and hand back with the same complete instruction, normally
-using one chunk near contact. Do not use empty-gripper pre-positioning or disturb
-a near-success state merely to test whether shaping helps.
+using one chunk near contact. Do not disturb a near-success state merely to test
+whether shaping helps.
 
 ## Observable gates
 

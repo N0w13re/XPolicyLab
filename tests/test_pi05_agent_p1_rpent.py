@@ -17,6 +17,8 @@ from XPolicyLab.policy.Pi_05_Agent_P1_RPent.prompt_versions import (
     rpent_v1_system_prompt,
     rpent_v2_system_prompt,
     rpent_v2_user_prompt,
+    rpent_v3_system_prompt,
+    rpent_v3_user_prompt,
 )
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.deploy import (
     _mark_incomplete_episode_failed,
@@ -26,7 +28,11 @@ from XPolicyLab.policy.Pi_05_Agent_P1_RPent.geometry import (
     sample_world_xyz,
     world_from_depth,
 )
-from XPolicyLab.policy.Pi_05_Agent_P1_RPent.robot_profile import default_clearance
+from XPolicyLab.policy.Pi_05_Agent_P1_RPent.robot_profile import (
+    default_clearance,
+    default_pregrasp_clearance,
+    pregrasp_quaternion,
+)
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.tools import RpentPrimitives
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.trace import EpisodeTrace
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.trace_viewer import (
@@ -499,6 +505,143 @@ def test_v2_prompt_aligns_with_robotwin_no_sam3_and_post_hold_move_to():
     assert "Optional ground" not in prompt
 
 
+def test_v3_prompt_requires_measured_pregrasp_before_the_pi05_grasp():
+    prompt = rpent_v3_system_prompt(task_name="general_pickup")
+    opening = rpent_v3_user_prompt(
+        task_name="general_pickup",
+        seed="0",
+        task_config="RoboDojo",
+    )
+
+    assert "it never receives your measured coordinates" in prompt
+    assert "Before the grasp of a measured object, call pregrasp" in prompt
+    assert "centred under the open gripper" in prompt
+    assert "above the measured object with pregrasp" in prompt
+    assert "Metric xyz is required before a grasp" in prompt
+    assert "Never skip from a visual bind straight to pi05_act" in prompt
+    assert "pregrasp before a grasp" in prompt
+    assert "verified hold" in prompt
+    assert "Do not use empty-gripper" not in prompt
+    assert "pregrasp" in opening
+    assert "grasp with pi05_act" in opening
+    assert "lingbot_act" not in prompt
+    assert "RoboTwin" not in prompt
+
+
+def test_v3_is_the_default_prompt_version():
+    assert PLANNER_PROMPT_VERSION == "v3"
+    assert SYSTEM_PROMPT == rpent_v3_system_prompt(
+        task_name="classify_objects_by_language"
+    )
+
+
+def test_pregrasp_is_registered_and_only_requires_the_object_xyz():
+    pregrasp = next(
+        tool for tool in TOOLS_SPEC if tool["function"]["name"] == "pregrasp"
+    )
+    parameters = pregrasp["function"]["parameters"]
+
+    assert parameters["required"] == ["object_xyz"]
+    assert set(parameters["properties"]) == {
+        "object_xyz",
+        "arm",
+        "clearance_m",
+        "substeps",
+    }
+
+
+def test_planner_dispatches_pregrasp_from_a_sampled_object_point(tmp_path):
+    env = _FakeEnv([_observation()])
+    qwen = _ToolSequenceQwen(
+        [
+            ("pregrasp", {"object_xyz": [-0.24, -0.18, 0.78], "clearance_m": 0.1}),
+            ("finish", {"status": "test", "summary": "done"}),
+        ]
+    )
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        qwen,
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    RpentPlanner(primitives, qwen).run()
+
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
+    ]
+    pregrasp = next(
+        event
+        for event in events
+        if event["type"] == "tool_result" and event["tool"] == "pregrasp"
+    )
+    assert pregrasp["result"]["arm"] == "left"
+    np.testing.assert_allclose(
+        pregrasp["result"]["pregrasp_xyz"], [-0.24, -0.18, 0.88]
+    )
+
+
+def test_pregrasp_hovers_above_the_object_with_an_open_top_down_gripper(tmp_path):
+    env = _FakeEnv([_observation(left_gripper=0.1)])
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    result = primitives.pregrasp([-0.24, -0.18, 0.78], clearance_m=0.12)
+
+    assert result["arm"] == "left"
+    assert result["object_xyz"] == [-0.24, -0.18, 0.78]
+    np.testing.assert_allclose(result["pregrasp_xyz"], [-0.24, -0.18, 0.90])
+    np.testing.assert_allclose(result["target_xyz"], [-0.24, -0.18, 0.90])
+    np.testing.assert_allclose(
+        result["pregrasp_quat"], pregrasp_quaternion("left"), atol=1e-5
+    )
+    assert env.actions
+    assert float(env.actions[-1]["left_ee_joint_state"][0]) == pytest.approx(1.0)
+
+
+def test_pregrasp_defaults_to_the_arm_on_the_objects_side(tmp_path, monkeypatch):
+    monkeypatch.delenv("RPENT_PREGRASP_CLEARANCE_M", raising=False)
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    result = primitives.pregrasp([0.22, -0.15, 0.77])
+
+    assert result["arm"] == "right"
+    assert result["clearance_m"] == default_pregrasp_clearance()
+    np.testing.assert_allclose(
+        result["pregrasp_xyz"][2], 0.77 + default_pregrasp_clearance()
+    )
+
+
+def test_pregrasp_hovers_lower_than_the_transport_clearance(monkeypatch):
+    monkeypatch.delenv("RPENT_PREGRASP_CLEARANCE_M", raising=False)
+    monkeypatch.delenv("RPENT_APPROACH_CLEARANCE_M", raising=False)
+
+    assert default_pregrasp_clearance() == 0.12
+    assert default_pregrasp_clearance() < default_clearance()
+
+
+def test_pregrasp_rejects_geometry_that_never_resolved(tmp_path):
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    with pytest.raises(ValueError):
+        primitives.pregrasp([float("nan"), -0.15, 0.77])
+
+
 def test_guide_rpent_preserves_upstream_operational_sections():
     guide_path = (
         Path(__file__).resolve().parents[1]
@@ -521,8 +664,9 @@ def test_guide_rpent_preserves_upstream_operational_sections():
         assert heading in guide, f"missing guide section {heading!r}"
 
     assert "no SAM3, no `segment` tool, and no `ground` tool" in guide
-    assert "Do not use empty-gripper `move_to`" in guide
-    assert "Use `move_to` only after a verified hold" in guide
+    assert "Pi_05 owns the contact of a grasp" in guide
+    assert "use `pregrasp` with a measured object xyz" in guide
+    assert "Use `move_to` after a verified hold" in guide
     assert "sample_world_xyz" in guide
     assert "query_world_map" in guide
     assert "pi05_act" in guide
@@ -807,7 +951,7 @@ def test_planner_frame_range_includes_tool_and_post_tool_observation(tmp_path):
         for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
     ]
     config = next(event for event in events if event["type"] == "planner_config")
-    assert config["prompt_version"] == "v2"
+    assert config["prompt_version"] == "v3"
     assert config["system_prompt"] == SYSTEM_PROMPT
     turns = [event for event in events if event["type"] == "planner_turn"]
     assert turns
@@ -1381,7 +1525,8 @@ def test_planner_v1_injects_matching_task_recipe_and_records_it(tmp_path, monkey
     assert config["recipe"].startswith("# Classify Objects by Language")
 
 
-def test_planner_v2_injects_matching_task_recipe_and_records_it(tmp_path):
+def test_planner_v2_injects_matching_task_recipe_and_records_it(tmp_path, monkeypatch):
+    monkeypatch.setenv("RPENT_PLANNER_PROMPT_VERSION", "v2")
     env = _FakeEnv([_observation()])
     env.task_name = "classify_objects_by_language"
     qwen = _FinishingQwen()
