@@ -57,9 +57,13 @@ case "${policy}" in
     ;;
 esac
 
-export PATH="${HOME}/miniconda3/bin:${PATH}"
-# shellcheck source=/dev/null
-source "${HOME}/miniconda3/etc/profile.d/conda.sh"
+if [[ -x "${ROBODOJO_SIM_ENV:-}/bin/python" ]]; then
+  :
+elif [[ -f "${HOME}/miniconda3/etc/profile.d/conda.sh" ]]; then
+  export PATH="${HOME}/miniconda3/bin:${PATH}"
+  # shellcheck source=/dev/null
+  source "${HOME}/miniconda3/etc/profile.d/conda.sh"
+fi
 # shellcheck source=robodojo_sim_env.sh
 source "${XPL_ROOT}/scripts/robodojo_sim_env.sh" "${ROBODOJO_ROOT}"
 

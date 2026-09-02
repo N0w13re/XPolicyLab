@@ -102,9 +102,15 @@ fi
 # servers -- separate processes, some of which want the newer CUDA runtime -- are untouched.
 # run_sim_env_client.sh reaches the simulator through `conda activate`, which runs activate.d.
 if [[ -e "${ROBODOJO_CUDA_NATIVE}/libcuda.so.1" ]]; then
-  sim_env_prefix="$(conda run -n "${ROBODOJO_SIM_ENV}" printenv CONDA_PREFIX 2>/dev/null | tail -1)"
+  if [[ -x "${ROBODOJO_SIM_ENV}/bin/python" ]]; then
+    sim_env_prefix="$(cd "${ROBODOJO_SIM_ENV}" && pwd)"
+  elif command -v conda >/dev/null 2>&1; then
+    sim_env_prefix="$(conda run -n "${ROBODOJO_SIM_ENV}" printenv CONDA_PREFIX 2>/dev/null | tail -1)"
+  else
+    sim_env_prefix=""
+  fi
   if [[ -z "${sim_env_prefix}" || ! -d "${sim_env_prefix}" ]]; then
-    echo "[robodojo-env] WARNING: conda env '${ROBODOJO_SIM_ENV}' not found; not installing activate hook" >&2
+    echo "[robodojo-env] WARNING: simulator env '${ROBODOJO_SIM_ENV}' not found; not installing activate hook" >&2
   else
     mkdir -p "${sim_env_prefix}/etc/conda/activate.d"
     cat > "${sim_env_prefix}/etc/conda/activate.d/zz-robodojo-native-cuda.sh" <<HOOK
