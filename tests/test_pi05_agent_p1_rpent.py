@@ -38,6 +38,7 @@ from XPolicyLab.policy.Pi_05_Agent_P1_RPent.trace import EpisodeTrace
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.trace_viewer import (
     HTML,
     IPv6ThreadingHTTPServer,
+    _tool_overlay,
     build_collection,
     build_manifest,
     server_class_for_host,
@@ -1413,6 +1414,7 @@ def test_trace_viewer_manifest_converts_ground_bbox_to_video_pixels(tmp_path):
     )
 
     assert manifest["tools"][0]["overlay"] == {
+        "kind": "ground_bbox",
         "camera": "head",
         "bbox_1000": [100.0, 200.0, 600.0, 800.0],
         "bbox_pixel": [64.0, 96.0, 384.0, 384.0],
@@ -1421,6 +1423,56 @@ def test_trace_viewer_manifest_converts_ground_bbox_to_video_pixels(tmp_path):
         "query": "green scissors",
         "label": "mint green scissors",
     }
+
+
+def test_trace_viewer_converts_row_col_samples_to_svg_xy():
+    overlay = _tool_overlay(
+        "sample_world_xyz",
+        {
+            "view": "left_wrist",
+            "pixels": [[120, 300], [240.5, 500.25]],
+            "radius": 3,
+        },
+        {},
+        {"left_wrist": {"width": 640, "height": 480}},
+    )
+
+    assert overlay == {
+        "kind": "points_rc",
+        "camera": "left_wrist",
+        "image_size": [640, 480],
+        "points": [
+            {"pixel_rc": [120.0, 300.0], "xy": [300.0, 120.0]},
+            {"pixel_rc": [240.5, 500.25], "xy": [500.25, 240.5]},
+        ],
+        "radius": 3,
+        "label": "sample_world_xyz [row,col]",
+    }
+
+
+def test_trace_viewer_converts_row_col_bbox_to_svg_xy_bbox():
+    overlay = _tool_overlay(
+        "query_world_map",
+        {"view": "head", "bbox": [100, 200, 300, 500]},
+        {},
+        {"head": {"width": 640, "height": 480}},
+    )
+
+    assert overlay == {
+        "kind": "bbox_rc",
+        "camera": "head",
+        "image_size": [640, 480],
+        "bbox_rc": [100.0, 200.0, 300.0, 500.0],
+        "bbox_pixel": [200.0, 100.0, 500.0, 300.0],
+        "label": "query_world_map [row0,col0,row1,col1]",
+    }
+
+
+def test_trace_viewer_renders_geometry_points_and_boxes():
+    assert "function renderToolOverlay(tool)" in HTML
+    assert "point.pixel_rc" in HTML
+    assert "sample-crosshair" in HTML
+    assert "data.bbox_pixel" in HTML
 
 
 def test_trace_viewer_selects_ipv6_server_for_ipv6_bind_address():

@@ -131,12 +131,59 @@ def _episode_summary(
     }
 
 
-def _ground_overlay(
+def _tool_overlay(
     tool: str | None,
     arguments: dict[str, Any],
     result: dict[str, Any],
     video_info: dict[str, dict[str, Any]],
 ) -> dict[str, Any] | None:
+    if tool in {"sample_world_xyz", "query_world_map"}:
+        camera = str(arguments.get("view", "head")).removeprefix("cam_")
+        info = video_info.get(camera)
+        if info is None:
+            return None
+        width = int(info["width"])
+        height = int(info["height"])
+        if tool == "sample_world_xyz":
+            pixels = arguments.get("pixels")
+            if not isinstance(pixels, list):
+                return None
+            points = []
+            for pixel in pixels:
+                if not isinstance(pixel, list) or len(pixel) != 2:
+                    continue
+                try:
+                    row, col = (float(value) for value in pixel)
+                except (TypeError, ValueError):
+                    continue
+                points.append({"pixel_rc": [row, col], "xy": [col, row]})
+            if not points:
+                return None
+            return {
+                "kind": "points_rc",
+                "camera": camera,
+                "image_size": [width, height],
+                "points": points,
+                "radius": arguments.get("radius", 2),
+                "label": "sample_world_xyz [row,col]",
+            }
+
+        bbox = arguments.get("bbox")
+        if not isinstance(bbox, list) or len(bbox) != 4:
+            return None
+        try:
+            row0, col0, row1, col1 = (float(value) for value in bbox)
+        except (TypeError, ValueError):
+            return None
+        return {
+            "kind": "bbox_rc",
+            "camera": camera,
+            "image_size": [width, height],
+            "bbox_rc": [row0, col0, row1, col1],
+            "bbox_pixel": [col0, row0, col1, row1],
+            "label": "query_world_map [row0,col0,row1,col1]",
+        }
+
     if tool != "ground":
         return None
     camera = str(arguments.get("camera", "head")).removeprefix("cam_")
@@ -161,6 +208,7 @@ def _ground_overlay(
     if not isinstance(anchor_pixel, list) or len(anchor_pixel) != 2:
         anchor_pixel = None
     return {
+        "kind": "ground_bbox",
         "camera": camera,
         "bbox_1000": normalized_bbox,
         "bbox_pixel": [round(value, 2) for value in pixel_bbox],
@@ -235,7 +283,7 @@ def build_manifest(
                 "exec_step_count": exec_step_count,
                 "is_zero_step": exec_step_count == 0,
                 "cameras": range_event.get("cameras", {}),
-                "overlay": _ground_overlay(
+                "overlay": _tool_overlay(
                     result_event.get("tool"),
                     result_event.get("arguments", {}),
                     result_event.get("result", {}),
@@ -427,7 +475,7 @@ header{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--pa
 #layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 82px)}
 aside{overflow:auto;border-right:1px solid var(--line);background:var(--panel)}
 .tool{padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer}.tool:hover,.tool.active{background:#21262d}.tool b{margin-right:8px}.tool small{display:block;color:var(--muted)}
-main{overflow:auto;padding:14px}.videos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.camera{background:#000;border:1px solid var(--line);border-radius:6px;overflow:hidden}.camera h3{font-size:12px;margin:0;padding:6px 9px;background:var(--panel)}.camera h3 button{float:right}.video-stage{position:relative;line-height:0}.video-stage video,.video-stage img{display:block;width:100%;background:#000}.depth-preview{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none!important}.camera.show-depth .depth-preview{display:block!important}.camera.show-depth video,.camera.show-depth .bbox-overlay{visibility:hidden}.bbox-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.bbox-overlay rect{fill:none;stroke:#ff3b30;stroke-width:4;vector-effect:non-scaling-stroke}.bbox-overlay circle{fill:#00e5ff;stroke:#00191d;stroke-width:2;vector-effect:non-scaling-stroke}.bbox-overlay text{fill:#fff;font:700 18px system-ui,sans-serif;paint-order:stroke;stroke:#000;stroke-width:5px;stroke-linejoin:round}
+main{overflow:auto;padding:14px}.videos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.camera{background:#000;border:1px solid var(--line);border-radius:6px;overflow:hidden}.camera h3{font-size:12px;margin:0;padding:6px 9px;background:var(--panel)}.camera h3 button{float:right}.video-stage{position:relative;line-height:0}.video-stage video,.video-stage img{display:block;width:100%;background:#000}.depth-preview{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none!important}.camera.show-depth .depth-preview{display:block!important}.camera.show-depth video,.camera.show-depth .bbox-overlay{visibility:hidden}.bbox-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.bbox-overlay rect{fill:rgba(255,59,48,.08);stroke:#ff3b30;stroke-width:4;vector-effect:non-scaling-stroke}.bbox-overlay circle{fill:#00e5ff;stroke:#00191d;stroke-width:2;vector-effect:non-scaling-stroke}.bbox-overlay text{fill:#fff;font:700 18px system-ui,sans-serif;paint-order:stroke;stroke:#000;stroke-width:5px;stroke-linejoin:round}.bbox-overlay .sample-index{fill:#00e5ff;font-size:15px}.bbox-overlay .sample-crosshair{stroke:#00e5ff;stroke-width:2;vector-effect:non-scaling-stroke}
 .controls{display:flex;align-items:center;gap:8px;margin:12px 0}.controls input[type=range]{flex:1}.badge{padding:2px 7px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
 .details{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px;min-width:0}.card h3{margin:0 0 8px;font-size:13px}pre{white-space:pre-wrap;word-break:break-word;margin:0;color:#c9d1d9}.json-key{color:#79c0ff}.json-string{color:#a5d6ff}.json-number{color:#f2cc60}.json-bool{color:#ff7b72}.json-highlight-key{color:#ff9bce;font-weight:800;background:#3b2033;border-radius:3px;padding:0 2px}.json-highlight-value{color:#fff8c5;font-weight:800;background:#473d16;border-radius:3px;padding:0 2px}
 #warnings{color:#f2cc60;margin-top:8px}@media(max-width:1000px){.videos{grid-template-columns:1fr}.details{grid-template-columns:1fr}}
@@ -482,7 +530,7 @@ function setSelected(index){
   renderJson(document.querySelector('#call'),{turn:tool.turn,trace_step:tool.step,tool:tool.tool,planner_text:tool.text,arguments:tool.arguments,env_step:[tool.env_step_start,tool.env_step_end],frame_ranges:tool.cameras});
   renderJson(document.querySelector('#result'),tool.result);
   updateDepthPreviews(tool);
-  renderGroundOverlay(tool);
+  renderToolOverlay(tool);
 }
 function updateDepthPreviews(tool){
   for(const [cam,image] of Object.entries(depthEls)){
@@ -513,25 +561,44 @@ function renderJson(element,value){
   }
   element.append(document.createTextNode(json.slice(cursor)));
 }
-function renderGroundOverlay(tool){
+function renderToolOverlay(tool){
   for(const overlay of Object.values(overlayEls))overlay.replaceChildren();
   const data=tool.overlay;if(!data)return;
   const svg=overlayEls[data.camera];if(!svg)return;
-  const [x0,y0,x1,y1]=data.bbox_pixel;
   const ns='http://www.w3.org/2000/svg';
-  const rect=document.createElementNS(ns,'rect');
-  rect.setAttribute('x',x0);rect.setAttribute('y',y0);
-  rect.setAttribute('width',Math.max(1,x1-x0));rect.setAttribute('height',Math.max(1,y1-y0));
-  svg.appendChild(rect);
+  if(data.bbox_pixel){
+    const [x0,y0,x1,y1]=data.bbox_pixel;
+    const rect=document.createElementNS(ns,'rect');
+    rect.setAttribute('x',x0);rect.setAttribute('y',y0);
+    rect.setAttribute('width',Math.max(1,x1-x0));rect.setAttribute('height',Math.max(1,y1-y0));
+    svg.appendChild(rect);
+    const label=document.createElementNS(ns,'text');
+    label.setAttribute('x',x0);label.setAttribute('y',Math.max(20,y0-8));
+    label.textContent=data.label||`${data.query||'ground'} · ${data.anchor||'anchor'}`;
+    svg.appendChild(label);
+  }
+  for(const [index,point] of (data.points||[]).entries()){
+    const [x,y]=point.xy;
+    const circle=document.createElementNS(ns,'circle');
+    circle.setAttribute('cx',x);circle.setAttribute('cy',y);circle.setAttribute('r',7);
+    svg.appendChild(circle);
+    for(const [x1,y1,x2,y2] of [[x-12,y,x+12,y],[x,y-12,x,y+12]]){
+      const line=document.createElementNS(ns,'line');
+      line.setAttribute('x1',x1);line.setAttribute('y1',y1);
+      line.setAttribute('x2',x2);line.setAttribute('y2',y2);
+      line.setAttribute('class','sample-crosshair');svg.appendChild(line);
+    }
+    const label=document.createElementNS(ns,'text');
+    label.setAttribute('x',x+10);label.setAttribute('y',Math.max(18,y-10));
+    label.setAttribute('class','sample-index');
+    label.textContent=`${index+1}: [${point.pixel_rc[0]},${point.pixel_rc[1]}]`;
+    svg.appendChild(label);
+  }
   if(data.anchor_pixel){
     const anchor=document.createElementNS(ns,'circle');
     anchor.setAttribute('cx',data.anchor_pixel[0]);anchor.setAttribute('cy',data.anchor_pixel[1]);anchor.setAttribute('r',6);
     svg.appendChild(anchor);
   }
-  const label=document.createElementNS(ns,'text');
-  label.setAttribute('x',x0);label.setAttribute('y',Math.max(20,y0-8));
-  label.textContent=`${data.label||data.query||'ground'} · ${data.anchor||'anchor'}`;
-  svg.appendChild(label);
 }
 function currentFrame(){
   const primary=head();
