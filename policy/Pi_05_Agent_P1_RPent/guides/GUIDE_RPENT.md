@@ -61,7 +61,10 @@ that contact is the system prompt's decision, so follow it. When the prompt asks
 for pre-positioning, use `pregrasp` with a measured object xyz rather than a raw
 `move_to`: it opens the gripper, applies the top-down pre-grasp orientation, and
 adds `clearance_m` in 0.12-0.30 m at the fingertips plus the EEF-to-TCP
-offset, because a surface xyz is not an EEF contact target. Then
+offset, and keeps the wrist camera aimed at the sampled object point. If the
+overhead pose is unreachable it searches reachable look-at hovers (tilt and
+retreat toward the robot, then the other arm) without changing that look-at
+target. Then
 re-observe and confirm on the wrist image that the intended object, not a
 distractor, sits under the gripper.
 

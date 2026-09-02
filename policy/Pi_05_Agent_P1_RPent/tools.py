@@ -28,7 +28,7 @@ from .robot_profile import (
     clamp_pregrasp_clearance,
     default_pregrasp_clearance,
     eef_tcp_offset,
-    pregrasp_quaternion,
+    iter_pregrasp_candidates,
 )
 from .trace import EpisodeTrace
 
@@ -800,30 +800,97 @@ class RpentPrimitives:
             raise ValueError("pregrasp clearance must be positive")
         clearance = clamp_pregrasp_clearance(requested)
         tcp_offset = eef_tcp_offset()
-        approach = target + np.array(
-            [0.0, 0.0, clearance + tcp_offset], dtype=np.float32
+        planner_ready = (
+            getattr(self.task_env, "robot_manager", None) is not None
         )
-        orientation = pregrasp_quaternion(selected)
+        attempts: list[dict[str, Any]] = []
+        chosen: dict[str, Any] | None = None
+        for candidate in iter_pregrasp_candidates(
+            target,
+            preferred_arm=selected,
+            requested_clearance_m=clearance,
+            tcp_offset_m=tcp_offset,
+        ):
+            if not planner_ready:
+                chosen = candidate
+                break
+            planned = self._plan_arm_path(
+                arm=str(candidate["arm"]),
+                target_pose=np.concatenate(
+                    [candidate["xyz"], candidate["quat"]]
+                ),
+            )
+            attempt = {
+                "arm": candidate["arm"],
+                "clearance_m": round(float(candidate["clearance_m"]), 4),
+                "retract_m": round(float(candidate["retract_m"]), 4),
+                "tilt_deg": round(float(candidate["tilt_deg"]), 1),
+                "xyz": [round(float(value), 4) for value in candidate["xyz"]],
+                "plan_status": planned.get("status"),
+            }
+            attempts.append(attempt)
+            if planned.get("status") == "Success" and planned.get("position") is not None:
+                chosen = candidate
+                break
+            if planned.get("status") == "Unavailable":
+                chosen = candidate
+                break
+        if chosen is None:
+            print(
+                f"[P1-RPent] pregrasp search failed object_xyz={target.round(4).tolist()} "
+                f"attempts={len(attempts)}",
+                flush=True,
+            )
+            return {
+                "completed": False,
+                "requested_steps": 0,
+                "executed_steps": 0,
+                "stop_reason": "plan_failed",
+                "success": False,
+                "plan_status": "Fail",
+                "hint": (
+                    "no reachable look-at hover; object may be outside the "
+                    "workspace even after tilting toward the robot"
+                ),
+                "arm": selected,
+                "object_xyz": [round(float(value), 4) for value in target],
+                "clearance_m": round(clearance, 4),
+                "tcp_offset_m": round(tcp_offset, 4),
+                "pregrasp_attempts": attempts,
+                **self.snapshot(self._obs()),
+            }
         result = self.move_to(
-            xyz=approach.tolist(),
-            arm=selected,
+            xyz=np.asarray(chosen["xyz"], dtype=np.float32).tolist(),
+            arm=str(chosen["arm"]),
             gripper=_gripper_open_command(),
-            quat=orientation.tolist(),
+            quat=np.asarray(chosen["quat"], dtype=np.float32).tolist(),
             substeps=substeps,
         )
         print(
-            f"[P1-RPent] pregrasp arm={selected} "
-            f"object_xyz={target.round(4).tolist()} clearance_m={clearance:.3f} "
-            f"tcp_offset_m={tcp_offset:.3f} error_m={result.get('final_error_m')}",
+            f"[P1-RPent] pregrasp arm={chosen['arm']} "
+            f"object_xyz={target.round(4).tolist()} "
+            f"clearance_m={float(chosen['clearance_m']):.3f} "
+            f"retract_m={float(chosen['retract_m']):.3f} "
+            f"tilt_deg={float(chosen['tilt_deg']):.1f} "
+            f"tcp_offset_m={tcp_offset:.3f} "
+            f"error_m={result.get('final_error_m')}",
             flush=True,
         )
         return {
             **result,
             "object_xyz": [round(float(value), 4) for value in target],
-            "clearance_m": round(clearance, 4),
+            "clearance_m": round(float(chosen["clearance_m"]), 4),
             "tcp_offset_m": round(tcp_offset, 4),
-            "pregrasp_xyz": [round(float(value), 4) for value in approach],
-            "pregrasp_quat": [round(float(value), 5) for value in orientation],
+            "retract_m": round(float(chosen["retract_m"]), 4),
+            "tilt_deg": round(float(chosen["tilt_deg"]), 1),
+            "look_at_xyz": [round(float(value), 4) for value in target],
+            "pregrasp_xyz": [
+                round(float(value), 4) for value in chosen["xyz"]
+            ],
+            "pregrasp_quat": [
+                round(float(value), 5) for value in chosen["quat"]
+            ],
+            "pregrasp_attempts": attempts,
         }
 
     def rotate_wrist(

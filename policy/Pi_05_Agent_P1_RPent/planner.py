@@ -186,11 +186,13 @@ TOOLS_SPEC = [
         "function": {
             "name": "pregrasp",
             "description": (
-                "Open one gripper and hold the fingertips above a measured "
-                "object xyz using the top-down pre-grasp orientation. The tool "
-                "adds the EEF-to-TCP offset; clearance_m is fingertip height "
-                "above the surface. Use this before the Pi_05 grasp so the "
-                "intended object dominates the wrist view."
+                "Open one gripper and hold a look-at hover above a measured "
+                "object xyz. The fingertips stay clearance_m from the sampled "
+                "point and the wrist camera axis is aimed at that same point. "
+                "If the requested top-down pose is unreachable, the tool "
+                "searches lower clearances, tilts toward the robot, and the "
+                "other arm without changing the look-at target. Use this "
+                "before the Pi_05 grasp."
             ),
             "parameters": {
                 "type": "object",

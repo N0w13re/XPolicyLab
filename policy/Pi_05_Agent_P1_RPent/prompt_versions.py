@@ -663,19 +663,20 @@ own target. With several plausible objects in view it regularly grasps a
 distractor. Your geometry is the only way to constrain that choice, so approach
 first and let Pi_05 own the contact.
 
-Before the grasp of a measured object, call pregrasp with the sampled object
-xyz. Estimate the object's own height from the world-map z span (query_world_map
-max_z minus table or min_z). Pass clearance_m in [0.12, 0.30] scaled by that
-height: short/low objects 0.12, medium 0.18-0.22, tall bottles or containers
-toward 0.30. Never pass below 0.12. It opens the gripper, applies the top-down
-pre-grasp orientation, and holds the wrist that far above the measured surface;
-the arm defaults to the object's side of the table. Then re-observe and read
-the fresh wrist image: the intended
-object must be centred under the open gripper and clearly closer than any
+Before the grasp of a measured object, call pregrasp once with the sampled
+object xyz. Estimate the object's own height from the world-map z span
+(query_world_map max_z minus table or min_z). Pass clearance_m in [0.12, 0.30]
+scaled by that height: short/low objects 0.12, medium 0.18-0.22, tall bottles
+or containers toward 0.30. Never pass below 0.12. pregrasp keeps the wrist
+camera aimed at that same object point. If the overhead hover is unreachable it
+internally searches reachable look-at poses (lower clearance, tilt/retreat
+toward the robot, then the other arm); do not keep calling pregrasp with the
+same xyz after plan_failed. Then re-observe and read the fresh wrist image: the
+intended object must be centred in the wrist view and clearly closer than any
 distractor. Only then call pi05_act for the descent and closure. If the wrist
-image shows a distractor centred, the residual is large, or planning failed,
-correct the approach before touching anything, because Pi_05 will grasp what it
-sees.
+image shows a distractor centred, the residual is large, or planning failed
+after that search, correct the bind before touching anything, because Pi_05
+will grasp what it sees.
 
 Every pi05_act uses the exact complete current instruction. Pi_05 always
 receives the full episode instruction; focus records the current phase only.

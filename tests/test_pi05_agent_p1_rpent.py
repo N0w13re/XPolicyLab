@@ -32,6 +32,8 @@ from XPolicyLab.policy.Pi_05_Agent_P1_RPent.robot_profile import (
     default_clearance,
     default_pregrasp_clearance,
     eef_tcp_offset,
+    iter_pregrasp_candidates,
+    pregrasp_look_pose,
     pregrasp_quaternion,
 )
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.tools import RpentPrimitives
@@ -516,11 +518,12 @@ def test_v3_prompt_requires_measured_pregrasp_before_the_pi05_grasp():
     )
 
     assert "it never receives your measured coordinates" in prompt
-    assert "Before the grasp of a measured object, call pregrasp" in prompt
+    assert "Before the grasp of a measured object, call pregrasp once" in prompt
     assert "Pass clearance_m in [0.12, 0.30]" in prompt
     assert "short/low objects 0.12" in prompt
     assert "Never pass below 0.12" in prompt
-    assert "centred under the open gripper" in prompt
+    assert "camera aimed at that same object point" in prompt
+    assert "centred in the wrist view" in prompt
     assert "above the measured object with pregrasp" in prompt
     assert "Metric xyz is required before a grasp" in prompt
     assert "Never skip from a visual bind straight to pi05_act" in prompt
@@ -662,6 +665,105 @@ def test_pregrasp_clamps_clearance_to_object_height_range(tmp_path):
     np.testing.assert_allclose(
         too_high["pregrasp_xyz"], [-0.24, -0.18, 0.78 + 0.30 + eef_tcp_offset()]
     )
+
+
+def test_pregrasp_look_pose_keeps_the_wrist_axis_on_the_object():
+    object_xyz = np.array([0.02, 0.03, 0.81], dtype=np.float32)
+    pose = pregrasp_look_pose(object_xyz, "right", 0.12, 0.10, 0.145)
+    assert pose is not None
+    look = object_xyz - pose["xyz"]
+    look = look / np.linalg.norm(look)
+    w, x, y, z = pose["quat"] / np.linalg.norm(pose["quat"])
+    eef_x = np.array(
+        [
+            1.0 - 2.0 * (y * y + z * z),
+            2.0 * (x * y + z * w),
+            2.0 * (x * z - y * w),
+        ]
+    )
+    np.testing.assert_allclose(eef_x, look, atol=1e-4)
+    np.testing.assert_allclose(
+        np.linalg.norm(object_xyz - pose["xyz"]), 0.12 + 0.145, atol=1e-5
+    )
+    assert pose["xyz"][1] < object_xyz[1]
+
+
+def test_pregrasp_candidates_try_overhead_before_tilted_retreat():
+    object_xyz = np.array([0.02, 0.03, 0.81], dtype=np.float32)
+    candidates = list(
+        iter_pregrasp_candidates(
+            object_xyz,
+            preferred_arm="right",
+            requested_clearance_m=0.12,
+            tcp_offset_m=0.145,
+        )
+    )
+    assert candidates[0]["arm"] == "right"
+    assert candidates[0]["retract_m"] == 0.0
+    assert candidates[0]["clearance_m"] == 0.12
+    assert any(item["retract_m"] > 0.09 and item["arm"] == "right" for item in candidates)
+    assert any(item["arm"] == "left" for item in candidates)
+
+
+class _DualArmFailThenSucceedManager:
+    def __init__(self):
+        self.left = _FakeRobot()
+        self.left.arm_name = "left_arm"
+        self.left.robot_name = "left_robot"
+        self.right = _FakeRobot()
+        self.right.arm_name = "right_arm"
+        self.right.robot_name = "right_robot"
+        self.calls = []
+
+        class _Planner:
+            def __init__(self, owner, arm):
+                self.owner = owner
+                self.arm = arm
+
+            def plan_path(self, current, target, real_robot_pose):
+                xyz = np.asarray(target, dtype=np.float32)[:3]
+                self.owner.calls.append((self.arm, xyz.copy()))
+                if self.arm == "right" and float(xyz[1]) < 0.0:
+                    return {
+                        "status": "Success",
+                        "position": np.array([[0.1] * 6], dtype=np.float32),
+                    }
+                return {"status": "Fail"}
+
+        self.planner = {
+            "left_robot": _Planner(self, "left"),
+            "right_robot": _Planner(self, "right"),
+        }
+
+    def get_robot_by_arm_name(self, name):
+        return self.left if name == "left_arm" else self.right
+
+    def get_joint(self, robot, env_idx_list):
+        return {env_idx_list[0]: np.zeros(6, dtype=np.float32)}
+
+
+def test_pregrasp_searches_look_at_retreats_after_overhead_plan_fails(tmp_path):
+    moved = _observation()
+    moved["state"]["right_ee_pose"][:3] = [0.08, -0.05, 1.0]
+    env = _FakeEnv([_observation(), moved, moved])
+    env.robot_manager = _DualArmFailThenSucceedManager()
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    result = primitives.pregrasp([0.02, 0.04, 0.81], arm="right", clearance_m=0.12)
+
+    assert result["arm"] == "right"
+    assert result["look_at_xyz"] == [0.02, 0.04, 0.81]
+    assert result["retract_m"] > 0.0
+    assert result["executed_steps"] >= 1
+    assert env.robot_manager.calls[0][0] == "right"
+    np.testing.assert_allclose(env.robot_manager.calls[0][1][0:2], [0.02, 0.04], atol=1e-4)
+    assert any(call[0] == "right" and float(call[1][1]) < 0.04 for call in env.robot_manager.calls)
+    assert env.robot_manager.calls[0][1][1] == pytest.approx(0.04, abs=1e-4)
 
 
 def test_pregrasp_rejects_geometry_that_never_resolved(tmp_path):
