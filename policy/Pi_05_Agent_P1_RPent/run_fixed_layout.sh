@@ -9,7 +9,7 @@ policy_gpu=${2:-0}
 env_gpu=${3:-1}
 eval_env=${4:-uv}
 task_name=${5:-classify_objects_by_language}
-run_id=${ROBODOJO_RUN_ID:-rpent-${task_name}-layout${layout}}
+run_id=${ROBODOJO_RUN_ID:-rpent-${task_name}-layout${layout//,/_}}
 
 export ROBODOJO_RUN_ID="${run_id}"
 export ROBODOJO_UNTILED_CAMERAS="${ROBODOJO_UNTILED_CAMERAS:-0}"
@@ -27,8 +27,21 @@ import sys
 from pathlib import Path
 
 spec, output = sys.argv[1:3]
-first, separator, last = spec.partition("-")
-layout_ids = list(range(int(first), int(last) + 1)) if separator else [int(first)]
+layout_ids = []
+seen = set()
+for part in spec.split(","):
+    part = part.strip()
+    if not part:
+        continue
+    if "-" in part:
+        first, last = (int(value) for value in part.split("-", 1))
+        chunk = range(first, last + 1)
+    else:
+        chunk = [int(part)]
+    for layout_id in chunk:
+        if layout_id not in seen:
+            seen.add(layout_id)
+            layout_ids.append(layout_id)
 Path(output).write_text(json.dumps({"layout_ids": layout_ids}, indent=2))
 PY
 fi

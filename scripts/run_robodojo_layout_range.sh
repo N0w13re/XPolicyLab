@@ -11,7 +11,8 @@
 # Usage:
 #   scripts/run_robodojo_single_layout.sh <POLICY> <TASK> <LAYOUTS> [extra eval args...]
 #
-# LAYOUTS is either a single index (`16`) or an inclusive range (`20-39`).
+# LAYOUTS is a single index (`16`), an inclusive range (`20-39`), or a
+# comma-separated mix of those (`1-3,5,12-14`).
 #
 # Environment:
 #   ROBODOJO_ROOT   RoboDojo checkout (default: ../RoboDojo-eval)
@@ -82,13 +83,29 @@ count = sum(1 for p in Path(layout_dir).iterdir() if pattern.fullmatch(p.name))
 if count == 0:
     raise SystemExit(f"No layouts for {task_name} under {layout_dir}")
 
-if "-" in layout_spec:
-    first, last = (int(part) for part in layout_spec.split("-", 1))
-else:
-    first = last = int(layout_spec)
-if not 0 <= first <= last < count:
-    raise SystemExit(f"layout range {first}-{last} outside 0..{count - 1}")
-wanted = set(range(first, last + 1))
+wanted_list = []
+seen = set()
+for part in layout_spec.split(","):
+    part = part.strip()
+    if not part:
+        continue
+    if "-" in part:
+        first_s, last_s = part.split("-", 1)
+        first, last = int(first_s), int(last_s)
+        if last < first:
+            raise SystemExit(f"empty layout range {part}")
+        chunk = list(range(first, last + 1))
+    else:
+        chunk = [int(part)]
+    for layout_id in chunk:
+        if not 0 <= layout_id < count:
+            raise SystemExit(f"layout {layout_id} outside 0..{count - 1}")
+        if layout_id not in seen:
+            seen.add(layout_id)
+            wanted_list.append(layout_id)
+if not wanted_list:
+    raise SystemExit(f"empty layout spec {layout_spec!r}")
+wanted = set(wanted_list)
 
 payload = {
     "run_id": run_id,
@@ -108,13 +125,27 @@ payload = {
     "restart_count": 0,
 }
 Path(manifest_path).write_text(json.dumps(payload, indent=2))
-print(f"[layout-select] {manifest_path}: keeping {sorted(wanted)} of {count}")
+print(f"[layout-select] {manifest_path}: keeping {wanted_list} of {count}")
 PY
 
 layout_count="$(python3 -c "
 spec = '${layout_spec}'
-first, _, last = spec.partition('-')
-print(int(last or first) - int(first) + 1)
+ids = []
+seen = set()
+for part in spec.split(','):
+    part = part.strip()
+    if not part:
+        continue
+    if '-' in part:
+        first, last = (int(x) for x in part.split('-', 1))
+        chunk = range(first, last + 1)
+    else:
+        chunk = [int(part)]
+    for layout_id in chunk:
+        if layout_id not in seen:
+            seen.add(layout_id)
+            ids.append(layout_id)
+print(len(ids))
 ")"
 
 exec bash "${repo_root}/scripts/run_robodojo_sim_eval.sh" eval "${policy_name}" \
