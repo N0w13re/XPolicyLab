@@ -512,18 +512,16 @@ after every primitive.""",
     ),
     (
         "PERCEPTION",
-        """This RoboDojo runtime has no SAM3 service and no segment tool.
-Do not wait for a mask or call a missing segmenter. Bind identity yourself
-from the current head RGB in view_env_state. Use the head view as semantic authority
+        """This RoboDojo runtime has no SAM3 service, no segment tool, and no ground tool.
+Do not wait for a mask, detector bbox, or missing segmenter.
+Bind identity yourself from the current head RGB in view_env_state. Use the head view as semantic authority
 for identity, distractors, destinations, language relations, and
-global progress. Optional ground is a language-to-bbox aid from the planner
-vision model, not SAM3; call it only on the head view. ground returns identity
-and bbox pixels only. It is not a world pose, a grasp, or a move_to target.
+global progress.
 
-After identity is bound, choose several interior [row,col] pixels, then call
-sample_world_xyz, or pass bbox_rc to query_world_map, at the exact step, view,
-and resolution. Do not skip from ground or a visual bind straight to pi05_act
-or move_to when you will need metric xyz. Use the matching current
+Choose several interior [row,col] pixels on that same head view, then call
+sample_world_xyz, or pass a bbox of those pixels to query_world_map, at the
+exact step, view, and resolution. Do not skip from a visual bind straight to
+pi05_act or move_to when you will need metric xyz. Use the matching current
 wrist view to refine geometry with sample_world_xyz or query_world_map for that
 same chosen candidate; do not let it silently switch to a look-alike. Pair RGB
 and world maps from the same step, view, and resolution. World maps are
@@ -577,18 +575,18 @@ _RPENT_V2_USER_SECTIONS = (
     ),
     (
         "BEGIN",
-        """Follow the required read order. There is no SAM3. Bind the current
-task's targets from the head image, query world-map xyz for the object and
-destination, grasp with pi05_act, then after a verified hold use move_to for
-transport. After each action verify its observable gate, preserve achieved
-relations, and use the complete current instruction unchanged for every
-pi05_act.""",
+        """Follow the required read order. There is no SAM3 and no ground tool.
+Bind the current task's targets from the head image, query world-map xyz for
+the object and destination, grasp with pi05_act, then after a verified hold
+use move_to for transport. After each action verify its observable gate,
+preserve achieved relations, and use the complete current instruction
+unchanged for every pi05_act.""",
     ),
 )
 
 
 def rpent_v2_system_prompt(*, task_name: str, seed: str = "0") -> str:
-    """Render the RoboTwin-aligned RoboDojo prompt: no SAM3, VLA grasp, post-hold move_to."""
+    """Render the RoboTwin-aligned RoboDojo prompt: no SAM3, no ground, VLA grasp, post-hold move_to."""
     return _render_sections(
         _RPENT_V2_SYSTEM_SECTIONS,
         {"task_name": task_name, "seed": seed},

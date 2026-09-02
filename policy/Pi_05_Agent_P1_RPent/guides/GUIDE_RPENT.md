@@ -7,7 +7,7 @@ geometry, and compact execution rules needed to apply it.
 ## Registered tools
 
 - Resources: `list_dir`, `read_text_file`
-- Observation: `view_env_state`, `sample_world_xyz`, `query_world_map`, `ground`
+- Observation: `view_env_state`, `sample_world_xyz`, `query_world_map`
 - Control: `pi05_act`, `move_to`, `rotate_wrist`, `set_gripper`, `release`,
   `verify_state`, `return_home`
 - Terminal: `finish`
@@ -19,19 +19,15 @@ result before the next mutation.
 ## Observation and geometry
 
 Start with `view_env_state(step=0)`. Its complete instruction is authoritative.
-This runtime has no SAM3 service and no `segment` tool; do not wait for a mask.
-Head views identify objects, distractors, destinations, global relations, and
-completed subgoals. Optional `ground` is a language-to-bbox aid from the planner
-vision model, not SAM3. It is head-only: it binds one requested target identity
-to a bounding box. It does not choose a point, query geometry, choose an arm, or
-compute an EEF hover target. After identity is bound, select several interior
-`[row,col]` pixels from the image or from the returned `bbox_rc`, then call
-`sample_world_xyz`, or pass `bbox_rc` to `query_world_map`, at the returned
-`env_state_step`. Do not skip from `ground` straight to `pi05_act` or `move_to`
-when metric xyz will be needed. Wrist views refine grasp, contact, insertion,
-and release geometry for the same head-selected candidate using those geometry
-tools at the exact step, view, and resolution; never call `ground` on a wrist
-view.
+This runtime has no SAM3, no `segment` tool, and no `ground` tool; do not wait
+for a mask or detector bbox. Head views identify objects, distractors,
+destinations, global relations, and completed subgoals. After you bind a
+candidate on the head RGB, select several interior `[row,col]` pixels, then
+call `sample_world_xyz`, or pass that pixel bbox to `query_world_map`, at the
+same step, view, and resolution. Do not skip from a visual bind straight to
+`pi05_act` or `move_to` when metric xyz will be needed. Wrist views refine
+grasp, contact, insertion, and release geometry for the same head-selected
+candidate using those geometry tools at the exact step, view, and resolution.
 
 World maps use `[row,col]`, contain world-frame `[x,y,z]` metres, and may contain
 NaN. Query the exact step/view/resolution whose RGB supplied the pixels. Sample

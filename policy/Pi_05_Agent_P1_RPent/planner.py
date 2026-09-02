@@ -137,33 +137,6 @@ TOOLS_SPEC = [
     {
         "type": "function",
         "function": {
-            "name": "ground",
-            "description": (
-                "Ground exactly one planner-requested target in the head RGB view. "
-                "Returns identity, normalized bbox, and same-step pixel bbox only. "
-                "You must choose interior [row,col] pixels and call "
-                "sample_world_xyz or query_world_map for geometry."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "Specific description of one visual target.",
-                    },
-                    "camera": {
-                        "type": "string",
-                        "enum": ["head"],
-                        "default": "head",
-                    },
-                },
-                "required": ["query"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "move_to",
                 "description": (
                     "Move one arm to a world xyz until reached, stalled, or timed "
@@ -404,7 +377,7 @@ class RpentPlanner:
                 user_prompt = rpent_v2_user_prompt
                 system_prompt = rpent_v2_system_prompt
                 prompt_source = (
-                    "XPolicyLab RoboDojo v2: no SAM3, VLA grasp, post-hold move_to"
+                    "XPolicyLab RoboDojo v2: no SAM3/ground, VLA grasp, post-hold move_to"
                 )
             else:
                 user_prompt = rpent_v1_user_prompt
@@ -486,11 +459,6 @@ class RpentPlanner:
                 str(arguments["view"]),
                 list(arguments["bbox"]),
                 int(arguments.get("step", -1)),
-            )
-        elif name == "ground":
-            result = self.primitives.ground(
-                str(arguments["query"]),
-                camera=str(arguments.get("camera", "head")),
             )
         elif name == "move_to":
             result = self.primitives.move_to(

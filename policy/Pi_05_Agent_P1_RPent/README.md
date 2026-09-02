@@ -2,7 +2,7 @@
 
 Evaluation-only Harness-VLA adapter for RoboDojo. Qwen is the low-frequency
 planner, frozen Pi_05 handles contact-rich motion, and generic RGB-D/CuRobo
-tools handle grounding, free-space motion, verification, and recovery.
+tools handle localization, free-space motion, verification, and recovery.
 
 This is a new RPent-style experimental condition, not the earlier
 `Pi_05_Agent_P1` gaze-only condition. In particular, the planner may give Pi_05
@@ -35,11 +35,9 @@ not know about categories, baskets, or benchmark rewards.
 The planner calls exactly one structured tool per turn:
 
 - `view_env_state`: inspect one immutable RGB-D state
-- `ground`: locate one target in the head view and return its normalized and
-  pixel bboxes without choosing a point or querying geometry
-- `sample_world_xyz` / `query_world_map`: derive robust metric geometry, including
-  planner-selected head pixels and wrist-view refinement for the same grounded
-  candidate at the exact step/view
+- `sample_world_xyz` / `query_world_map`: derive robust metric geometry from
+  planner-selected head pixels and wrist-view refinement for the same candidate
+  at the exact step/view
 - `move_to`: execute a CuRobo collision-checked joint path to an EEF pose
 - `rotate_wrist`: rotate one wrist at fixed EEF position
 - `pi05_act`: run a short prefix of frozen Pi_05 with the full instruction
@@ -68,15 +66,16 @@ Planner prompts are explicitly versioned:
   upstream RPent section structure with RoboDojo, Pi_05, local resource, and
   `pi05_act` horizon substitutions, and treats head-view `ground` as identity
   plus bbox pixels.
-- `v2` is the current default. It keeps the v1 tool names and resource loading,
-  and aligns strategy with upstream RoboTwin RPent: this stack has no SAM3 and
-  no `segment` tool; identity comes from the head RGB; optional `ground` is an
-  LLM bbox aid, not SAM3; the planner must query `sample_world_xyz` or
-  `query_world_map` before using metric xyz; grasp with `pi05_act`; `move_to`
-  only after a verified hold, with planner-added EEF/TCP clearance. It loads
-  the generic guide, exact task/seed curated resources when present, the
-  legacy task recipe as an experimental prior, and the memory index. Missing
-  curated resources remain supported and are recorded in trace.
+- `v2` is the current default. It keeps v1 resource loading and aligns the
+  registered tools with upstream RoboTwin RPent: no SAM3, no `segment`, and no
+  `ground`. Identity comes from the head RGB; the planner picks `[row,col]`
+  pixels and queries `sample_world_xyz` or `query_world_map` before using
+  metric xyz; grasp with `pi05_act`; `move_to` only after a verified hold, with
+  planner-added EEF/TCP clearance. It loads the generic guide, exact task/seed
+  curated resources when present, the legacy task recipe as an experimental
+  prior, and the memory index. Missing curated resources remain supported and
+  are recorded in trace. The `ground` helper remains in Python for old traces
+  but is not registered for the planner.
 
 Select a version with `RPENT_PLANNER_PROMPT_VERSION=v0|v1|v2`. Each new trace
 records a `planner_config` event containing the selected version, exact system
@@ -131,7 +130,7 @@ library HTTP client; GPT uses `AzureOpenAI`.
 
 ## Planner LLM
 
-Planner and vision calls (`ground`, `verify_state`) share one backend. Default
+Planner and vision calls (`verify_state`) share one backend. Default
 is Qwen. Set `RPENT_LLM_BACKEND=gpt` (or only a GPT key) to use ByteDance AIDP
 Azure OpenAI for the same loop.
 
@@ -193,9 +192,7 @@ export RPENT_STOP_AFTER_FIRST_PI05=1
 ```
 
 `RPENT_APPROACH_CLEARANCE_M` is the default hover offset the planner should add
-above explicitly sampled object geometry before `move_to`. `ground` does not
-accept a clearance or anchor parameter and returns no world XYZ or suggested
-hover pose.
+above explicitly sampled object geometry before `move_to`.
 `RPENT_PI05_EXECUTION_HORIZON` limits how many
 actions are executed from each Pi_05-generated chunk before re-observing and
 requesting a new chunk; the model still generates its native 50-action chunk.

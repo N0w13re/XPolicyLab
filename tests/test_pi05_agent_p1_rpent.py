@@ -426,13 +426,6 @@ _UPSTREAM_RPENT_SECTION_TITLES = (
 )
 
 
-def _ground_tool_parameters():
-    for tool in TOOLS_SPEC:
-        if tool["function"]["name"] == "ground":
-            return tool["function"]["parameters"]
-    raise AssertionError("ground tool not found in TOOLS_SPEC")
-
-
 def test_default_system_prompt_preserves_upstream_rpent_strategy():
     prompt = SYSTEM_PROMPT
 
@@ -483,19 +476,21 @@ def test_v2_prompt_aligns_with_robotwin_no_sam3_and_post_hold_move_to():
         task_config="RoboDojo",
     )
 
-    assert "no SAM3 service and no segment tool" in prompt
-    assert "not SAM3" in prompt
+    assert "no SAM3 service, no segment tool" in prompt
+    assert "no ground tool" in prompt
     assert "Do not use empty-gripper" in prompt
     assert "Use move_to only after a verified hold" in prompt
-    assert "choose several interior [row,col] pixels" in prompt
+    assert "Choose several interior [row,col] pixels" in prompt
     assert "sample_world_xyz" in prompt
     assert "query_world_map" in prompt
-    assert "There is no SAM3" in opening
+    assert "There is no SAM3 and no ground tool" in opening
     assert "grasp with pi05_act" in opening
-    assert "verified hold use move_to" in opening
+    assert "verified hold" in opening
     assert "segment(" not in prompt
     assert "lingbot_act" not in prompt
     assert "RoboTwin" not in prompt
+    assert "Call ground" not in prompt
+    assert "Optional ground" not in prompt
 
 
 def test_guide_rpent_preserves_upstream_operational_sections():
@@ -519,8 +514,7 @@ def test_guide_rpent_preserves_upstream_operational_sections():
     ):
         assert heading in guide, f"missing guide section {heading!r}"
 
-    assert "no SAM3 service and no `segment` tool" in guide
-    assert "ground` is a language-to-bbox aid" in guide
+    assert "no SAM3, no `segment` tool, and no `ground` tool" in guide
     assert "Do not use empty-gripper `move_to`" in guide
     assert "Use `move_to` only after a verified hold" in guide
     assert "sample_world_xyz" in guide
@@ -534,10 +528,9 @@ def test_guide_rpent_preserves_upstream_operational_sections():
     assert "qpos14" not in guide
 
 
-def test_ground_tool_schema_has_no_clearance_parameter():
-    properties = _ground_tool_parameters()["properties"]
-    assert "clearance" not in properties
-    assert "anchor" not in properties
+def test_ground_is_not_a_registered_planner_tool():
+    names = [tool["function"]["name"] for tool in TOOLS_SPEC]
+    assert "ground" not in names
 
 
 def test_ground_result_contains_only_semantic_binding_not_geometry(tmp_path):
