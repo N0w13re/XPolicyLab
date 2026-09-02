@@ -21,16 +21,30 @@ def default_clearance() -> float:
     return float(os.environ.get("RPENT_APPROACH_CLEARANCE_M", "0.20"))
 
 
+PREGRASP_CLEARANCE_MIN_M = 0.12
+PREGRASP_CLEARANCE_MAX_M = 0.30
+
+
+def clamp_pregrasp_clearance(clearance_m: float) -> float:
+    """Keep pre-grasp hover in the prompt range of 0.12-0.30 m."""
+    return min(
+        PREGRASP_CLEARANCE_MAX_M,
+        max(PREGRASP_CLEARANCE_MIN_M, float(clearance_m)),
+    )
+
+
 def default_pregrasp_clearance() -> float:
     """Height held above a measured object before Pi_05 takes the contact.
 
-    Transport clearance is deliberately generous, but a pre-grasp hover has to
-    stay low enough that the object fills the wrist view. The earlier P1-gaze
-    loop hovered 0.10 m above the table for the same reason.
+    The added hover is 0.12-0.30 m according to the object's own height. The
+    default is the floor for a short object; taller objects need more so the
+    fingers and TCP stay clear of the body.
     """
     import os
 
-    return float(os.environ.get("RPENT_PREGRASP_CLEARANCE_M", "0.12"))
+    return clamp_pregrasp_clearance(
+        float(os.environ.get("RPENT_PREGRASP_CLEARANCE_M", "0.12"))
+    )
 
 
 def pregrasp_quaternion(arm: str) -> np.ndarray:

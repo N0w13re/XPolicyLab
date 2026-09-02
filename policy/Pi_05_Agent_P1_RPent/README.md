@@ -40,7 +40,8 @@ The planner calls exactly one structured tool per turn:
   planner-selected head pixels and wrist-view refinement for the same candidate
   at the exact step/view
 - `move_to`: execute a CuRobo collision-checked joint path to an EEF pose
-- `pregrasp`: open one gripper and hold it one clearance above a measured object
+- `pregrasp`: open one gripper and hold it 0.12-0.30 m above a measured object,
+  scaled by the object's own height
   point, using the top-down pre-grasp orientation and the arm on the object's
   side, so Pi_05 sees the intended object rather than a distractor
 - `rotate_wrist`: rotate one wrist at fixed EEF position
@@ -87,10 +88,11 @@ Planner prompts are explicitly versioned:
   receives our measured coordinates and binds its own target, so on RoboDojo
   layouts with several plausible objects it regularly grasps a distractor. v3
   therefore requires the measured geometry to position the arm before the
-  contact: sample the object xyz, call `pregrasp`, confirm on the fresh wrist
-  image that the intended object is centred under the open gripper, and only
-  then run `pi05_act` for the descent and closure. Transport after a verified
-  hold is unchanged.
+  contact: sample the object xyz, call `pregrasp` with `clearance_m` in
+  0.12-0.30 m from the object's own height, confirm on the fresh wrist image
+  that the intended object is centred under the open gripper, and only then
+  run `pi05_act` for the descent and closure. Transport after a verified hold
+  is unchanged.
 
 Select a version with `RPENT_PLANNER_PROMPT_VERSION=v0|v1|v2|v3`. Each new trace
 records a `planner_config` event containing the selected version, exact system
@@ -208,8 +210,9 @@ export RPENT_STOP_AFTER_FIRST_PI05=1
 
 `RPENT_APPROACH_CLEARANCE_M` is the offset the planner should add above
 explicitly sampled geometry before `move_to`. `RPENT_PREGRASP_CLEARANCE_M` is
-the lower hover `pregrasp` holds above a measured object, chosen so the object
-still fills the wrist view when Pi_05 takes the contact.
+the default `pregrasp` hover when the planner omits `clearance_m`; the prompt
+requires 0.12-0.30 m scaled by object height, and the tool clamps into that
+range.
 `RPENT_PI05_EXECUTION_HORIZON` limits how many
 actions are executed from each Pi_05-generated chunk before re-observing and
 requesting a new chunk; the model still generates its native 50-action chunk.

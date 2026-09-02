@@ -632,8 +632,9 @@ current instruction and observed goal match it:
 - Pick/place or spatial relation: bind manipulated object, reference or
   destination, requested relation, and arm separately. Query world-map xyz for
   the object and the destination before grasping. Position the open gripper
-  above the measured object with pregrasp, confirm on the fresh wrist image
-  that the intended object is centred under the gripper, then grasp with
+  above the measured object with pregrasp, setting clearance_m from the
+  object's own height in 0.12-0.30 m. Confirm on the fresh wrist image that
+  the intended object is centred under the gripper, then grasp with
   pi05_act. Require a verified hold before any transport move_to. Release only
   when the object is supported at the correct destination/relation; then verify
   separation, stability, and arm clearance.
@@ -663,9 +664,13 @@ distractor. Your geometry is the only way to constrain that choice, so approach
 first and let Pi_05 own the contact.
 
 Before the grasp of a measured object, call pregrasp with the sampled object
-xyz. It opens the gripper, applies the top-down pre-grasp orientation, and holds
-the wrist one clearance above the object; the arm defaults to the object's side
-of the table. Then re-observe and read the fresh wrist image: the intended
+xyz. Estimate the object's own height from the world-map z span (query_world_map
+max_z minus table or min_z). Pass clearance_m in [0.12, 0.30] scaled by that
+height: short/low objects 0.12, medium 0.18-0.22, tall bottles or containers
+toward 0.30. Never pass below 0.12. It opens the gripper, applies the top-down
+pre-grasp orientation, and holds the wrist that far above the measured surface;
+the arm defaults to the object's side of the table. Then re-observe and read
+the fresh wrist image: the intended
 object must be centred under the open gripper and clearly closer than any
 distractor. Only then call pi05_act for the descent and closure. If the wrist
 image shows a distractor centred, the residual is large, or planning failed,
@@ -690,8 +695,9 @@ for measured transport, staging, retreat, or one small geometric correction. A
 verified hold means the target left its source and moves with the TCP; gripper
 closure alone is not enough. Never transport because a gripper merely looks
 closed. Never call a primitive just to test whether it helps. Do not send a raw
-object surface point as a move_to contact target; pregrasp adds the clearance
-for you, and for a destination you add EEF/TCP and safety clearance yourself.
+object surface point as a move_to contact target; pregrasp adds clearance_m
+(0.12-0.30 m from the object's height) for you, and for a destination you add
+EEF/TCP and safety clearance yourself.
 Re-query destination xyz after the grasp because the scene moved. For planner
 residuals, guarded low approaches, physical state shaping, and wrist-sweep
 safety, follow guides/GUIDE_RPENT.md and re-observe after every primitive.""",
@@ -705,6 +711,8 @@ Choose several interior [row,col] pixels on that same head view, then call
 sample_world_xyz, or pass a bbox of those pixels to query_world_map, at the
 exact step, view, and resolution. Metric xyz is required before a grasp, not
 optional: it is what pregrasp uses to put the correct object under the gripper.
+Use query_world_map z min/max to estimate the object's own height so clearance_m
+can be set in 0.12-0.30 m.
 Never skip from a visual bind straight to pi05_act. Use the matching current
 wrist view to refine geometry with sample_world_xyz or query_world_map for that
 same chosen candidate; do not let it silently switch to a look-alike. Pair RGB
@@ -722,7 +730,8 @@ _RPENT_V3_USER_SECTIONS = _override_sections(
         "BEGIN": """Follow the required read order. There is no SAM3 and no
 ground tool. Bind the current task's targets from the head image, query
 world-map xyz for the object and destination, place the open gripper above the
-measured object with pregrasp, confirm on the fresh wrist image that the
+measured object with pregrasp using clearance_m 0.12-0.30 m from the object's
+height, confirm on the fresh wrist image that the
 intended object is centred, grasp with pi05_act, then after a verified hold use
 move_to for transport. After each action verify its observable gate, preserve
 achieved relations, and use the complete current instruction unchanged for every

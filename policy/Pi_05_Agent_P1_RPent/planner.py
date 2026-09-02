@@ -205,7 +205,16 @@ TOOLS_SPEC = [
                         "enum": ["left", "right"],
                         "description": "Defaults to the arm on the object's side.",
                     },
-                    "clearance_m": {"type": "number", "minimum": 0.02},
+                    "clearance_m": {
+                        "type": "number",
+                        "minimum": 0.12,
+                        "maximum": 0.30,
+                        "description": (
+                            "Metres added above the measured object surface. "
+                            "Scale by the object's own height: 0.12 for short "
+                            "objects, up to 0.30 for tall ones. Never below 0.12."
+                        ),
+                    },
                     "substeps": {"type": "integer", "minimum": 1, "default": 25},
                 },
                 "required": ["object_xyz"],

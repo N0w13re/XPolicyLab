@@ -60,7 +60,8 @@ Pi_05 owns the contact of a grasp. Whether you position the empty gripper before
 that contact is the system prompt's decision, so follow it. When the prompt asks
 for pre-positioning, use `pregrasp` with a measured object xyz rather than a raw
 `move_to`: it opens the gripper, applies the top-down pre-grasp orientation, and
-adds the clearance, because a surface xyz is not an EEF contact target. Then
+adds `clearance_m` in 0.12-0.30 m scaled by the object's own height, because a
+surface xyz is not an EEF contact target. Then
 re-observe and confirm on the wrist image that the intended object, not a
 distractor, sits under the gripper.
 

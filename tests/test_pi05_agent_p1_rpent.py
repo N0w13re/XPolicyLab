@@ -516,6 +516,9 @@ def test_v3_prompt_requires_measured_pregrasp_before_the_pi05_grasp():
 
     assert "it never receives your measured coordinates" in prompt
     assert "Before the grasp of a measured object, call pregrasp" in prompt
+    assert "Pass clearance_m in [0.12, 0.30]" in prompt
+    assert "short/low objects 0.12" in prompt
+    assert "Never pass below 0.12" in prompt
     assert "centred under the open gripper" in prompt
     assert "above the measured object with pregrasp" in prompt
     assert "Metric xyz is required before a grasp" in prompt
@@ -549,13 +552,15 @@ def test_pregrasp_is_registered_and_only_requires_the_object_xyz():
         "clearance_m",
         "substeps",
     }
+    assert parameters["properties"]["clearance_m"]["minimum"] == 0.12
+    assert parameters["properties"]["clearance_m"]["maximum"] == 0.30
 
 
 def test_planner_dispatches_pregrasp_from_a_sampled_object_point(tmp_path):
     env = _FakeEnv([_observation()])
     qwen = _ToolSequenceQwen(
         [
-            ("pregrasp", {"object_xyz": [-0.24, -0.18, 0.78], "clearance_m": 0.1}),
+            ("pregrasp", {"object_xyz": [-0.24, -0.18, 0.78], "clearance_m": 0.18}),
             ("finish", {"status": "test", "summary": "done"}),
         ]
     )
@@ -578,8 +583,9 @@ def test_planner_dispatches_pregrasp_from_a_sampled_object_point(tmp_path):
         if event["type"] == "tool_result" and event["tool"] == "pregrasp"
     )
     assert pregrasp["result"]["arm"] == "left"
+    assert pregrasp["result"]["clearance_m"] == 0.18
     np.testing.assert_allclose(
-        pregrasp["result"]["pregrasp_xyz"], [-0.24, -0.18, 0.88]
+        pregrasp["result"]["pregrasp_xyz"], [-0.24, -0.18, 0.96]
     )
 
 
@@ -629,6 +635,23 @@ def test_pregrasp_hovers_lower_than_the_transport_clearance(monkeypatch):
 
     assert default_pregrasp_clearance() == 0.12
     assert default_pregrasp_clearance() < default_clearance()
+
+
+def test_pregrasp_clamps_clearance_to_object_height_range(tmp_path):
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    too_low = primitives.pregrasp([-0.24, -0.18, 0.78], clearance_m=0.08)
+    too_high = primitives.pregrasp([-0.24, -0.18, 0.78], clearance_m=0.40)
+
+    assert too_low["clearance_m"] == 0.12
+    np.testing.assert_allclose(too_low["pregrasp_xyz"], [-0.24, -0.18, 0.90])
+    assert too_high["clearance_m"] == 0.30
+    np.testing.assert_allclose(too_high["pregrasp_xyz"], [-0.24, -0.18, 1.08])
 
 
 def test_pregrasp_rejects_geometry_that_never_resolved(tmp_path):

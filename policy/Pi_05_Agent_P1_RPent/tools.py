@@ -25,6 +25,7 @@ from .geometry import (
     sample_world_xyz as sample_xyz,
 )
 from .robot_profile import (
+    clamp_pregrasp_clearance,
     default_pregrasp_clearance,
     pregrasp_quaternion,
 )
@@ -789,13 +790,14 @@ class RpentPrimitives:
         selected = arm or ("left" if float(target[0]) < 0.0 else "right")
         if selected not in {"left", "right"}:
             raise ValueError("arm must be 'left' or 'right'")
-        clearance = (
+        requested = (
             default_pregrasp_clearance()
             if clearance_m is None
             else float(clearance_m)
         )
-        if not clearance > 0.0:
+        if not requested > 0.0:
             raise ValueError("pregrasp clearance must be positive")
+        clearance = clamp_pregrasp_clearance(requested)
         approach = target + np.array([0.0, 0.0, clearance], dtype=np.float32)
         orientation = pregrasp_quaternion(selected)
         result = self.move_to(
