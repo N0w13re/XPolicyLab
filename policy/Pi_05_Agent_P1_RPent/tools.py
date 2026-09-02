@@ -24,29 +24,10 @@ from .geometry import (
     query_world_map as summarize_world_map,
     sample_world_xyz as sample_xyz,
 )
-from .manipulation import ManipulationLedger
 from .robot_profile import (
     pregrasp_quaternion,
 )
 from .trace import EpisodeTrace
-
-
-GROUND_PROMPT = """You ground one requested robot-manipulation target in an image.
-Locate exactly the visual target requested by the user. Do not choose a task
-order or silently substitute another target. The "label" should concisely
-describe the located target. Return one JSON object only:
-{"label": "target description", "bbox_2d": [x0, y0, x1, y1]}
-Coordinates are relative integers from 0 to 1000. Return
-{"label": null, "bbox_2d": null} if the requested target is not visible."""
-
-VERIFY_PROMPT = """You verify one observable robot-manipulation transition from
-the supplied fresh head and wrist images. Never infer a hold from gripper
-closure alone. For grasp, the named target must have left its source and move
-with the requested TCP. For transport, the same target must remain with the
-TCP. For placement or release, it must be separated from the gripper and
-visibly supported in/on the requested destination. Return JSON only:
-{"passed": true, "evidence": "concise visible evidence"}
-or {"passed": false, "evidence": "first unmet observable condition"}."""
 
 
 def _gripper_open_threshold() -> float:
@@ -216,13 +197,9 @@ class RpentPrimitives:
         self.env_idx = env_idx
         self.trace = trace or EpisodeTrace()
         self.env_states = EnvStateStore()
-        self.ledger = ManipulationLedger()
         self.reset_poses: dict[str, np.ndarray] | None = None
-        self.last_label: str | None = None
-        self.last_grounding: dict[str, Any] | None = None
         self.finished = False
         self.last_tool: str | None = None
-        self.last_reached_move: dict[str, dict[str, Any]] = {}
 
     def _obs(self) -> dict[str, Any]:
         if hasattr(self.task_env, "get_obs"):
@@ -306,9 +283,6 @@ class RpentPrimitives:
                 )
                 for arm in ("left", "right")
             },
-            "manipulation": self.ledger.as_dict(),
-            "carrying_arm": self.ledger.holding_arm,
-            "last_grounded_label": self.last_label,
             "left_ee_xyz": _state_vector(state, "left_ee_pose", 7)[:3].round(4).tolist(),
             "right_ee_xyz": _state_vector(state, "right_ee_pose", 7)[:3].round(4).tolist(),
             "left_gripper": float(_state_vector(state, "left_ee_joint_state", 1, 1.0)[0]),
@@ -478,7 +452,6 @@ class RpentPrimitives:
                 for name, view in record.views.items()
             },
             "episode_status": dict(record.episode_status),
-            "manipulation": self.ledger.as_dict(),
         }
 
     def sample_world_xyz(
@@ -511,57 +484,6 @@ class RpentPrimitives:
             "view": view,
             **summarize_world_map(record.views[view].world_xyz, bbox),
         }
-
-    def ground(
-        self,
-        query: str,
-        camera: str = "head",
-    ) -> dict[str, Any]:
-        self.last_grounding = None
-        self.last_label = None
-        if camera != "head":
-            raise ValueError(
-                "ground is head-only for semantic target binding (camera='head'); "
-                "refine wrist geometry with sample_world_xyz or query_world_map "
-                "at the exact step, view, and resolution for the same candidate."
-            )
-        observation = self._obs()
-        instruction = str(
-            observation.get("instruction") or observation.get("instructions") or ""
-        )
-        record = self._capture_env_state(observation)
-        image = record.views[camera].rgb
-        parsed = self._vision_json(
-            image,
-            GROUND_PROMPT,
-            f"Robot instruction: {instruction}\nLocate this requested target: {query}",
-        )
-        bbox = parsed.get("bbox_2d")
-        label = parsed.get("label")
-        if bbox is None:
-            self.last_label = None
-            return {
-                "query": query,
-                "label": None,
-                "bbox_2d": None,
-                "env_state_step": record.step,
-                "bbox_rc": None,
-                "image_shape": list(image.shape[:2]),
-                "carrying_arm": self.ledger.holding_arm,
-            }
-        bbox_rc = bbox_to_pixels(bbox, image.shape)
-        self.last_label = None if label is None else str(label)
-        result = {
-            "query": query,
-            "label": label,
-            "bbox_2d": bbox,
-            "env_state_step": record.step,
-            "bbox_rc": list(bbox_rc),
-            "image_shape": list(image.shape[:2]),
-            "carrying_arm": self.ledger.holding_arm,
-        }
-        self.last_grounding = result
-        return result
 
     def _build_ee_action(
         self,
@@ -770,21 +692,6 @@ class RpentPrimitives:
         if arm not in {"left", "right"}:
             raise ValueError("arm must be 'left' or 'right'")
         selected = arm
-        if (
-            self.ledger.holding_arm == selected
-            and self.ledger.hold_state != "verified"
-        ):
-            return {
-                "error": "transport_requires_verified_hold",
-                "arm": selected,
-                "target_xyz": hover_xyz.round(4).tolist(),
-                "precondition": {
-                    "required": "hold_state=verified",
-                    "actual": self.ledger.hold_state,
-                },
-                "recovery_hint": "Call verify_state(gate='grasp') before transport.",
-                **self.snapshot(observation),
-            }
         current_pose = _state_vector(
             observation["state"], f"{selected}_ee_pose", 7
         )
@@ -859,15 +766,6 @@ class RpentPrimitives:
             "final_orientation_error_rad": round(orientation_error, 5),
             **self.snapshot(final_observation),
         }
-        if result["reached"]:
-            self.last_reached_move[selected] = {
-                "target_xyz": result["target_xyz"],
-                "sim_step": result["step"],
-                "carrying": (
-                    self.ledger.holding_arm == selected
-                    and self.ledger.hold_state == "verified"
-                ),
-            }
         return result
 
     def rotate_wrist(
@@ -916,7 +814,6 @@ class RpentPrimitives:
                 or os.environ.get("RPENT_PI05_EXECUTION_HORIZON", "20")
             ),
         )
-        self.last_reached_move.clear()
         start = self._obs()
         start_z = {
             arm: float(_state_vector(start["state"], f"{arm}_ee_pose", 7)[2])
@@ -972,11 +869,6 @@ class RpentPrimitives:
             and post_min_peak_z[candidate_arm] - min_z[candidate_arm]
             >= float(os.environ.get("RPENT_LIFT_THRESH_M", "0.04"))
         )
-        self.ledger.candidate(
-            arm=candidate_arm if candidate_evidence else None,
-            target=focus,
-            step=self.env_step(),
-        )
         print(
             f"[P1-RPent] pi05_act candidate={candidate_evidence} chunks={chunks_used} "
             f"actions={actions_executed} horizon={execution_horizon} "
@@ -1014,65 +906,6 @@ class RpentPrimitives:
             "prompt": prompt,
             "candidate_success": result["candidate_evidence"],
             "carrying_arm": result["candidate_arm"],
-        }
-
-    def verify_state(
-        self,
-        gate: str,
-        target: str,
-        arm: str | None = None,
-    ) -> dict[str, Any]:
-        allowed = {
-            "grasp",
-            "transport",
-            "support_placement",
-            "container_placement",
-            "handover_receive",
-            "release",
-        }
-        if gate not in allowed:
-            raise ValueError(f"Unsupported verification gate: {gate}")
-        if not target.strip():
-            raise ValueError("verify_state requires the target/relation to verify")
-        observation = self._obs()
-        parts = self.image_parts(observation)
-        parts.append(
-            {
-                "type": "text",
-                "text": (
-                    f"Gate: {gate}\nTarget/relation: {target}\n"
-                    f"Arm: {arm or self.ledger.holding_arm}\n"
-                    f"Ledger before check: {json.dumps(self.ledger.as_dict())}"
-                ),
-            }
-        )
-        response = self.qwen.chat(
-            [
-                {"role": "system", "content": VERIFY_PROMPT},
-                {"role": "user", "content": parts},
-            ],
-            tools=None,
-            tool_choice=None,
-        )
-        text, _ = self.qwen.message_text_and_tools(response)
-        verification = _extract_json(text)
-        passed = verification.get("passed") is True
-        evidence = str(verification.get("evidence") or "")
-        if gate in {"grasp", "transport", "handover_receive"} and passed:
-            selected = arm or self.ledger.holding_arm
-            if selected not in {"left", "right"}:
-                raise ValueError(f"{gate} verification requires an arm")
-            self.ledger.holding_arm = selected
-        self.ledger.verify(gate=gate, passed=bool(passed), step=self.env_step())
-        if gate == "handover_receive" and passed:
-            self.ledger.holding_arm = arm
-        return {
-            "gate": gate,
-            "passed": bool(passed),
-            "target": target,
-            "evidence": evidence,
-            "transition": self.ledger.as_dict(),
-            **self.snapshot(),
         }
 
     def set_gripper(
@@ -1135,29 +968,9 @@ class RpentPrimitives:
         }
 
     def release(self, arm: str | None = None, max_steps: int = 20) -> dict[str, Any]:
-        observation = self._obs()
-        arm = arm or self.ledger.holding_arm
-        if arm is None:
-            return {"error": "no_verified_hold", **self.snapshot()}
-        move = self.last_reached_move.get(arm)
-        if (
-            move is None
-            or not move["carrying"]
-            or self.ledger.holding_arm != arm
-            or self.ledger.hold_state != "verified"
-        ):
-            return {
-                "error": "release_requires_reached_carry_move",
-                "arm": arm,
-                "precondition": {
-                    "required": "verified hold and successful transport move",
-                    "hold_state": self.ledger.hold_state,
-                },
-                **self.snapshot(observation),
-            }
+        if arm not in {"left", "right"}:
+            raise ValueError("release requires an explicit arm")
         result = self.set_gripper(arm, "open", max_steps)
-        self.last_reached_move.pop(arm, None)
-        self.ledger.verify(gate="release", passed=True, step=self.env_step())
         print(
             f"[P1-RPent] release arm={arm} steps={result['steps_used']} "
             f"open={result['opened']}",

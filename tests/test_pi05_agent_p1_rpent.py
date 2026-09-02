@@ -161,26 +161,6 @@ class _UnusedQwen:
     pass
 
 
-class _GroundingQwen:
-    def chat(self, messages, **kwargs):
-        del messages, kwargs
-        return {
-            "choices": [
-                {
-                    "message": {
-                        "content": (
-                            '{"label":"requested target",'
-                            '"bbox_2d":[400,300,500,500]}'
-                        )
-                    }
-                }
-            ]
-        }
-
-    def message_text_and_tools(self, result):
-        return result["choices"][0]["message"]["content"], []
-
-
 class _FinishingQwen:
     def __init__(self):
         self.messages = None
@@ -379,14 +359,6 @@ def test_release_only_opens_at_the_current_pose(tmp_path):
         _UnusedQwen(),
         trace=EpisodeTrace(tmp_path),
     )
-    primitives.last_reached_move["left"] = {
-        "target_xyz": [-0.25, -0.2, 0.9],
-        "sim_step": 0,
-        "carrying": True,
-    }
-    primitives.ledger.holding_arm = "left"
-    primitives.ledger.hold_state = "verified"
-
     result = primitives.release("left", max_steps=4)
 
     assert result["opened"]
@@ -398,7 +370,7 @@ def test_release_only_opens_at_the_current_pose(tmp_path):
     np.testing.assert_allclose(env.actions[0]["left_ee_joint_state"], [1.0])
 
 
-def test_release_is_rejected_without_a_reached_carry_move(tmp_path):
+def test_release_requires_an_explicit_arm(tmp_path):
     env = _FakeEnv([_observation(left_gripper=0.1)])
     primitives = RpentPrimitives(
         env,
@@ -407,9 +379,9 @@ def test_release_is_rejected_without_a_reached_carry_move(tmp_path):
         trace=EpisodeTrace(tmp_path),
     )
 
-    result = primitives.release("left", max_steps=4)
+    with pytest.raises(ValueError, match="explicit arm"):
+        primitives.release(None, max_steps=4)
 
-    assert result["error"] == "release_requires_reached_carry_move"
     assert not env.actions
 
 
@@ -520,7 +492,8 @@ def test_guide_rpent_preserves_upstream_operational_sections():
     assert "sample_world_xyz" in guide
     assert "query_world_map" in guide
     assert "pi05_act" in guide
-    assert "verify_state" in guide
+    assert "verify_state" not in guide
+    assert "No tool judges a gate for you" in guide
     assert "return_home" in guide
     assert "left_ee_pose" in guide
     assert "RoboTwin" not in guide
@@ -533,60 +506,17 @@ def test_ground_is_not_a_registered_planner_tool():
     assert "ground" not in names
 
 
-def test_ground_result_contains_only_semantic_binding_not_geometry(tmp_path):
-    observation = _observation(right_gripper=0.1)
-    observation["vision"]["cam_head"]["intrinsic_matrix"] = np.array(
-        [[615.0, 0.0, 8.0], [0.0, 615.0, 6.0], [0.0, 0.0, 1.0]]
-    )
-    observation["vision"]["cam_head"]["extrinsics_matrix"] = np.array(
-        [
-            [1.0, 0.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0, -0.20],
-            [0.0, 0.0, 1.0, 1.308],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
-    )
-    env = _FakeEnv([observation])
-    primitives = RpentPrimitives(
-        env,
-        _FakeModelClient(),
-        _GroundingQwen(),
-        trace=EpisodeTrace(tmp_path),
-    )
-
-    result = primitives.ground(
-        "one requested target",
-        camera="head",
-    )
-
-    assert "suggested_hover_xyz" not in result
-    assert "anchor_pixel" not in result
-    assert "anchor_world_xyz" not in result
-    assert "world_summary" not in result
-    assert result["bbox_rc"] == [3, 6, 6, 8]
-    assert result["image_shape"] == [12, 16]
-    assert result["env_state_step"] == 0
-
-
-def test_rejected_wrist_grounding_clears_stale_binding(tmp_path):
+def test_no_detector_primitive_remains_on_the_runtime(tmp_path):
     primitives = RpentPrimitives(
         _FakeEnv([_observation()]),
         _FakeModelClient(),
         _UnusedQwen(),
         trace=EpisodeTrace(tmp_path),
     )
-    primitives.last_grounding = {"query": "stale target"}
-    primitives.last_label = "stale target"
 
-    with pytest.raises(ValueError, match="camera='head'") as excinfo:
-        primitives.ground("one requested target", camera="right_wrist")
-
-    message = str(excinfo.value)
-    assert "head-only" in message
-    assert "sample_world_xyz" in message
-    assert "query_world_map" in message
-    assert primitives.last_grounding is None
-    assert primitives.last_label is None
+    assert not hasattr(primitives, "ground")
+    assert not hasattr(primitives, "verify_state")
+    assert not hasattr(primitives, "ledger")
 
 
 def test_move_does_not_use_rectangular_workspace_as_authority(tmp_path):
@@ -602,37 +532,6 @@ def test_move_does_not_use_rectangular_workspace_as_authority(tmp_path):
 
     assert result["execution_mode"] == "ee_servo_fallback"
     assert env.actions
-
-
-def test_ground_returns_one_target_and_bbox_for_explicit_geometry_query(tmp_path):
-    observation = _observation(right_gripper=0.1)
-    observation["vision"]["cam_head"]["intrinsic_matrix"] = np.array(
-        [[615.0, 0.0, 8.0], [0.0, 615.0, 6.0], [0.0, 0.0, 1.0]]
-    )
-    observation["vision"]["cam_head"]["extrinsics_matrix"] = np.array(
-        [
-            [1.0, 0.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0, -0.20],
-            [0.0, 0.0, 1.0, 1.308],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
-    )
-    env = _FakeEnv([observation])
-    primitives = RpentPrimitives(
-        env,
-        _FakeModelClient(),
-        _GroundingQwen(),
-        trace=EpisodeTrace(tmp_path),
-    )
-
-    result = primitives.ground("one requested target", camera="head")
-
-    assert result["query"] == "one requested target"
-    assert result["label"] == "requested target"
-    assert result["bbox_2d"] == [400, 300, 500, 500]
-    assert result["bbox_rc"] == [3, 6, 6, 8]
-    assert result["image_shape"] == [12, 16]
-    assert result["carrying_arm"] is None
 
 
 def test_default_approach_clearance_is_twenty_centimeters(monkeypatch):
@@ -717,7 +616,7 @@ def test_curobo_path_executes_joint_waypoints(tmp_path):
     np.testing.assert_allclose(env.actions[-1]["left_arm_joint_state"], [0.2] * 6)
 
 
-def test_closed_gripper_is_not_verified_hold(tmp_path):
+def test_snapshot_reports_gripper_state_without_a_runtime_hold_verdict(tmp_path):
     primitives = RpentPrimitives(
         _FakeEnv([_observation(left_gripper=0.1)]),
         _FakeModelClient(),
@@ -728,41 +627,23 @@ def test_closed_gripper_is_not_verified_hold(tmp_path):
     snapshot = primitives.snapshot()
 
     assert snapshot["gripper_state"]["left"] == "closed"
-    assert snapshot["manipulation"]["hold_state"] == "empty"
-    assert snapshot["carrying_arm"] is None
+    assert "manipulation" not in snapshot
+    assert "carrying_arm" not in snapshot
 
 
-def test_release_requires_visual_hold_verification(tmp_path):
+def test_transport_is_not_blocked_by_a_runtime_hold_gate(tmp_path):
+    env = _FakeEnv([_observation(left_gripper=0.1)])
     primitives = RpentPrimitives(
-        _FakeEnv([_observation(left_gripper=0.1)]),
+        env,
         _FakeModelClient(),
         _UnusedQwen(),
         trace=EpisodeTrace(tmp_path),
     )
-    primitives.last_reached_move["left"] = {"carrying": True}
 
-    result = primitives.release("left")
+    result = primitives.move_to([-0.25, -0.2, 1.0], arm="left")
 
-    assert result["error"] == "release_requires_reached_carry_move"
-
-
-def test_ground_does_not_choose_a_bbox_point(tmp_path):
-    observation = _observation()
-    observation["vision"]["cam_head"]["intrinsic_matrix"] = np.eye(3)
-    observation["vision"]["cam_head"]["extrinsics_matrix"] = np.eye(4)
-    primitives = RpentPrimitives(
-        _FakeEnv([observation]),
-        _FakeModelClient(),
-        _GroundingQwen(),
-        trace=EpisodeTrace(tmp_path),
-    )
-    result = primitives.ground("one requested target")
-
-    assert result["bbox_rc"] == [3, 6, 6, 8]
-    assert result["image_shape"] == [12, 16]
-    assert "anchor" not in result
-    assert "anchor_pixel" not in result
-    assert result["env_state_step"] == 0
+    assert "error" not in result
+    assert env.actions
 
 
 def test_tool_trace_persists_three_camera_views(tmp_path):

@@ -212,28 +212,6 @@ TOOLS_SPEC = [
     {
         "type": "function",
         "function": {
-            "name": "verify_state",
-            "description": "Record a visual manipulation gate after inspecting fresh camera views.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "gate": {
-                        "type": "string",
-                        "enum": ["grasp", "transport", "support_placement", "container_placement", "handover_receive", "release"],
-                    },
-                    "target": {
-                        "type": "string",
-                        "description": "The exact object or relation to verify visually.",
-                    },
-                    "arm": {"type": "string", "enum": ["left", "right"]},
-                },
-                "required": ["gate", "target"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "set_gripper",
             "description": (
                 "Hold the current end-effector pose and explicitly open or close "
@@ -485,12 +463,6 @@ class RpentPlanner:
                 delta_yaw_deg=float(arguments["delta_yaw_deg"]),
                 gripper=arguments.get("gripper"),
                 substeps=int(arguments.get("substeps", 25)),
-            )
-        elif name == "verify_state":
-            result = self.primitives.verify_state(
-                gate=str(arguments["gate"]),
-                target=str(arguments["target"]),
-                arm=arguments.get("arm"),
             )
         elif name == "set_gripper":
             result = self.primitives.set_gripper(

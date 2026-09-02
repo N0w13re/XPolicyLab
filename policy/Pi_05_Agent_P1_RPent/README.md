@@ -41,7 +41,6 @@ The planner calls exactly one structured tool per turn:
 - `move_to`: execute a CuRobo collision-checked joint path to an EEF pose
 - `rotate_wrist`: rotate one wrist at fixed EEF position
 - `pi05_act`: run a short prefix of frozen Pi_05 with the full instruction
-- `verify_state`: verify grasp/transport/place/handover from fresh RGB views
 - `set_gripper`: explicitly firm or open one gripper
 - `release`: open one gripper without transporting it
 - `return_home`: return one or both arms to their episode-start poses
@@ -49,8 +48,11 @@ The planner calls exactly one structured tool per turn:
 
 Metric depth and camera calibration are converted into a dense per-view
 `world_xyz` map. Fixed support-plane projection and rectangular arm
-reachability are not used as execution authority. A closed gripper is recorded
-separately from a visually verified hold.
+reachability are not used as execution authority. Following upstream RoboTwin
+RPent, no tool adjudicates an observable gate and no primitive is blocked on a
+recorded verdict: tool results report gripper values and motion residuals, and
+the planner judges grasp, transport, and placement from the fresh images it
+already receives.
 
 Every tool result is followed by fresh labeled camera images. A persistent
 trace is written under `RPENT_TRACE_DIR`, containing `transcript.jsonl` and one
@@ -67,15 +69,16 @@ Planner prompts are explicitly versioned:
   `pi05_act` horizon substitutions, and treats head-view `ground` as identity
   plus bbox pixels.
 - `v2` is the current default. It keeps v1 resource loading and aligns the
-  registered tools with upstream RoboTwin RPent: no SAM3, no `segment`, and no
-  `ground`. Identity comes from the head RGB; the planner picks `[row,col]`
-  pixels and queries `sample_world_xyz` or `query_world_map` before using
-  metric xyz; grasp with `pi05_act`; `move_to` only after a verified hold, with
-  planner-added EEF/TCP clearance. It loads the generic guide, exact task/seed
-  curated resources when present, the legacy task recipe as an experimental
-  prior, and the memory index. Missing curated resources remain supported and
-  are recorded in trace. The `ground` helper remains in Python for old traces
-  but is not registered for the planner.
+  registered tools with upstream RoboTwin RPent: no SAM3, no `segment`, no
+  `ground`, and no `verify_state`. Identity comes from the head RGB; the
+  planner picks `[row,col]` pixels and queries `sample_world_xyz` or
+  `query_world_map` before using metric xyz; grasp with `pi05_act`; `move_to`
+  is for transport after the planner has seen a hold, with planner-added
+  EEF/TCP clearance. Gate discipline lives in the prompt and guide, not in a
+  runtime state machine. It loads the generic guide, exact task/seed curated
+  resources when present, the legacy task recipe as an experimental prior, and
+  the memory index. Missing curated resources remain supported and are
+  recorded in trace.
 
 Select a version with `RPENT_PLANNER_PROMPT_VERSION=v0|v1|v2`. Each new trace
 records a `planner_config` event containing the selected version, exact system
@@ -130,7 +133,7 @@ library HTTP client; GPT uses `AzureOpenAI`.
 
 ## Planner LLM
 
-Planner and vision calls (`verify_state`) share one backend. Default
+Planner calls use one backend. Default
 is Qwen. Set `RPENT_LLM_BACKEND=gpt` (or only a GPT key) to use ByteDance AIDP
 Azure OpenAI for the same loop.
 
@@ -244,8 +247,9 @@ EVAL_ENV_TYPE=debug \
 
 ## Known Limitations
 
-- Grasp and placement verification uses the selected planner LLM over fresh RGB views. It avoids
-  privileged simulator poses but can still produce perception errors.
+- Grasp and placement verification is the planner's own reading of fresh RGB
+  views. It avoids privileged simulator poses but can still produce perception
+  errors, and nothing in the runtime catches a wrong call.
 - The planner is single-environment. Use `--num-envs 1` for fixed-layout
   development.
 - A fixed-layout single-environment result is not directly comparable with the

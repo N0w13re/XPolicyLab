@@ -9,8 +9,11 @@ geometry, and compact execution rules needed to apply it.
 - Resources: `list_dir`, `read_text_file`
 - Observation: `view_env_state`, `sample_world_xyz`, `query_world_map`
 - Control: `pi05_act`, `move_to`, `rotate_wrist`, `set_gripper`, `release`,
-  `verify_state`, `return_home`
+  `return_home`
 - Terminal: `finish`
+
+No tool judges a gate for you. Gates below are satisfied by your own reading of
+fresh images; the runtime never blocks a motion on a recorded verification.
 
 Use no legacy command protocol or direct Env/VLA client. Tool schemas are
 authoritative for arguments. Issue one mutation at a time and inspect its fresh
