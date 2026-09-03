@@ -1885,6 +1885,33 @@ def test_planner_v2_injects_matching_task_recipe_and_records_it(tmp_path, monkey
     assert config["recipe"].startswith("# Classify Objects by Language")
 
 
+def test_planner_v4_injects_make_kong_recipe(tmp_path):
+    env = _FakeEnv([_observation()])
+    env.task_name = "make_kong"
+    qwen = _FinishingQwen()
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        qwen,
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    RpentPlanner(primitives, qwen).run()
+
+    prompt = json.dumps(qwen.messages, ensure_ascii=False)
+    assert "TASK RECIPE:" in prompt
+    assert "leftmost and toward the robot" in prompt
+    assert "highest world `z`" in prompt
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
+    ]
+    config = next(event for event in events if event["type"] == "planner_config")
+    assert config["prompt_version"] == "v4"
+    assert config["recipe_path"].endswith("recipes/make_kong.md")
+    assert config["recipe"].startswith("# Make Kong")
+
+
 def test_planner_v1_runs_without_recipe_for_unknown_task(tmp_path):
     env = _FakeEnv([_observation()])
     env.task_name = "task_without_recipe"
