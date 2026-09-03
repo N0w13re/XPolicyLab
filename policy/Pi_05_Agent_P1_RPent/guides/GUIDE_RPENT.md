@@ -68,8 +68,9 @@ metres and quaternions are `[qw,qx,qy,qz]`.
 
 Every `pi05_act` must use the full current instruction. Pi_05 always receives
 the complete episode instruction; `focus` records the current phase only. Execute
-short prefixes (`execution_horizon` default 20). Use the same-task successful
-recipe's chunk cadence as a prior. Shorten to one chunk near contact,
+native Pi_05 chunks (`execution_horizon` default 50, matching the model's
+50-action horizon). Use the same-task successful recipe's chunk cadence as a
+prior. Shorten only near contact,
 instability, or completion. Preserve useful continuous Pi_05 behavior for
 bimanual, articulated, hanging, insertion, and tool phases.
 

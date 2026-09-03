@@ -19,9 +19,9 @@ therefore also `pi05_act`. Do not use `hold_position` as idle. Do not insert
 `pregrasp`, `move_to`, `query_world_map`, `sample_world_xyz`, `release`,
 `set_gripper`, `rotate_wrist`, or `return_home` at any phase.
 
-Keep calling `pi05_act` with short prefixes (`execution_horizon` 12–20,
-`max_chunks` 1). If a chunk is unproductive, re-observe, tighten `focus`, and
-call `pi05_act` again. Do not switch playbooks.
+Keep calling `pi05_act` with the native Pi_05 chunk (`execution_horizon` 50,
+`max_chunks` 1). Do not truncate to 20. If a chunk is unproductive, re-observe,
+tighten `focus`, and call `pi05_act` again. Do not switch playbooks.
 
 ## Observable subgoals (still only `pi05_act`)
 

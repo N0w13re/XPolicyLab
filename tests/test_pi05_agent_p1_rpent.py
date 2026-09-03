@@ -401,6 +401,33 @@ def test_pi05_pick_executes_only_configured_action_prefix(tmp_path, monkeypatch)
     assert result["actions_executed"] == 20
 
 
+def test_pi05_act_defaults_to_the_native_chunk_length(tmp_path, monkeypatch):
+    monkeypatch.delenv("RPENT_PI05_EXECUTION_HORIZON", raising=False)
+    env = _FakeEnv([_observation() for _ in range(80)])
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(action_horizon=50),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    result = primitives.pi05_act(focus="continue the instruction", max_chunks=1)
+
+    assert len(env.actions) == 50
+    assert result["execution_horizon"] == 50
+    assert result["actions_executed"] == 50
+
+
+def test_pi05_act_schema_allows_the_native_chunk_length():
+    tool = next(
+        item for item in TOOLS_SPEC if item["function"]["name"] == "pi05_act"
+    )
+    horizon = tool["function"]["parameters"]["properties"]["execution_horizon"]
+    assert horizon["minimum"] == 4
+    assert horizon["maximum"] == 50
+    assert horizon["default"] == 50
+
+
 def test_move_preserves_current_orientation_by_default(tmp_path):
     start = _observation()
     moved = _observation()
@@ -670,6 +697,7 @@ def test_v4_prompt_is_instruction_first_and_not_grasp_first():
     assert "Never use pi05_act as an" in prompt
     assert "idle action" in prompt
     assert "Analytic geometry is optional and phase-dependent" in prompt
+    assert "execution_horizon default 50" in prompt
     assert "Do not assume the" in opening
     assert "task begins with a grasp" in opening
     assert "above the measured object with pregrasp" not in opening
@@ -1903,6 +1931,7 @@ def test_planner_v4_injects_make_kong_recipe(tmp_path):
     assert "one continuous Pi_05 episode" in prompt
     assert "Do not use `hold_position` as idle" in prompt
     assert "mixing analytic primitives yanks" in prompt
+    assert "`execution_horizon` 50" in prompt
     events = [
         json.loads(line)
         for line in (tmp_path / "transcript.jsonl").read_text().splitlines()

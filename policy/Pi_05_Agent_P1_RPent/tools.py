@@ -932,11 +932,14 @@ class RpentPrimitives:
     ) -> dict[str, Any]:
         if not focus:
             raise ValueError("pi05_act requires a concise current focus")
-        execution_horizon = max(
-            1,
-            int(
-                execution_horizon
-                or os.environ.get("RPENT_PI05_EXECUTION_HORIZON", "20")
+        execution_horizon = min(
+            50,
+            max(
+                1,
+                int(
+                    execution_horizon
+                    or os.environ.get("RPENT_PI05_EXECUTION_HORIZON", "50")
+                ),
             ),
         )
         start = self._obs()

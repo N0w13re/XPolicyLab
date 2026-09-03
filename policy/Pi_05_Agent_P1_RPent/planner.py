@@ -352,8 +352,8 @@ TOOLS_SPEC = [
                     "execution_horizon": {
                         "type": "integer",
                         "minimum": 4,
-                        "maximum": 20,
-                        "default": 20,
+                        "maximum": 50,
+                        "default": 50,
                     },
                 },
                 "required": ["focus"],

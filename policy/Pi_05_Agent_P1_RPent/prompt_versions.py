@@ -291,7 +291,7 @@ observed goal match it:
         "PI_05 AND PRIMITIVE CONTROL",
         """Every pi05_act uses the exact complete current instruction. Pi_05
 always receives the full episode instruction; focus records the current phase
-only. Execute short prefixes (execution_horizon default 20) near contact, near
+only. Execute native Pi_05 chunks (execution_horizon default 50) near contact, near
 success, instability, or for a small correction; two chunks for ordinary stable
 progress; three only for a recipe-supported continuity-sensitive phase already
 moving correctly. When Pi_05 has correct contact and visible progress, avoid
@@ -488,7 +488,7 @@ observed goal match it:
         "PI_05 AND PRIMITIVE CONTROL",
         """Every pi05_act uses the exact complete current instruction. Pi_05
 always receives the full episode instruction; focus records the current phase
-only. Execute short prefixes (execution_horizon default 20) near contact, near
+only. Execute native Pi_05 chunks (execution_horizon default 50) near contact, near
 success, instability, or for a small correction; two chunks for ordinary stable
 progress; three only for a recipe-supported continuity-sensitive phase already
 moving correctly. When Pi_05 has correct contact and visible progress, avoid
@@ -680,7 +680,7 @@ will grasp what it sees.
 
 Every pi05_act uses the exact complete current instruction. Pi_05 always
 receives the full episode instruction; focus records the current phase only.
-Execute short prefixes (execution_horizon default 20) near contact, near
+Execute native Pi_05 chunks (execution_horizon default 50) near contact, near
 success, instability, or for a small correction; two chunks for ordinary stable
 progress; three only for a recipe-supported continuity-sensitive phase already
 moving correctly. When Pi_05 has correct contact and visible progress, avoid
@@ -838,7 +838,7 @@ permission to bypass a temporal or state prerequisite.
 complete episode instruction; focus records the current phase only. Choose it
 when the active phase needs learned contact-rich behavior, bimanual
 coordination, insertion, hanging, tool use, or a grasp that benefits from its
-visual policy. Execute short prefixes (execution_horizon default 20) near
+visual policy. Execute native Pi_05 chunks (execution_horizon default 50) near
 contact, success, or instability. Repeated calls are allowed when fresh
 evidence shows useful progress.
 
