@@ -1900,8 +1900,9 @@ def test_planner_v4_injects_make_kong_recipe(tmp_path):
 
     prompt = json.dumps(qwen.messages, ensure_ascii=False)
     assert "TASK RECIPE:" in prompt
-    assert "leftmost and toward the robot" in prompt
-    assert "highest world `z`" in prompt
+    assert "one continuous Pi_05 episode" in prompt
+    assert "Do not use `hold_position` as idle" in prompt
+    assert "mixing analytic primitives yanks" in prompt
     events = [
         json.loads(line)
         for line in (tmp_path / "transcript.jsonl").read_text().splitlines()

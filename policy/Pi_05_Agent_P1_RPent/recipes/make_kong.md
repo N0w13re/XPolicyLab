@@ -1,66 +1,37 @@
 # Make Kong
 
 Use the live instruction: wait for the opponent to discard a tile, then declare
-a kong with the matching tiles. This recipe is a phase skeleton with observable
-gates. Do not replay coordinates. Do not treat the task as a generic pick-and-
-place.
+a kong with the matching tiles. This recipe is one continuous Pi_05 episode.
+Do not replay coordinates. Do not treat the task as a scripted pick-and-place.
 
 Pi_05 receives the complete episode instruction on every `pi05_act`. `focus`
-only records the current phase. Generic playbooks must not insert `pregrasp`,
-`move_to`, `release`, `return_home`, or `set_gripper` during a Pi_05 continuity
-phase.
+only records the current observable subgoal. Bare Pi_05 already solves this
+task by staying on the learned controller; mixing analytic primitives yanks
+the arms out of that distribution.
 
-## Phase 1: wait for the opponent discard
+## Controller contract
 
-Keep both policy arms and grippers still with `hold_position` while the
-simulator advances. Observation tools do not consume native steps.
+After `understand_instruction`, set `prerequisites_satisfied` to true and
+`allowed_tools` to `["pi05_act"]` for the whole episode.
 
-Gate: a discarded tile is visibly separate from the opponent's remaining tiles,
-the opponent arm is no longer pushing, and the scene is stable. Elapsed time
-alone is not evidence. Do not `pi05_act` before this gate.
+The opponent discard only advances when native `take_action` runs. Waiting is
+therefore also `pi05_act`. Do not use `hold_position` as idle. Do not insert
+`pregrasp`, `move_to`, `query_world_map`, `sample_world_xyz`, `release`,
+`set_gripper`, `rotate_wrist`, or `return_home` at any phase.
 
-After the gate, rebind every target from the post-event head image. Discard
-geometry measured before the discard.
+Keep calling `pi05_act` with short prefixes (`execution_horizon` 12–20,
+`max_chunks` 1). If a chunk is unproductive, re-observe, tighten `focus`, and
+call `pi05_act` again. Do not switch playbooks.
 
-## Phase 2: knock down the three matching tiles
+## Observable subgoals (still only `pi05_act`)
 
-Once the discard is stable, call `pi05_act` repeatedly until three matching
-tiles from the player's own row are knocked down or lying face-up. Matching
-means the same face as the discarded tile, not a nearby look-alike.
+1. Wait: the opponent discards one tile and the scene is stable. Pi_05 may
+   output near-hold motion; that is intended. Do not freeze the arms with
+   another controller.
+2. Knock: three player-row tiles matching the discarded face are down or
+   exposed. Matching means the same face, not a nearby look-alike.
+3. Pick and place: a fourth matching tile is grouped with those three as the
+   declared kong. Prefer learned grasp/handover/place continuity over any
+   measured hover.
 
-This phase is continuity-sensitive. Keep calling `pi05_act` with short prefixes.
-Do not insert analytic primitives, `release`, `return_home`, or a grasp attempt
-on a fourth tile. If a chunk is unproductive, shorten the next prefix or
-re-observe, then continue Pi_05; do not switch playbooks.
-
-Gate: three matching tiles are down/exposed and no longer standing in the
-player row. Only then leave this phase.
-
-## Phase 3: pick the leftmost-near, highest tile
-
-The grasp target is one specific tile:
-
-- in the head view, the pile that is leftmost and toward the robot (bottom of
-  the image / near side of the table)
-- in that pile, the top tile: highest world `z`, not the median of the stack
-
-Query that region with `query_world_map` or `sample_world_xyz`. Use samples
-near `max_z` as `object_xyz`. Do not send bbox median xyz if the z span shows a
-stack. Call `pregrasp` once with that point, `clearance_m` near 0.12 for a thin
-tile, confirm on the fresh wrist image that the top tile is centred, then use a
-short `pi05_act` only for descent and closure.
-
-Gate: a verified hold. The tile left the pile and moves with the TCP. Gripper
-closure alone is not enough. If the wrist shows a distractor or a lower tile,
-rebind and `pregrasp` again before another grasp.
-
-## Phase 4: handover and place
-
-After the verified hold, call `pi05_act` for receiving-arm handover and placing
-the held tile with the three knocked matching tiles. Do not `move_to` this
-object and do not `release` until the four matching tiles are grouped as a
-kong.
-
-Gate: four matching tiles are together as the declared kong, both grippers are
-open, and the held tile is no longer in the gripper. Stop robot motion after
-official `eval_success=true`.
+Stop robot motion after official `eval_success=true`.
