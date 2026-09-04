@@ -28,7 +28,6 @@ from XPolicyLab.policy.Pi_05_Agent_P1_RPent.deploy import (
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.geometry import (
     query_world_map,
     sample_world_xyz,
-    summarize_samples,
     world_from_depth,
 )
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.robot_profile import (
@@ -1086,78 +1085,6 @@ def test_world_map_sampling_ignores_invalid_depth():
     np.testing.assert_allclose(sampled["xyz"], [0.2, 0.3, 0.4])
     np.testing.assert_allclose(summary["median_xyz"], [0.2, 0.3, 0.4])
     assert summary["valid_samples"] == 2
-
-
-def test_scattered_samples_report_the_pixels_that_missed_the_surface():
-    # Pad row sampled while an arm hovered over four of the five pads.
-    polluted = [
-        {"xyz": [-0.1688, -0.0612, 0.7706]},
-        {"xyz": [-0.0505, -0.1859, 0.9645]},
-        {"xyz": [0.0121, -0.1982, 0.9816]},
-        {"xyz": [0.0497, -0.2595, 1.0766]},
-        {"xyz": [0.0752, -0.2842, 1.1143]},
-    ]
-
-    summary = summarize_samples(polluted)
-
-    assert summary["coplanar"] is False
-    assert summary["outlier_indices"] == [0, 3, 4]
-    assert summary["z_span_m"] > 0.3
-    assert "sample again" in summary["hint"]
-
-
-def test_coplanar_samples_are_not_flagged():
-    pads = [
-        {"xyz": [x, -0.0717, 0.7706]}
-        for x in (-0.1674, -0.0815, 0.0, 0.0859, 0.1696)
-    ]
-
-    summary = summarize_samples(pads)
-
-    assert summary["coplanar"] is True
-    assert summary["outlier_indices"] == []
-    assert "hint" not in summary
-
-
-def test_samples_without_any_valid_depth_are_not_coplanar():
-    summary = summarize_samples([{"xyz": None}, {"xyz": None}])
-
-    assert summary["valid_samples"] == 0
-    assert summary["coplanar"] is False
-    assert summary["z_median"] is None
-
-
-def test_query_world_map_separates_the_top_cluster_from_the_blend():
-    world = np.zeros((10, 10, 3), dtype=np.float32)
-    world[..., 2] = 0.77
-    world[0:2, 0:2, 2] = 1.10
-
-    summary = query_world_map(world, [0, 0, 10, 10])
-
-    assert summary["z_span_m"] == pytest.approx(0.33, abs=1e-4)
-    assert summary["median_xyz"][2] == pytest.approx(0.77, abs=1e-4)
-    assert summary["top_z_median_xyz"][2] == pytest.approx(1.10, abs=1e-4)
-
-
-def test_sample_world_xyz_tool_returns_the_consistency_block(tmp_path):
-    env = _FakeEnv([_observation()])
-    primitives = RpentPrimitives(
-        env,
-        _FakeModelClient(),
-        _UnusedQwen(),
-        trace=EpisodeTrace(tmp_path),
-    )
-    primitives.observe()
-
-    result = primitives.sample_world_xyz("head", [[4, 5], [8, 11]])
-
-    assert "consistency" in result
-    assert set(result["consistency"]) >= {
-        "coplanar",
-        "outlier_indices",
-        "z_span_m",
-        "valid_samples",
-    }
 
 
 def test_curobo_plan_failure_executes_no_action(tmp_path):

@@ -20,8 +20,7 @@ left-to-right pad row. Then keep `allowed_tools` narrow for the active
 sub-phase; never list the full motion set.
 
 - Bind / rebind (no motion): observation tools only.
-- Acquire one digit: `sample_world_xyz`, `query_world_map`, `pregrasp`, short
-  `pi05_act`.
+- Acquire one digit: `query_world_map`, `pregrasp`, short `pi05_act`.
 - Transport: `move_to`, `rotate_wrist`.
 - Place: `move_to`, short `pi05_act`, `release`.
 - Clear / finish: `set_gripper`, `return_home`.
@@ -36,22 +35,27 @@ values descending; that sequence is the left-to-right pad order (for 8,5,3,1,0
 the pads must read 85310). Bind pads as the empty circular row, leftmost =
 index 0 = largest remaining digit.
 
-Sample pad xyz once from a **clean** head frame: neither policy arm may overlap
-the pad pixels. The pads are coplanar, so the returned `consistency` block must
-report `coplanar: true`. If it lists `outlier_indices`, those pixels landed on
-an arm or gripper: `return_home` that arm, `render`, and sample again. Never
-`pregrasp` or `move_to` an outlier xyz. Store pad xyz and re-query only after a
-placement disturbs the row.
+Measure each pad with its own tight `query_world_map` bbox, from a **clean**
+head frame where neither policy arm overlaps the pad pixels. Prefer one bbox
+per pad over scattered `sample_world_xyz` pixels: separate point samples come
+back as ordinary coordinates even when some of them landed on an arm, and
+nothing in the result says which ones did.
+
+Cross-check the row before using it. The pads are coplanar, so their z values
+must agree within a few centimetres. If one pad's z sits far above the others,
+that bbox caught an arm or gripper: `return_home` that arm, `render`, and
+measure again. Never `pregrasp` or `move_to` such an xyz. Store pad xyz and
+re-measure only after a placement disturbs the row.
 
 ## One digit at a time, largest remaining first
 
 Repeat for the next unplaced digit in descending order:
 
-1. On the current head image, bind **that digit only**. Prefer a tight
-   `query_world_map` bbox around that glyph: a small `z_span_m` confirms the
-   bbox holds one flat digit, and a large one means it also caught an arm or a
-   neighbour, so tighten it. Do not use a cluster median that mixes 8 with
-   3/0/1. With `sample_world_xyz`, require `coplanar: true` first.
+1. On the current head image, bind **that digit only**. Draw a tight
+   `query_world_map` bbox around that glyph alone and use its `median_xyz`.
+   Compare `min_xyz`/`max_xyz`: a wide z range means the bbox also caught an
+   arm or a neighbouring digit, so tighten it. Do not use a cluster median that
+   mixes 8 with 3/0/1.
 2. `pregrasp` that `object_xyz` with the reachable arm. Digits are thin:
    `clearance_m` near 0.12. Confirm on the fresh wrist image that the intended
    digit, not a neighbour, is centred under the gripper. If not, rebind; do not

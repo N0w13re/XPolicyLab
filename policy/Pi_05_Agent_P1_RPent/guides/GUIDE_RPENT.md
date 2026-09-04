@@ -52,15 +52,7 @@ candidate using those geometry tools at the exact step, view, and resolution.
 World maps use `[row,col]`, contain world-frame `[x,y,z]` metres, and may contain
 NaN. Query the exact step/view/resolution whose RGB supplied the pixels. Sample
 several interior pixels and use robust geometry; an exposed surface point is not
-necessarily an object center.
-
-Scattered point samples are not self-validating. `sample_world_xyz` returns a
-`consistency` block over the requested pixels: when `coplanar` is false, the
-listed `outlier_indices` landed on an arm, a gripper, or a different object,
-so discard them, retreat that arm, `render`, and sample again before using any
-xyz. For a single object prefer a tight `query_world_map` bbox: a large
-`z_span_m` means the bbox mixes surfaces, and `top_z_median_xyz` is the highest
-cluster rather than the blended median. Re-observe after occlusion or physical change:
+necessarily an object center. Re-observe after occlusion or physical change:
 `render` captures a fresh state without moving the robot, while
 `view_env_state` only re-reads a state that already exists.
 
