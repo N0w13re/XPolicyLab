@@ -1812,11 +1812,11 @@ def test_post_tool_turn_omits_images_until_render(tmp_path):
 
     assert message["role"] == "user"
     assert isinstance(message["content"], str)
-    assert "No new camera images are attached" in message["content"]
-    assert "call render" in message["content"]
+    assert "No new camera images are stored in the dialogue" in message["content"]
+    assert "Call render" in message["content"]
 
 
-def test_post_render_turn_contains_fresh_labeled_images(tmp_path):
+def test_post_render_turn_is_text_only_for_stable_prefix(tmp_path):
     env = _FakeEnv([_observation()])
     primitives = RpentPrimitives(
         env,
@@ -1829,22 +1829,11 @@ def test_post_render_turn_contains_fresh_labeled_images(tmp_path):
     message = planner._post_tool_turn("render", {"env_state_step": 1})
 
     assert message["role"] == "user"
-    labels = [
-        part["text"]
-        for part in message["content"]
-        if part["type"] == "text" and part["text"].startswith("[")
-    ]
-    images = [
-        part["image_url"]["url"]
-        for part in message["content"]
-        if part["type"] == "image_url"
-    ]
-    assert labels == ["[head camera]", "[left_wrist camera]", "[right_wrist camera]"]
-    assert len(images) == 3
-    assert all(url.startswith("data:image/jpeg;base64,") for url in images)
+    assert isinstance(message["content"], str)
+    assert "current-camera suffix" in message["content"]
 
 
-def test_old_image_turns_are_compacted_but_latest_is_retained(tmp_path):
+def test_request_attaches_images_only_in_camera_suffix(tmp_path):
     env = _FakeEnv([_observation()])
     primitives = RpentPrimitives(
         env,
@@ -1853,20 +1842,32 @@ def test_old_image_turns_are_compacted_but_latest_is_retained(tmp_path):
         trace=EpisodeTrace(tmp_path),
     )
     planner = RpentPlanner(primitives, _UnusedQwen())
-    messages = [
-        planner._user_turn("old"),
-        {"role": "tool", "content": "{}"},
-        planner._user_turn("latest"),
+    history = [
+        {"role": "system", "content": "sys"},
+        planner._user_turn("opening"),
+        planner._post_tool_turn("render", {}),
     ]
 
-    planner._compact_old_images(messages)
+    request = planner._messages_for_request(history)
 
-    assert not any(
-        part["type"] == "image_url" for part in messages[0]["content"]
+    assert all(
+        not isinstance(message.get("content"), list)
+        for message in history
     )
-    assert sum(
-        part["type"] == "image_url" for part in messages[2]["content"]
-    ) == 3
+    suffix = request[-1]["content"]
+    labels = [
+        part["text"]
+        for part in suffix
+        if part["type"] == "text" and part["text"].startswith("[")
+    ]
+    images = [
+        part["image_url"]["url"]
+        for part in suffix
+        if part["type"] == "image_url"
+    ]
+    assert labels == ["[head camera]", "[left_wrist camera]", "[right_wrist camera]"]
+    assert len(images) == 3
+    assert all(url.startswith("data:image/jpeg;base64,") for url in images)
 
 
 def test_planner_v1_injects_matching_task_recipe_and_records_it(tmp_path, monkeypatch):
@@ -2096,7 +2097,9 @@ def test_planner_v0_uses_and_records_upstream_rpent_prompt(tmp_path, monkeypatch
 
     assert qwen.messages is not None
     assert "You control one dual-arm RoboTwin" in qwen.messages[0]["content"]
-    opening = qwen.messages[1]["content"][0]["text"]
+    opening = qwen.messages[1]["content"]
+    if isinstance(opening, list):
+        opening = opening[0]["text"]
     assert "- task: classify_objects_by_language" in opening
     assert "- seed: 3" in opening
     assert "first unmet recipe phase" in opening
@@ -2109,6 +2112,130 @@ def test_planner_v0_uses_and_records_upstream_rpent_prompt(tmp_path, monkeypatch
     assert config["upstream_commit"] == RPENT_V0_UPSTREAM_COMMIT
     turn = next(event for event in events if event["type"] == "planner_turn")
     assert turn["prompt_version"] == "v0"
+
+
+def test_planner_rejects_unknown_context_mode(tmp_path, monkeypatch):
+    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "full")
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    try:
+        RpentPlanner(primitives, _UnusedQwen())
+    except ValueError as exc:
+        assert "RPENT_PLANNER_CONTEXT" in str(exc)
+    else:
+        raise AssertionError("unknown context mode was accepted")
+
+
+class _RenderThenFinishQwen:
+    def __init__(self):
+        self.chats = []
+        self.calls = 0
+
+    def chat(self, messages, **kwargs):
+        del kwargs
+        self.chats.append(messages)
+        self.calls += 1
+        name = "render" if self.calls == 1 else "finish"
+        arguments = (
+            {}
+            if name == "render"
+            else {"status": "test", "summary": "second turn"}
+        )
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": f"call {name}",
+                        "tool_calls": [
+                            {
+                                "id": f"{name}_call",
+                                "type": "function",
+                                "function": {
+                                    "name": name,
+                                    "arguments": json.dumps(arguments),
+                                },
+                            }
+                        ],
+                        "tool_calls_content": f"raw-{name}",
+                    }
+                }
+            ]
+        }
+
+    def message_text_and_tools(self, result):
+        message = result["choices"][0]["message"]
+        return message["content"], message["tool_calls"]
+
+
+def test_history_mode_keeps_original_assistant_and_grows_prefix(tmp_path, monkeypatch):
+    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "history")
+    env = _FakeEnv([_observation(), _observation()])
+    qwen = _RenderThenFinishQwen()
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        qwen,
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    RpentPlanner(primitives, qwen).run()
+
+    assert len(qwen.chats) == 2
+    first, second = qwen.chats
+    assert first[0]["role"] == "system"
+    assert isinstance(first[1]["content"], str)
+    assert first[-1]["content"][-1]["type"] == "image_url"
+    assert not any(message.get("role") == "assistant" for message in first)
+    assistant = next(
+        message for message in second if message.get("role") == "assistant"
+    )
+    assert assistant["tool_calls_content"] == "raw-render"
+    assert assistant["tool_calls"][0]["function"]["name"] == "render"
+    assert any(message.get("role") == "tool" for message in second)
+    history_text = [
+        message
+        for message in second[:-1]
+        if message.get("role") != "system"
+    ]
+    assert all(
+        not isinstance(message.get("content"), list) for message in history_text
+    )
+
+
+def test_observe_mode_does_not_replay_dialogue_history(tmp_path, monkeypatch):
+    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "observe")
+    env = _FakeEnv([_observation(), _observation()])
+    qwen = _RenderThenFinishQwen()
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        qwen,
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    planner = RpentPlanner(primitives, qwen)
+    planner.run()
+
+    assert len(qwen.chats) == 2
+    first, second = qwen.chats
+    assert [message["role"] for message in first] == ["system", "user", "user"]
+    assert [message["role"] for message in second] == ["system", "user", "user"]
+    suffix = second[-1]["content"][0]["text"]
+    assert "This turn has no prior dialogue" in suffix
+    assert "LAST TOOL RESULT" in suffix
+    assert '"tool": "render"' in suffix or '"tool":"render"' in suffix
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
+    ]
+    config = next(event for event in events if event["type"] == "planner_config")
+    assert config["context_mode"] == "observe"
+    assert config["session_id"] == planner.session_id
 
 
 def test_planner_rejects_unknown_prompt_version(tmp_path, monkeypatch):

@@ -23,8 +23,8 @@ from .prompt_versions import (
     rpent_v4_system_prompt,
     rpent_v4_user_prompt,
 )
-from .planner_llm import AzureOpenAIPlannerClient
-from .qwen_client import QwenClient
+from .planner_llm import AzureOpenAIPlannerClient, extract_llm_usage
+from .qwen_client import QwenClient, assistant_message_from_result
 from .resources import (
     list_resource_dir,
     planner_resources,
@@ -37,6 +37,9 @@ from .tools import RpentPrimitives
 DEFAULT_PLANNER_PROMPT_VERSION = "v4"
 PLANNER_PROMPT_VERSION = DEFAULT_PLANNER_PROMPT_VERSION
 SUPPORTED_PLANNER_PROMPT_VERSIONS = ("v0", "v1", "v2", "v3", "v4")
+DEFAULT_PLANNER_CONTEXT_MODE = "history"
+SUPPORTED_PLANNER_CONTEXT_MODES = ("history", "observe")
+_OBSERVE_TOOL_RESULT_CHARS = 8000
 
 
 SYSTEM_PROMPT_V2 = rpent_v2_system_prompt(
@@ -486,8 +489,20 @@ class RpentPlanner:
                 "RPENT_PLANNER_PROMPT_VERSION must be one of: "
                 + ", ".join(SUPPORTED_PLANNER_PROMPT_VERSIONS)
             )
+        self.context_mode = os.environ.get(
+            "RPENT_PLANNER_CONTEXT", DEFAULT_PLANNER_CONTEXT_MODE
+        ).strip().lower()
+        if self.context_mode not in SUPPORTED_PLANNER_CONTEXT_MODES:
+            raise ValueError(
+                "RPENT_PLANNER_CONTEXT must be one of: "
+                + ", ".join(SUPPORTED_PLANNER_CONTEXT_MODES)
+            )
+        self.session_id = os.environ.get("RPENT_GPT_SESSION_ID", "").strip() or (
+            f"rpent-{self.context_mode}-{uuid4().hex}"
+        )
         self.successful_mutations: list[dict[str, Any]] = []
         self.instruction_contract: dict[str, Any] | None = None
+        self._last_tool_memory: dict[str, Any] | None = None
 
     def _task_name(self) -> str:
         return str(
@@ -770,9 +785,78 @@ class RpentPlanner:
         return self.primitives.record_tool_result(name, arguments, result)
 
     def _user_turn(self, text: str) -> dict[str, Any]:
-        content: list[dict[str, Any]] = [{"type": "text", "text": text}]
+        return {"role": "user", "content": text}
+
+    def _post_tool_turn(
+        self, name: str, result: dict[str, Any]
+    ) -> dict[str, Any]:
+        del result
+        if name == "render":
+            return self._user_turn(
+                "Fresh render observation is in the current-camera suffix of "
+                "this request. The preceding structured tool result is "
+                "authoritative. Inspect every labeled camera view before "
+                "choosing exactly one next tool."
+            )
+        return self._user_turn(
+            f"Post-{name} state. The preceding structured tool result is "
+            "authoritative. No new camera images are stored in the dialogue; "
+            "the current-camera suffix of this request has the latest views. "
+            "Call render when you need a new captured observation before the "
+            "next mutation."
+        )
+
+    def _json_blob(self, value: Any, *, limit: int | None = None) -> str:
+        text = json.dumps(value, ensure_ascii=False, default=str)
+        if limit is not None and len(text) > limit:
+            return text[:limit] + f"\n...[truncated {len(text) - limit} chars]"
+        return text
+
+    def _observation_suffix(self, *, include_memory: bool) -> dict[str, Any]:
+        last_tool = None if self._last_tool_memory is None else self._last_tool_memory.get("tool")
+        attach_live_images = include_memory or last_tool is None or last_tool == "render"
+        if attach_live_images and not include_memory:
+            observation = self.primitives._obs()
+        else:
+            observation = (
+                self.primitives._last_observation or self.primitives._obs()
+            )
+        snapshot = self.primitives.snapshot(observation)
+        parts: list[str] = []
+        if include_memory:
+            parts.append(
+                "This turn has no prior dialogue. Decide only from this "
+                "current observation, the instruction, and the fields below."
+            )
+            if self.instruction_contract is not None:
+                parts.append(
+                    "INSTRUCTION CONTRACT:\n"
+                    + self._json_blob(self.instruction_contract)
+                )
+            if self.successful_mutations:
+                parts.append(
+                    "SUCCESSFUL MUTATIONS THIS EPISODE:\n"
+                    + self._json_blob(self.successful_mutations)
+                )
+            if self._last_tool_memory is not None:
+                parts.append(
+                    "LAST TOOL RESULT:\n"
+                    + self._json_blob(
+                        self._last_tool_memory,
+                        limit=_OBSERVE_TOOL_RESULT_CHARS,
+                    )
+                )
+        else:
+            parts.append(
+                "Current cameras are attached only in this suffix. Earlier "
+                "dialogue messages are text-only so the prompt prefix stays "
+                "stable for cache hits."
+            )
+        parts.append("Live RoboDojo snapshot:\n" + self._json_blob(snapshot))
+        content: list[dict[str, Any]] = [{"type": "text", "text": "\n\n".join(parts)}]
         try:
-            content.extend(self.primitives.image_parts())
+            if attach_live_images:
+                content.extend(self.primitives.image_parts(observation))
         except Exception as exc:
             content.append(
                 {
@@ -782,81 +866,95 @@ class RpentPlanner:
             )
         return {"role": "user", "content": content}
 
-    def _post_tool_turn(
-        self, name: str, result: dict[str, Any]
-    ) -> dict[str, Any]:
-        text = (
-            f"Post-{name} state. The preceding structured tool result is "
-            "authoritative. No new camera images are attached; call render "
-            "when fresh visual evidence is needed before choosing the next "
-            "mutation."
-        )
-        if name == "render":
-            return self._user_turn(
-                "Fresh render observation. Inspect every labeled camera view "
-                "before choosing exactly one next tool. The preceding "
-                "structured tool result is authoritative."
-            )
-        return {"role": "user", "content": text}
+    def _messages_for_request(
+        self, history: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        if self.context_mode == "observe":
+            return [*history, self._observation_suffix(include_memory=True)]
+        return [*history, self._observation_suffix(include_memory=False)]
 
-    @staticmethod
-    def _compact_old_images(messages: list[dict[str, Any]]) -> None:
-        image_turns = [
-            index
-            for index, message in enumerate(messages)
-            if isinstance(message.get("content"), list)
-            and any(
-                isinstance(part, dict) and part.get("type") == "image_url"
-                for part in message["content"]
-            )
-        ]
-        for index in image_turns[:-1]:
-            compacted = []
-            for part in messages[index]["content"]:
-                if isinstance(part, dict) and part.get("type") == "image_url":
-                    continue
-                compacted.append(part)
-            compacted.append(
-                {"type": "text", "text": "[older camera images omitted]"}
-            )
-            messages[index]["content"] = compacted
+    def _bind_llm_session(self) -> None:
+        bind = getattr(self.qwen, "bind_planner_session", None)
+        if callable(bind):
+            bind(self.session_id, context_mode=self.context_mode)
+
+    def _record_llm_usage(self, result: dict[str, Any], turn: int) -> None:
+        usage = extract_llm_usage(result)
+        if not usage:
+            return
+        event = {
+            "type": "planner_llm_usage",
+            "turn": turn,
+            "session_id": self.session_id,
+            "context_mode": self.context_mode,
+            **usage,
+        }
+        self.primitives.trace.append(event)
+        cached = usage.get("cached_tokens")
+        prompt_tokens = usage.get("prompt_tokens")
+        print(
+            f"[P1-RPent] llm usage turn={turn} prompt={prompt_tokens} "
+            f"cached={cached} completion={usage.get('completion_tokens')}",
+            flush=True,
+        )
 
     def run(self) -> None:
         snapshot = self.primitives.observe()
         prompt_config = self._prompt_config()
-        self.primitives.trace.append({"type": "planner_config", **prompt_config})
-        messages: list[dict[str, Any]] = [
+        self._bind_llm_session()
+        self.primitives.trace.append(
+            {
+                "type": "planner_config",
+                **prompt_config,
+                "context_mode": self.context_mode,
+                "session_id": self.session_id,
+            }
+        )
+        history: list[dict[str, Any]] = [
             {"role": "system", "content": prompt_config["system_prompt"]},
             self._user_turn(
                 prompt_config["opening_prompt"]
-                + "\n\nLive RoboDojo snapshot: "
-                + json.dumps(snapshot, default=str)
+                + "\n\nInitial RoboDojo snapshot: "
+                + self._json_blob(snapshot)
             ),
         ]
+        if self.context_mode == "observe":
+            history = [
+                {"role": "system", "content": prompt_config["system_prompt"]},
+                self._user_turn(prompt_config["opening_prompt"]),
+            ]
         for turn in range(self.max_turns):
             if self.primitives.task_env.is_episode_end() or self.primitives.finished:
                 break
-            self._compact_old_images(messages)
-            result = self.qwen.chat(messages, tools=TOOLS_SPEC, tool_choice="auto")
+            result = self.qwen.chat(
+                self._messages_for_request(history),
+                tools=TOOLS_SPEC,
+                tool_choice="auto",
+            )
+            self._record_llm_usage(result, turn)
             text, tool_calls = self.qwen.message_text_and_tools(result)
-            assistant: dict[str, Any] = {"role": "assistant", "content": text or ""}
-            if tool_calls:
-                tool_calls = tool_calls[:1]
-                assistant["tool_calls"] = tool_calls
-            messages.append(assistant)
-            if not tool_calls:
+            assistant = assistant_message_from_result(result)
+            executed_calls = tool_calls[:1]
+            if not executed_calls:
                 print(
                     f"[P1-RPent] planner text-only turn={turn}: {text[:300]!r}",
                     flush=True,
                 )
-                messages.append(
-                    self._user_turn(
-                        "You must call a tool. Snapshot: "
-                        + json.dumps(self.primitives.observe(), default=str)
+                if self.context_mode == "history":
+                    history.append(assistant)
+                    history.append(
+                        self._user_turn(
+                            "You must call a tool. The current-camera suffix "
+                            "has the live snapshot."
+                        )
                     )
-                )
+                else:
+                    self._last_tool_memory = {
+                        "error": "planner returned text without a tool call",
+                        "text": text,
+                    }
                 continue
-            call = tool_calls[0]
+            call = executed_calls[0]
             function = call.get("function") or {}
             name = function.get("name") or call.get("name")
             arguments = _parse_arguments(function.get("arguments"))
@@ -867,6 +965,8 @@ class RpentPlanner:
                     "type": "planner_turn",
                     "turn": turn,
                     "prompt_version": self.prompt_version,
+                    "context_mode": self.context_mode,
+                    "session_id": self.session_id,
                     "text": text,
                     "tool": name,
                     "arguments": arguments,
@@ -902,9 +1002,36 @@ class RpentPlanner:
                 self.successful_mutations.append(
                     {"action": str(name), **arguments}
                 )
-            messages.append(_tool_message(call_id, str(name), tool_result))
-            if not self.primitives.finished and not self.primitives.task_env.is_episode_end():
-                messages.append(self._post_tool_turn(str(name), tool_result))
+            self._last_tool_memory = {
+                "tool": name,
+                "arguments": arguments,
+                "result": tool_result,
+            }
+            if self.context_mode == "history":
+                history.append(assistant)
+                history.append(_tool_message(call_id, str(name), tool_result))
+                for skipped in tool_calls[1:]:
+                    skipped_fn = skipped.get("function") or {}
+                    skipped_name = skipped_fn.get("name") or skipped.get("name") or "unknown"
+                    skipped_id = skipped.get("id") or f"call_{uuid4().hex[:8]}"
+                    history.append(
+                        _tool_message(
+                            skipped_id,
+                            str(skipped_name),
+                            {
+                                "error": (
+                                    "planner executes exactly one tool per "
+                                    "turn; this call was not executed"
+                                ),
+                                "skipped": True,
+                            },
+                        )
+                    )
+                if (
+                    not self.primitives.finished
+                    and not self.primitives.task_env.is_episode_end()
+                ):
+                    history.append(self._post_tool_turn(str(name), tool_result))
             self.primitives.trace.record_tool_frame_range(
                 step=int(tool_result["trace_step"]),
                 turn=turn,

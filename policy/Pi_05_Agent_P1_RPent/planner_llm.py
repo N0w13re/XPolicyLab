@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import random
 import time
@@ -95,6 +96,38 @@ def planner_backend() -> str:
     return "qwen"
 
 
+def prompt_cache_enabled() -> bool:
+    raw = os.environ.get("RPENT_PROMPT_CACHE", "1").strip().lower()
+    return raw not in {"0", "false", "off", "no"}
+
+
+def extract_llm_usage(result: dict[str, Any]) -> dict[str, Any]:
+    usage = result.get("usage")
+    if not isinstance(usage, dict):
+        return {}
+    details = (
+        usage.get("prompt_tokens_details")
+        or usage.get("input_tokens_details")
+        or {}
+    )
+    if not isinstance(details, dict):
+        details = {}
+    cached = details.get("cached_tokens")
+    if cached is None:
+        cached = usage.get("cached_tokens")
+    return {
+        "prompt_tokens": usage.get("prompt_tokens") or usage.get("input_tokens"),
+        "completion_tokens": usage.get("completion_tokens")
+        or usage.get("output_tokens"),
+        "total_tokens": usage.get("total_tokens"),
+        "cached_tokens": cached,
+        "cache_write_tokens": details.get("cache_write_tokens")
+        or usage.get("cache_creation_input_tokens"),
+        "cache_read_tokens": details.get("cache_read_tokens")
+        or usage.get("cache_read_input_tokens"),
+    }
+
+
 def remote_planner_configured() -> bool:
     backend = planner_backend()
     if backend == "azure_openai":
@@ -133,6 +166,9 @@ class AzureOpenAIPlannerClient:
             or DEFAULT_GPT_MODEL
         )
         self.logid = os.environ.get("RPENT_GPT_LOGID", "").strip() or uuid4().hex
+        self.session_id = os.environ.get("RPENT_GPT_SESSION_ID", "").strip()
+        self.context_mode = "history"
+        self.prompt_cache_enabled = prompt_cache_enabled()
         self.max_retries = max(
             0,
             int(
@@ -172,6 +208,24 @@ class AzureOpenAIPlannerClient:
 
     def available(self) -> bool:
         return bool(self.api_key)
+
+    def bind_planner_session(
+        self, session_id: str, *, context_mode: str = "history"
+    ) -> None:
+        self.session_id = str(session_id).strip()
+        self.context_mode = context_mode
+
+    def _cache_headers(self) -> dict[str, str]:
+        headers: dict[str, str] = {}
+        if not self.prompt_cache_enabled or not self.session_id:
+            return headers
+        headers["extra"] = json.dumps({"session_id": self.session_id})
+        headers["azureai-model-sessionid"] = self.session_id
+        stateful = os.environ.get("RPENT_AZURE_STATEFUL_SESSION", "1").strip().lower()
+        stateful_on = stateful not in {"0", "false", "off", "no"}
+        if stateful_on and self.context_mode == "history":
+            headers["azureai-stateful-session-enabled"] = "true"
+        return headers
 
     def _client(self):
         try:
@@ -219,7 +273,13 @@ class AzureOpenAIPlannerClient:
             payload.pop(key, None)
         headers = dict(payload.pop("extra_headers", {}) or {})
         headers.setdefault("X-TT-LOGID", self.logid)
+        headers.update(self._cache_headers())
         payload["extra_headers"] = headers
+        if self.prompt_cache_enabled and self.session_id:
+            payload.setdefault("prompt_cache_key", self.session_id)
+            retention = os.environ.get("RPENT_PROMPT_CACHE_RETENTION", "").strip()
+            if retention:
+                payload.setdefault("prompt_cache_retention", retention)
         last_error: Exception | None = None
         waited_s = 0.0
         for attempt in range(self.max_retries + 1):

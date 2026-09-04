@@ -1,4 +1,5 @@
 import sys
+import json
 import types
 
 import pytest
@@ -20,6 +21,10 @@ def _clear_llm_env(monkeypatch):
         "OPENAI_API_VERSION",
         "RPENT_GPT_MODEL",
         "RPENT_GPT_LOGID",
+        "RPENT_GPT_SESSION_ID",
+        "RPENT_PROMPT_CACHE",
+        "RPENT_PROMPT_CACHE_RETENTION",
+        "RPENT_AZURE_STATEFUL_SESSION",
         "RPENT_GPT_MAX_TOKENS",
         "RPENT_GPT_TEMPERATURE",
         "RPENT_GPT_MAX_RETRIES",
@@ -151,9 +156,49 @@ def test_azure_client_uses_bytedance_azure_openai_contract(monkeypatch):
     assert create["max_tokens"] == 500
     assert "enable_thinking" not in create
     assert create["extra_headers"]["X-TT-LOGID"] == "log-123"
+    assert "extra" not in create["extra_headers"]
+    assert "prompt_cache_key" not in create
     assert create["tools"][0]["function"]["name"] == "ground"
     assert text == '{"label": "ok"}'
     assert tool_calls[0]["function"]["name"] == "ground"
+
+
+def test_azure_client_sends_modelhub_cache_headers_after_bind(monkeypatch):
+    _clear_llm_env(monkeypatch)
+    monkeypatch.setenv("RPENT_GPT_API_KEY", "gpt-test-key")
+    captured = {}
+    _install_fake_openai(monkeypatch, captured)
+    from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner_llm import (
+        AzureOpenAIPlannerClient,
+        extract_llm_usage,
+    )
+
+    client = AzureOpenAIPlannerClient()
+    client.bind_planner_session("episode-1", context_mode="history")
+    client.chat([{"role": "user", "content": "hi"}])
+    create = captured["create"]
+    headers = create["extra_headers"]
+    assert json.loads(headers["extra"]) == {"session_id": "episode-1"}
+    assert headers["azureai-model-sessionid"] == "episode-1"
+    assert headers["azureai-stateful-session-enabled"] == "true"
+    assert create["prompt_cache_key"] == "episode-1"
+
+    client.bind_planner_session("episode-1", context_mode="observe")
+    client.chat([{"role": "user", "content": "hi"}])
+    headers = captured["create"]["extra_headers"]
+    assert json.loads(headers["extra"]) == {"session_id": "episode-1"}
+    assert headers["azureai-model-sessionid"] == "episode-1"
+    assert "azureai-stateful-session-enabled" not in headers
+
+    assert extract_llm_usage(
+        {
+            "usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 9,
+                "prompt_tokens_details": {"cached_tokens": 80},
+            }
+        }
+    )["cached_tokens"] == 80
 
 
 def test_azure_client_omits_qwen_thinking_and_default_temperature(monkeypatch):

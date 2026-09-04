@@ -192,6 +192,9 @@ export RPENT_GPT_API_VERSION=2024-03-01-preview
 export RPENT_GPT_MODEL=gpt-5.5-2026-04-24
 # optional
 export RPENT_GPT_LOGID=...
+export RPENT_GPT_SESSION_ID=...  # optional; otherwise one id is generated per episode
+export RPENT_PROMPT_CACHE=1
+export RPENT_AZURE_STATEFUL_SESSION=1
 export RPENT_GPT_MAX_TOKENS=4096
 export RPENT_GPT_MAX_RETRIES=12
 export RPENT_GPT_RETRY_CAP_S=120
@@ -204,6 +207,26 @@ errors use capped exponential backoff, honor a numeric `Retry-After` header,
 and stop once either `RPENT_GPT_MAX_RETRIES` or the total
 `RPENT_GPT_RETRY_BUDGET_S` wait budget is exhausted. Set
 `RPENT_GPT_RETRY_JITTER=0` only for deterministic diagnostics.
+
+GPT requests bind one `session_id` per episode and pass ModelHub sticky
+headers (`extra: {"session_id": ...}`, `prompt_cache_key`, and in `history`
+mode Azure `azureai-model-sessionid` / `azureai-stateful-session-enabled`).
+Do not send cache parameters without a session id. Trace events of type
+`planner_llm_usage` record vendor `cached_tokens` when the response includes
+them.
+
+Planner context:
+
+```bash
+export RPENT_PLANNER_CONTEXT=history   # default: append-only text dialogue
+export RPENT_PLANNER_CONTEXT=observe   # no multi-turn history; current obs only
+```
+
+`history` keeps the original assistant payload (including
+`tool_calls_content` when present) and never rewrites earlier messages.
+Camera JPEGs are attached only as a per-request suffix so the text prefix can
+hit prompt cache. `observe` sends system + opening prompt + the current
+snapshot/images/last tool result each turn.
 
 Optional Qwen / loop settings:
 

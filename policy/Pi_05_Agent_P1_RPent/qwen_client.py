@@ -44,6 +44,22 @@ def parse_chat_message(result: dict[str, Any]) -> tuple[str, list[dict[str, Any]
     return str(content), list(tool_calls)
 
 
+def assistant_message_from_result(result: dict[str, Any]) -> dict[str, Any]:
+    """Keep the vendor assistant payload so the next turn can hit KV cache."""
+    choices = result.get("choices") or []
+    if not choices:
+        raise RuntimeError(f"Planner LLM returned no choices: {result!r}")
+    message = dict(choices[0].get("message") or {})
+    stored: dict[str, Any] = {
+        "role": message.get("role") or "assistant",
+        "content": message.get("content") or "",
+    }
+    for key in ("tool_calls", "tool_calls_content", "function_call"):
+        if message.get(key) is not None:
+            stored[key] = message[key]
+    return stored
+
+
 class QwenClient:
     """Thin chat.completions wrapper. No OpenAI SDK required."""
 
@@ -64,9 +80,18 @@ class QwenClient:
             else os.environ.get("QWEN_TIMEOUT_S", "120")
         )
         self.max_retries = max(0, int(os.environ.get("QWEN_MAX_RETRIES", "3")))
+        self.session_id = os.environ.get("RPENT_GPT_SESSION_ID", "").strip()
+        self.context_mode = "history"
+        self.prompt_cache_enabled = os.environ.get("RPENT_PROMPT_CACHE", "1") != "0"
 
     def available(self) -> bool:
         return bool(self.api_key)
+
+    def bind_planner_session(
+        self, session_id: str, *, context_mode: str = "history"
+    ) -> None:
+        self.session_id = str(session_id).strip()
+        self.context_mode = context_mode
 
     def chat(
         self,
@@ -94,14 +119,18 @@ class QwenClient:
         payload.setdefault("enable_thinking", False)
 
         body = json.dumps(payload).encode("utf-8")
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+        if self.prompt_cache_enabled and self.session_id:
+            headers["extra"] = json.dumps({"session_id": self.session_id})
+            headers["x-dashscope-session-cache"] = self.session_id
         req = request.Request(
             f"{self.base_url}/chat/completions",
             data=body,
             method="POST",
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}",
-            },
+            headers=headers,
         )
         result: dict[str, Any] | None = None
         for attempt in range(self.max_retries + 1):

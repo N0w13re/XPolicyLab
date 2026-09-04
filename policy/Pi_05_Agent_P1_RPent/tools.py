@@ -203,14 +203,18 @@ class RpentPrimitives:
         self.reset_poses: dict[str, np.ndarray] | None = None
         self.finished = False
         self.last_tool: str | None = None
+        self._last_observation: dict[str, Any] | None = None
 
     def _obs(self) -> dict[str, Any]:
         if hasattr(self.task_env, "get_obs"):
-            return self.task_env.get_obs()
-        running = self.task_env.get_running_env_idx_list()
-        env_idx = running[0] if running else self.env_idx
-        self.env_idx = env_idx
-        return self.task_env.get_obs_batch([env_idx])[0]
+            observation = self.task_env.get_obs()
+        else:
+            running = self.task_env.get_running_env_idx_list()
+            env_idx = running[0] if running else self.env_idx
+            self.env_idx = env_idx
+            observation = self.task_env.get_obs_batch([env_idx])[0]
+        self._last_observation = observation
+        return observation
 
     def _cache_start(self, observation: Mapping[str, Any]) -> None:
         if self.reset_poses is not None:
