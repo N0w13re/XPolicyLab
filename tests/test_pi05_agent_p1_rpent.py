@@ -1976,11 +1976,12 @@ def test_planner_v4_injects_arrange_largest_number_recipe(tmp_path):
     prompt = json.dumps(qwen.messages, ensure_ascii=False)
     assert "TASK RECIPE:" in prompt
     assert "look-alike digits" in prompt
-    assert "Never skip from a visual bind straight to `pi05_act`" in prompt
-    assert "first mutation after understanding" in prompt
-    assert "Mandatory reset after every placed digit" in prompt
+    assert "Predict source bbox" in prompt
+    assert "Predict destination bbox" in prompt
+    assert "source bbox -> `pregrasp` ->" in prompt
+    assert "retry destination" in prompt
     assert '`return_home(arm=\\"both\\")`' in prompt
-    assert "Then call `render`" in prompt
+    assert "Do not predict the next source bbox" in prompt
     events = [
         json.loads(line)
         for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
