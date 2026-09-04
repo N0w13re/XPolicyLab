@@ -61,9 +61,10 @@ judges task evidence from fresh images. In v4 the runtime additionally blocks
 motion until an instruction contract exists, while prerequisites are pending,
 or when a tool is not allowed by the active phase.
 
-Every tool result is followed by fresh labeled camera images. A persistent
-trace is written under `RPENT_TRACE_DIR`, containing `transcript.jsonl` and one
-directory per tool call with state JSON and JPEG observations.
+Every tool result is returned as structured text, but new camera images are
+attached to the planner only after an explicit `render` call. The persistent
+trace still records state JSON and JPEG observations for every tool under
+`RPENT_TRACE_DIR`; trace capture is separate from planner image input.
 
 Planner prompts are explicitly versioned:
 

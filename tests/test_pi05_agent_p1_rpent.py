@@ -1240,7 +1240,7 @@ def test_tool_frame_range_is_written_to_transcript(tmp_path):
     assert event["cameras"]["left_wrist"] == {"start": 10, "end": 30}
 
 
-def test_planner_frame_range_includes_tool_and_post_tool_observation(tmp_path):
+def test_planner_frame_range_excludes_automatic_post_tool_observation(tmp_path):
     env = _FrameRecordingEnv([_observation()])
     qwen = _ObserveThenFinishQwen()
     primitives = RpentPrimitives(
@@ -1267,12 +1267,12 @@ def test_planner_frame_range_includes_tool_and_post_tool_observation(tmp_path):
     ranges = [event for event in events if event["type"] == "tool_frame_range"]
     assert ranges[0]["tool"] == "observe"
     assert ranges[0]["cameras"] == {
-        "head": {"start": 2, "end": 4},
-        "left_wrist": {"start": 2, "end": 4},
-        "right_wrist": {"start": 2, "end": 4},
+        "head": {"start": 2, "end": 3},
+        "left_wrist": {"start": 2, "end": 3},
+        "right_wrist": {"start": 2, "end": 3},
     }
     assert ranges[1]["tool"] == "finish"
-    assert ranges[1]["cameras"]["head"] == {"start": 4, "end": 6}
+    assert ranges[1]["cameras"]["head"] == {"start": 3, "end": 5}
 
 
 def test_trace_viewer_manifest_merges_tool_calls_and_extends_video_edges(tmp_path):
@@ -1798,7 +1798,7 @@ def test_trace_viewer_supports_per_tool_depth_preview():
     assert "/artifact?path=" in HTML
 
 
-def test_post_tool_turn_contains_fresh_labeled_images(tmp_path):
+def test_post_tool_turn_omits_images_until_render(tmp_path):
     env = _FakeEnv([_observation()])
     primitives = RpentPrimitives(
         env,
@@ -1809,6 +1809,24 @@ def test_post_tool_turn_contains_fresh_labeled_images(tmp_path):
     planner = RpentPlanner(primitives, _UnusedQwen())
 
     message = planner._post_tool_turn("move_to", {"reached": True})
+
+    assert message["role"] == "user"
+    assert isinstance(message["content"], str)
+    assert "No new camera images are attached" in message["content"]
+    assert "call render" in message["content"]
+
+
+def test_post_render_turn_contains_fresh_labeled_images(tmp_path):
+    env = _FakeEnv([_observation()])
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+    planner = RpentPlanner(primitives, _UnusedQwen())
+
+    message = planner._post_tool_turn("render", {"env_state_step": 1})
 
     assert message["role"] == "user"
     labels = [
@@ -1960,6 +1978,9 @@ def test_planner_v4_injects_arrange_largest_number_recipe(tmp_path):
     assert "look-alike digits" in prompt
     assert "Never skip from a visual bind straight to `pi05_act`" in prompt
     assert "first mutation after understanding" in prompt
+    assert "Mandatory reset after every placed digit" in prompt
+    assert '`return_home(arm=\\"both\\")`' in prompt
+    assert "Then call `render`" in prompt
     events = [
         json.loads(line)
         for line in (tmp_path / "transcript.jsonl").read_text().splitlines()

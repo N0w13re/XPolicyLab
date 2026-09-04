@@ -853,8 +853,9 @@ coordination, or a non-grasp interaction.
 Use move_to only for measured free-space motion when the active phase permits
 it. Before transporting an object, verify that it left its source and moves
 with the TCP; gripper closure alone is insufficient. Re-query geometry after
-scene motion. Follow guides/GUIDE_RPENT.md for EEF/TCP clearance and re-observe
-after every primitive.""",
+scene motion. Follow guides/GUIDE_RPENT.md for EEF/TCP clearance. Call render
+after a primitive whenever its outcome requires visual verification; images
+are not attached automatically.""",
             "PERCEPTION": """This RoboDojo runtime has no SAM3 service, segment
 tool, or ground tool. Bind semantic identity from the current head RGB. Use
 the head view for actors, identity, distractors, destinations, language
@@ -867,6 +868,12 @@ from the same step, view, and resolution. Use a matching wrist view to refine ge
 with sample_world_xyz or query_world_map when it materially improves the active
 target. World maps are [row,col] -> [x,y,z]
 metres and visible surface points are not automatically object centers.
+
+Camera images are not attached automatically after each tool. The structured
+tool result is available immediately, but when the next decision requires
+fresh visual evidence, call render explicitly. Use only the images attached
+after that render to bind new pixels or judge contact and placement; never
+pretend that a prior image is a fresh post-motion observation.
 Relocalize after an external event, occlusion, contact, or substantial motion.
 Perception does not itself advance the simulator.""",
         },

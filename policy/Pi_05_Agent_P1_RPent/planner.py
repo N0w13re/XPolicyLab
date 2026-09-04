@@ -785,11 +785,19 @@ class RpentPlanner:
     def _post_tool_turn(
         self, name: str, result: dict[str, Any]
     ) -> dict[str, Any]:
-        return self._user_turn(
-            f"Fresh post-{name} observation. Inspect every labeled camera view "
-            "before choosing exactly one next tool. The preceding structured "
-            "tool result is authoritative."
+        text = (
+            f"Post-{name} state. The preceding structured tool result is "
+            "authoritative. No new camera images are attached; call render "
+            "when fresh visual evidence is needed before choosing the next "
+            "mutation."
         )
+        if name == "render":
+            return self._user_turn(
+                "Fresh render observation. Inspect every labeled camera view "
+                "before choosing exactly one next tool. The preceding "
+                "structured tool result is authoritative."
+            )
+        return {"role": "user", "content": text}
 
     @staticmethod
     def _compact_old_images(messages: list[dict[str, Any]]) -> None:

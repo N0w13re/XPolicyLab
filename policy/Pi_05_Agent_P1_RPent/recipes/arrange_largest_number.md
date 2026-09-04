@@ -20,10 +20,11 @@ left-to-right pad row. Then keep `allowed_tools` narrow for the active
 sub-phase; never list the full motion set.
 
 - Bind / rebind (no motion): observation tools only.
-- Acquire one digit: `query_world_map`, `pregrasp`, short `pi05_act`.
+- Acquire one digit: `render`, `query_world_map`, `pregrasp`, short `pi05_act`.
 - Transport: `move_to`, `rotate_wrist`.
 - Place: `move_to`, short `pi05_act`, `release`.
-- Clear / finish: `set_gripper`, `return_home`.
+- Reset after every placement: `return_home`, then `render`.
+- Clear / finish: `set_gripper`, `return_home`, `render`.
 
 Never skip from a visual bind straight to `pi05_act`. Never call `pi05_act` as
 the first mutation after understanding.
@@ -51,19 +52,20 @@ re-measure only after a placement disturbs the row.
 
 Repeat for the next unplaced digit in descending order:
 
-1. On the current head image, bind **that digit only**. Draw a tight
+1. Call `render`. On that fresh head image, bind **that digit only**. Draw a tight
    `query_world_map` bbox around that glyph alone and use its `median_xyz`.
    Compare `min_xyz`/`max_xyz`: a wide z range means the bbox also caught an
    arm or a neighbouring digit, so tighten it. Do not use a cluster median that
    mixes 8 with 3/0/1.
 2. `pregrasp` that `object_xyz` with the reachable arm. Digits are thin:
-   `clearance_m` near 0.12. Confirm on the fresh wrist image that the intended
-   digit, not a neighbour, is centred under the gripper. If not, rebind; do not
-   grasp.
+   `clearance_m` near 0.12. Then call `render` and confirm on its fresh wrist
+   image that the intended digit, not a neighbour, is centred under the
+   gripper. If not, rebind; do not grasp.
 3. Short `pi05_act` (`execution_horizon` 12–20, `max_chunks` 1) for descent and
    closure only. `focus` names the single digit and forbids moving already
    placed digits.
-4. Gate: verified hold. The digit left the table and moves with the TCP.
+4. Call `render`. Gate: verified hold. The digit left the table and moves with
+   the TCP.
    Gripper closure alone is not enough. If `candidate_evidence` is false, do
    not `move_to`; rebind and `pregrasp` again.
 5. Re-query the destination pad from a clean view. `move_to` a hover above that
@@ -74,7 +76,12 @@ Repeat for the next unplaced digit in descending order:
    (and a flipped 2), `rotate_wrist` before release until the glyph matches an
    upright reading. 0 may sit either way around its upright axis; 8 does not
    need a distinct left-right facing.
-7. Re-observe. Protect every already-correct pad. Then acquire the next digit.
+7. **Mandatory reset after every placed digit:** after `release`, call
+   `return_home(arm="both")` before selecting or measuring the next digit.
+   Do not query the next digit or pad while either arm remains over the pad
+   row. Then call `render`, verify the placed digit is stable and the head
+   view is unobstructed, and only then update the contract for the next digit.
+   Protect every already-correct pad.
 
 If `move_to` plans fail or residual error stays large, do not retry the same
 xyz. Retreat, re-query, and change arm, height, or approach.
@@ -82,5 +89,6 @@ xyz. Retreat, re-query, and change arm, height, or approach.
 ## Finish
 
 When every pad holds the descending sequence, open both grippers and
-`return_home`. Official success also requires both arms back at the origin.
+`return_home(arm="both")`, then call `render` for the final visual check.
+Official success also requires both arms back at the origin.
 Stop motion after `eval_success=true`.

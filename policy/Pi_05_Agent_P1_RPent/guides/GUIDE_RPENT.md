@@ -56,6 +56,12 @@ necessarily an object center. Re-observe after occlusion or physical change:
 `render` captures a fresh state without moving the robot, while
 `view_env_state` only re-reads a state that already exists.
 
+The planner does not receive new camera images automatically after every tool.
+Tool results remain available as structured text. Call `render` explicitly
+whenever the next decision needs post-motion visual evidence, including after
+`pregrasp`, grasp, placement, reset, occlusion, or contact. Only the user turn
+following `render` contains the fresh labeled head and wrist images.
+
 The arx_x5 observation exposes `left_ee_pose` and `right_ee_pose` (xyz plus
 `[qw,qx,qy,qz]`) and normalized gripper values in `left_ee_joint_state` and
 `right_ee_joint_state`. Gripper near 1 is open and near 0 is closed. `move_to`
