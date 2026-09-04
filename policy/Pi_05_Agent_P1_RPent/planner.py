@@ -192,7 +192,12 @@ TOOLS_SPEC = [
         "type": "function",
         "function": {
             "name": "sample_world_xyz",
-            "description": "Sample robust world XYZ around [row,col] pixels from one recorded view.",
+            "description": (
+                "Sample robust world XYZ around [row,col] pixels from one "
+                "recorded view. Also returns a consistency block: when "
+                "coplanar is false, the listed outlier_indices landed on an "
+                "arm or another object and must not be used as targets."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -217,7 +222,11 @@ TOOLS_SPEC = [
         "type": "function",
         "function": {
             "name": "query_world_map",
-            "description": "Summarize world XYZ inside [row0,col0,row1,col1] for one recorded view.",
+            "description": (
+                "Summarize world XYZ inside [row0,col0,row1,col1] for one "
+                "recorded view. A large z_span_m means the bbox mixes "
+                "surfaces; top_z_median_xyz is the highest cluster."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {

@@ -105,11 +105,67 @@ def sample_world_xyz(
     }
 
 
+def summarize_samples(
+    samples: Sequence[Mapping[str, Any]],
+    *,
+    z_tolerance_m: float = 0.02,
+) -> dict[str, Any]:
+    """Flag scattered point samples that cannot share one supporting surface.
+
+    Pixels picked from one RGB frame often land on an arm, a gripper, or a
+    neighbouring object instead of the intended surface. Those samples come
+    back as ordinary XYZ triples, so report the z consensus and the indices
+    that break it rather than leaving the planner to eyeball the list.
+    """
+    heights = [
+        (index, float(sample["xyz"][2]))
+        for index, sample in enumerate(samples)
+        if sample.get("xyz") is not None
+    ]
+    if not heights:
+        return {
+            "valid_samples": 0,
+            "z_median": None,
+            "z_range": None,
+            "outlier_indices": [],
+            "coplanar": False,
+        }
+    values = np.array([height for _, height in heights], dtype=np.float64)
+    median = float(np.median(values))
+    # A scale-free spread estimate inflates itself once several pixels land on
+    # the same arm, so keep the tolerance absolute.
+    tolerance = float(z_tolerance_m)
+    deviation = np.abs(values - median)
+    outliers = [
+        index
+        for (index, _), offset in zip(heights, deviation)
+        if offset > tolerance
+    ]
+    span = float(values.max() - values.min())
+    summary = {
+        "valid_samples": len(heights),
+        "z_median": round(median, 4),
+        "z_range": [round(float(values.min()), 4), round(float(values.max()), 4)],
+        "z_span_m": round(span, 4),
+        "z_tolerance_m": round(tolerance, 4),
+        "outlier_indices": outliers,
+        "coplanar": span <= tolerance,
+    }
+    if not summary["coplanar"]:
+        summary["hint"] = (
+            "these samples do not share one surface; a pixel probably landed "
+            "on an arm, a gripper, or another object. Move that arm clear, "
+            "render a fresh view, and sample again before using the xyz."
+        )
+    return summary
+
+
 def query_world_map(
     world_xyz: Any,
     bbox_rc: Sequence[int],
     *,
     max_samples: int = 16,
+    top_band_m: float = 0.01,
 ) -> dict[str, Any]:
     """Summarize valid XYZ values inside a half-open pixel bbox."""
     world = np.asarray(world_xyz, dtype=np.float64)
@@ -136,12 +192,19 @@ def query_world_map(
         }
     count = min(max(1, int(max_samples)), len(valid))
     indices = np.linspace(0, len(valid) - 1, count).astype(int)
+    heights = valid[:, 2]
     return {
         "bbox_rc": [row0, col0, row1, col1],
         "valid_samples": int(len(valid)),
         "min_xyz": np.min(valid, axis=0).astype(np.float32).tolist(),
         "max_xyz": np.max(valid, axis=0).astype(np.float32).tolist(),
         "median_xyz": np.median(valid, axis=0).astype(np.float32).tolist(),
+        "z_span_m": round(float(heights.max() - heights.min()), 4),
+        "top_z_median_xyz": np.median(
+            valid[heights >= heights.max() - abs(float(top_band_m))], axis=0
+        )
+        .astype(np.float32)
+        .tolist(),
         "samples": valid[indices].astype(np.float32).tolist(),
     }
 

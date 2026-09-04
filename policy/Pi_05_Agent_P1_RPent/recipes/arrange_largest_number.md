@@ -37,18 +37,21 @@ the pads must read 85310). Bind pads as the empty circular row, leftmost =
 index 0 = largest remaining digit.
 
 Sample pad xyz once from a **clean** head frame: neither policy arm may overlap
-the pad pixels. All pad z values must sit on the table (within a few
-centimetres of each other). If a sample's z jumps onto an arm or gripper,
-discard it, move that arm aside or `render` after a retreat, and sample again.
-Store pad xyz and re-query only after a placement disturbs the row.
+the pad pixels. The pads are coplanar, so the returned `consistency` block must
+report `coplanar: true`. If it lists `outlier_indices`, those pixels landed on
+an arm or gripper: `return_home` that arm, `render`, and sample again. Never
+`pregrasp` or `move_to` an outlier xyz. Store pad xyz and re-query only after a
+placement disturbs the row.
 
 ## One digit at a time, largest remaining first
 
 Repeat for the next unplaced digit in descending order:
 
-1. On the current head image, bind **that digit only**. Sample several interior
-   pixels with `sample_world_xyz` or a tight `query_world_map` bbox. Do not use
-   a cluster median that mixes 8 with 3/0/1.
+1. On the current head image, bind **that digit only**. Prefer a tight
+   `query_world_map` bbox around that glyph: a small `z_span_m` confirms the
+   bbox holds one flat digit, and a large one means it also caught an arm or a
+   neighbour, so tighten it. Do not use a cluster median that mixes 8 with
+   3/0/1. With `sample_world_xyz`, require `coplanar: true` first.
 2. `pregrasp` that `object_xyz` with the reachable arm. Digits are thin:
    `clearance_m` near 0.12. Confirm on the fresh wrist image that the intended
    digit, not a neighbour, is centred under the gripper. If not, rebind; do not

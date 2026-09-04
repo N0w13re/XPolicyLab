@@ -23,6 +23,7 @@ from .geometry import (
     get_camera,
     query_world_map as summarize_world_map,
     sample_world_xyz as sample_xyz,
+    summarize_samples,
 )
 from .robot_profile import (
     clamp_pregrasp_clearance,
@@ -466,13 +467,15 @@ class RpentPrimitives:
     ) -> dict[str, Any]:
         record = self.env_states.get(step)
         camera = record.views[view]
+        samples = [
+            sample_xyz(camera.world_xyz, pixel, radius=radius)
+            for pixel in pixels
+        ]
         return {
             "env_state_step": record.step,
             "view": view,
-            "samples": [
-                sample_xyz(camera.world_xyz, pixel, radius=radius)
-                for pixel in pixels
-            ],
+            "samples": samples,
+            "consistency": summarize_samples(samples),
         }
 
     def query_world_map(
