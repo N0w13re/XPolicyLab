@@ -1942,6 +1942,34 @@ def test_planner_v4_injects_make_kong_recipe(tmp_path):
     assert config["recipe"].startswith("# Make Kong")
 
 
+def test_planner_v4_injects_arrange_largest_number_recipe(tmp_path):
+    env = _FakeEnv([_observation()])
+    env.task_name = "arrange_largest_number"
+    qwen = _FinishingQwen()
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        qwen,
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    RpentPlanner(primitives, qwen).run()
+
+    prompt = json.dumps(qwen.messages, ensure_ascii=False)
+    assert "TASK RECIPE:" in prompt
+    assert "look-alike digits" in prompt
+    assert "Never skip from a visual bind straight to `pi05_act`" in prompt
+    assert "first mutation after understanding" in prompt
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
+    ]
+    config = next(event for event in events if event["type"] == "planner_config")
+    assert config["prompt_version"] == "v4"
+    assert config["recipe_path"].endswith("recipes/arrange_largest_number.md")
+    assert config["recipe"].startswith("# Arrange Largest Number")
+
+
 def test_planner_v1_runs_without_recipe_for_unknown_task(tmp_path):
     env = _FakeEnv([_observation()])
     env.task_name = "task_without_recipe"
