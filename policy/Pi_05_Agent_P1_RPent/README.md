@@ -225,8 +225,14 @@ export RPENT_PLANNER_CONTEXT=observe   # no multi-turn history; current obs only
 `history` keeps the original assistant payload (including
 `tool_calls_content` when present) and never rewrites earlier messages.
 Camera JPEGs are attached only as a per-request suffix so the text prefix can
-hit prompt cache. `observe` sends system + opening prompt + the current
-snapshot/images/last tool result each turn.
+hit prompt cache. `observe` does not replay assistant/tool-call transcripts.
+It keeps the guide, recipe, and memory index in the stable opening prompt,
+retains additional `list_dir` / `read_text_file` results as persistent
+guidance, and sends the current snapshot/images, instruction contract,
+successful mutations, and last tool result each turn. The request explicitly
+marks loaded guidance as already read and treats the live snapshot as current,
+so the planner should not repeatedly read the guide or call `view_env_state`
+just to recover the latest state.
 
 Optional Qwen / loop settings:
 

@@ -503,6 +503,8 @@ class RpentPlanner:
         self.successful_mutations: list[dict[str, Any]] = []
         self.instruction_contract: dict[str, Any] | None = None
         self._last_tool_memory: dict[str, Any] | None = None
+        self._base_guidance_sources: list[str] = []
+        self._guidance_memory: dict[str, dict[str, Any]] = {}
 
     def _task_name(self) -> str:
         return str(
@@ -812,6 +814,42 @@ class RpentPlanner:
             return text[:limit] + f"\n...[truncated {len(text) - limit} chars]"
         return text
 
+    def _seed_base_guidance(self, prompt_config: dict[str, Any]) -> None:
+        sources = [prompt_config.get("guide_path")]
+        sources.extend(prompt_config.get("recipe_paths") or [])
+        sources.append(prompt_config.get("memory_path"))
+        self._base_guidance_sources = [
+            str(source) for source in sources if source
+        ]
+
+    @staticmethod
+    def _guidance_key(name: str, arguments: dict[str, Any]) -> str:
+        scope = str(arguments.get("scope", ""))
+        path = str(arguments.get("path", ""))
+        return f"{name}:{scope}:{path}"
+
+    def _remember_guidance(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        result: dict[str, Any],
+    ) -> None:
+        if self.context_mode != "observe" or name not in {
+            "list_dir",
+            "read_text_file",
+        }:
+            return
+        clean_result = {
+            key: value
+            for key, value in result.items()
+            if key not in {"trace_step", "artifacts"}
+        }
+        self._guidance_memory[self._guidance_key(name, arguments)] = {
+            "tool": name,
+            "arguments": arguments,
+            "result": clean_result,
+        }
+
     def _observation_suffix(self, *, include_memory: bool) -> dict[str, Any]:
         last_tool = None if self._last_tool_memory is None else self._last_tool_memory.get("tool")
         attach_live_images = include_memory or last_tool is None or last_tool == "render"
@@ -825,9 +863,30 @@ class RpentPlanner:
         parts: list[str] = []
         if include_memory:
             parts.append(
-                "This turn has no prior dialogue. Decide only from this "
-                "current observation, the instruction, and the fields below."
+                "No assistant/tool-call transcript is replayed this turn. "
+                "Persistent guidance and task-state memory below are retained; "
+                "decide from them plus the current observation."
             )
+            parts.append(
+                "CURRENT-STATE RULE: Live RoboDojo snapshot and attached "
+                "cameras are the authoritative current state. Do not call "
+                "view_env_state merely to recover the latest/current state; "
+                "use it only when a specific older immutable step is genuinely "
+                "needed."
+            )
+            if self._base_guidance_sources:
+                parts.append(
+                    "BASE GUIDANCE ALREADY LOADED IN THE OPENING PROMPT:\n"
+                    + "\n".join(f"- {path}" for path in self._base_guidance_sources)
+                    + "\nDo not call list_dir or read_text_file to rediscover "
+                    "or reread these sources."
+                )
+            if self._guidance_memory:
+                parts.append(
+                    "PERSISTENT GUIDANCE READS (retained across turns; do not "
+                    "repeat these reads):\n"
+                    + self._json_blob(list(self._guidance_memory.values()))
+                )
             if self.instruction_contract is not None:
                 parts.append(
                     "INSTRUCTION CONTRACT:\n"
@@ -901,6 +960,7 @@ class RpentPlanner:
     def run(self) -> None:
         snapshot = self.primitives.observe()
         prompt_config = self._prompt_config()
+        self._seed_base_guidance(prompt_config)
         self._bind_llm_session()
         self.primitives.trace.append(
             {
@@ -1007,6 +1067,7 @@ class RpentPlanner:
                 "arguments": arguments,
                 "result": tool_result,
             }
+            self._remember_guidance(str(name), arguments, tool_result)
             if self.context_mode == "history":
                 history.append(assistant)
                 history.append(_tool_message(call_id, str(name), tool_result))

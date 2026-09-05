@@ -2226,7 +2226,10 @@ def test_observe_mode_does_not_replay_dialogue_history(tmp_path, monkeypatch):
     assert [message["role"] for message in first] == ["system", "user", "user"]
     assert [message["role"] for message in second] == ["system", "user", "user"]
     suffix = second[-1]["content"][0]["text"]
-    assert "This turn has no prior dialogue" in suffix
+    assert "No assistant/tool-call transcript is replayed" in suffix
+    assert "BASE GUIDANCE ALREADY LOADED" in suffix
+    assert "Do not call list_dir or read_text_file" in suffix
+    assert "Do not call view_env_state merely" in suffix
     assert "LAST TOOL RESULT" in suffix
     assert '"tool": "render"' in suffix or '"tool":"render"' in suffix
     events = [
@@ -2236,6 +2239,54 @@ def test_observe_mode_does_not_replay_dialogue_history(tmp_path, monkeypatch):
     config = next(event for event in events if event["type"] == "planner_config")
     assert config["context_mode"] == "observe"
     assert config["session_id"] == planner.session_id
+
+
+def test_observe_mode_retains_guidance_but_not_tool_transcript(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "observe")
+    env = _FakeEnv([_observation()])
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+    planner = RpentPlanner(primitives, _UnusedQwen())
+    config = planner._prompt_config()
+    planner._seed_base_guidance(config)
+    planner._remember_guidance(
+        "read_text_file",
+        {"scope": "memory", "path": "strategy.md"},
+        {
+            "scope": "memory",
+            "path": "strategy.md",
+            "available": True,
+            "content": "Use the left arm for the left workspace.",
+            "trace_step": 3,
+            "artifacts": {"head": "step_003/head.jpg"},
+        },
+    )
+    planner._last_tool_memory = {
+        "tool": "view_env_state",
+        "arguments": {"step": 2},
+        "result": {"env_state_step": 2},
+    }
+    history = [
+        {"role": "system", "content": config["system_prompt"]},
+        planner._user_turn(config["opening_prompt"]),
+    ]
+
+    request = planner._messages_for_request(history)
+
+    assert [message["role"] for message in request] == ["system", "user", "user"]
+    suffix = request[-1]["content"][0]["text"]
+    assert "PERSISTENT GUIDANCE READS" in suffix
+    assert "Use the left arm for the left workspace." in suffix
+    assert "strategy.md" in suffix
+    assert "trace_step" not in suffix
+    assert "step_003/head.jpg" not in suffix
+    assert '"tool": "view_env_state"' in suffix
 
 
 def test_planner_rejects_unknown_prompt_version(tmp_path, monkeypatch):
