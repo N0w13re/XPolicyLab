@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from functools import partial
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -40,6 +41,7 @@ SUPPORTED_PLANNER_PROMPT_VERSIONS = ("v0", "v1", "v2", "v3", "v4")
 DEFAULT_PLANNER_CONTEXT_MODE = "history"
 SUPPORTED_PLANNER_CONTEXT_MODES = ("history", "observe")
 _OBSERVE_TOOL_RESULT_CHARS = 8000
+INSTRUCTION_CONTRACT_TOOL = "understand_instruction"
 
 
 SYSTEM_PROMPT_V2 = rpent_v2_system_prompt(
@@ -463,6 +465,21 @@ def _parse_arguments(raw: Any) -> dict[str, Any]:
     return json.loads(raw)
 
 
+def instruction_contract_enabled() -> bool:
+    raw = os.environ.get("RPENT_INSTRUCTION_CONTRACT", "1").strip().lower()
+    return raw not in {"0", "false", "off", "no"}
+
+
+def tools_spec_for(*, instruction_contract: bool) -> list[dict[str, Any]]:
+    if instruction_contract:
+        return TOOLS_SPEC
+    return [
+        tool
+        for tool in TOOLS_SPEC
+        if (tool.get("function") or {}).get("name") != INSTRUCTION_CONTRACT_TOOL
+    ]
+
+
 def _tool_message(tool_call_id: str, name: str, result: dict[str, Any]) -> dict[str, Any]:
     return {
         "role": "tool",
@@ -499,6 +516,10 @@ class RpentPlanner:
             )
         self.session_id = os.environ.get("RPENT_GPT_SESSION_ID", "").strip() or (
             f"rpent-{self.context_mode}-{uuid4().hex}"
+        )
+        self.instruction_contract_enabled = instruction_contract_enabled()
+        self.tools_spec = tools_spec_for(
+            instruction_contract=self.instruction_contract_enabled
         )
         self.successful_mutations: list[dict[str, Any]] = []
         self.instruction_contract: dict[str, Any] | None = None
@@ -539,10 +560,18 @@ class RpentPlanner:
                 for item in resources["recipes"]
             )
             if self.prompt_version == "v4":
-                user_prompt = rpent_v4_user_prompt
-                system_prompt = rpent_v4_system_prompt
+                user_prompt = partial(
+                    rpent_v4_user_prompt,
+                    instruction_contract=self.instruction_contract_enabled,
+                )
+                system_prompt = partial(
+                    rpent_v4_system_prompt,
+                    instruction_contract=self.instruction_contract_enabled,
+                )
                 prompt_source = (
                     "XPolicyLab RoboDojo v4: instruction-first phase contract"
+                    if self.instruction_contract_enabled
+                    else "XPolicyLab RoboDojo v4: instruction-first, inline phase reasoning"
                 )
             elif self.prompt_version == "v3":
                 user_prompt = rpent_v3_user_prompt
@@ -644,7 +673,7 @@ class RpentPlanner:
         }
 
     def _v4_motion_gate(self, name: str) -> dict[str, Any] | None:
-        if self.prompt_version != "v4":
+        if self.prompt_version != "v4" or not self.instruction_contract_enabled:
             return None
         if self.instruction_contract is None:
             return {
@@ -712,8 +741,18 @@ class RpentPlanner:
             result = self.primitives.view_env_state(int(arguments.get("step", -1)))
         elif name == "render":
             result = self.primitives.observe()
-        elif name == "understand_instruction":
-            result = self._instruction_contract_result(arguments)
+        elif name == INSTRUCTION_CONTRACT_TOOL:
+            result = (
+                self._instruction_contract_result(arguments)
+                if self.instruction_contract_enabled
+                else {
+                    "error": (
+                        "understand_instruction is disabled in this run; derive "
+                        "the active phase from the instruction, recipe, and "
+                        "current observation, then call the action it needs"
+                    )
+                }
+            )
         elif name == "sample_world_xyz":
             result = self.primitives.sample_world_xyz(
                 str(arguments["view"]),
@@ -968,6 +1007,7 @@ class RpentPlanner:
                 **prompt_config,
                 "context_mode": self.context_mode,
                 "session_id": self.session_id,
+                "instruction_contract": self.instruction_contract_enabled,
             }
         )
         history: list[dict[str, Any]] = [
@@ -988,7 +1028,7 @@ class RpentPlanner:
                 break
             result = self.qwen.chat(
                 self._messages_for_request(history),
-                tools=TOOLS_SPEC,
+                tools=self.tools_spec,
                 tool_choice="auto",
             )
             self._record_llm_usage(result, turn)

@@ -914,12 +914,98 @@ use the complete instruction unchanged for every pi05_act.""",
 )
 
 
-def rpent_v4_system_prompt(*, task_name: str, seed: str = "0") -> str:
+# Tasks without an external actor spend turns re-declaring a contract instead of
+# acting, so the same phase discipline is required as reasoning rather than as a
+# tool call plus a self-imposed permission list.
+_RPENT_V4_INLINE_SYSTEM_SECTIONS = _override_sections(
+    _RPENT_V4_SYSTEM_SECTIONS,
+    {
+        "ACCURACY-FIRST LOOP": """Issue one registered action, inspect fresh
+before/after evidence, then decide again. Before each action, state in your
+reply the active phase, prerequisite status, achieved and protected relations,
+held object and arm, the first unmet postcondition, and the next observable
+gate. Advance only when the current gate is visibly satisfied. Primitive
+success is not task success.
+
+If an action makes useful progress but stops mid-phase, continue the same phase
+with the shortest suitable action. pi05_act may be called repeatedly when the
+active phase and physical state require it. The two-no-progress rule applies to
+an unchanged analytic target or identical hand-written recovery: after two
+ineffective repetitions, re-observe and change one meaningful variable. Near
+success, repair only the remaining blocker; do not restart the full task or
+disturb correct objects.""",
+        "CONDITIONAL TASK-FAMILY PLAYBOOKS": """Choose a playbook only after the
+current observation identifies the active phase. A playbook never creates
+permission to bypass a temporal or state prerequisite.
+
+- Wait or external event: preserve both policy arms and grippers with
+  hold_position so the simulator can advance. Re-observe periodically. Require
+  fresh visual evidence of the specified event and resulting stable scene;
+  elapsed time alone is not evidence. Rebind geometry after the event.
+- Pick/place or spatial relation: only when the active phase requires object
+  acquisition, bind the manipulated object, destination, relation, and arm.
+  Use measured pregrasp when target ambiguity makes geometric staging useful.
+  Require a verified hold before transport and support before release.
+- Button or short contact: distinguish the physical control from nearby visual
+  markings, make one guarded contact, and immediately check for the intended
+  change.
+- Articulated object: establish affordance contact, retain contact while moving
+  in the mechanism's direction, and verify state change before releasing.
+- Ranking or stacking: follow the language-specified order and protect each
+  achieved relation from later motion.
+- Bimanual or multi-object: track each hand's content and ownership. For a true
+  handover, verify receiver hold before giver release.
+- Orientation or hold: verify the requested orientation while the object stays
+  controlled. Do not release when the instruction requires continued holding.
+- Container: distinguish an interior from a rim or nearby support. Release only
+  after the object body crosses the opening and is internally supported.""",
+        "INSTRUCTION UNDERSTANDING": """There is no contract tool in this run.
+Derive the task structure directly from the exact instruction, the task recipe,
+and the current observation: the objective and success condition; the relevant
+actors and which actor owns each event; the ordered phases; temporal words such
+as before, after, wait, until, once, and when; the active phase and its
+prerequisites; and the observable evidence that completes it. Keep that
+reasoning in your reply text and do not maintain a permission list; every
+registered tool stays available, so choose the one the active phase needs.
+
+When progress depends on an external actor, an environment event, or an earlier
+phase that is not visibly complete, do not manipulate. Re-observe, and where the
+instruction requires waiting, preserve both arms and grippers with short
+hold_position intervals so the simulator can advance. Never use pi05_act as an
+idle action. Once fresh evidence confirms the event and a stable scene, continue
+with the next phase and discard stale pre-event geometry.""",
+    },
+)
+
+
+_RPENT_V4_INLINE_USER_SECTIONS = _override_sections(
+    _RPENT_V3_USER_SECTIONS,
+    {
+        "BEGIN": """Read the exact instruction and fresh scene before choosing
+an action. Complete the required resource read order, then derive the objective,
+actors, ordered phases, prerequisites, and observable gates from the instruction,
+the recipe, and the current observation. Do not assume the task begins with a
+grasp. Satisfy pending external or earlier-phase conditions before manipulation,
+choose only the playbook needed by the active phase, and restate the active
+phase and its unmet gate before each action. Verify every action and use the
+complete instruction unchanged for every pi05_act.""",
+    },
+)
+
+
+def rpent_v4_system_prompt(
+    *,
+    task_name: str,
+    seed: str = "0",
+    instruction_contract: bool = True,
+) -> str:
     """Render the instruction-first, phase-gated RoboDojo prompt."""
-    return _render_sections(
-        _RPENT_V4_SYSTEM_SECTIONS,
-        {"task_name": task_name, "seed": seed},
+    sections = (
+        _RPENT_V4_SYSTEM_SECTIONS
+        if instruction_contract
+        else _RPENT_V4_INLINE_SYSTEM_SECTIONS
     )
+    return _render_sections(sections, {"task_name": task_name, "seed": seed})
 
 
 def rpent_v4_user_prompt(
@@ -927,10 +1013,16 @@ def rpent_v4_user_prompt(
     task_name: str,
     seed: str,
     task_config: str,
+    instruction_contract: bool = True,
 ) -> str:
     """Render the instruction-first v4 user prompt."""
+    sections = (
+        _RPENT_V4_USER_SECTIONS
+        if instruction_contract
+        else _RPENT_V4_INLINE_USER_SECTIONS
+    )
     return _render_sections(
-        _RPENT_V4_USER_SECTIONS,
+        sections,
         {
             "task_name": task_name,
             "seed": seed,

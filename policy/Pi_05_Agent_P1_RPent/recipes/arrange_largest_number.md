@@ -13,15 +13,15 @@ There is no opponent or wait event. Do not use `hold_position`.
 
 ## Bind the task
 
-After the first `understand_instruction`, set `prerequisites_satisfied` to true
-only once the current head image has bound every visible digit identity and the
-left-to-right pad row. Read every yellow digit, sort the values descending, and
-assign that sequence to the pads from left to right. For example, digits
-8,5,3,1,0 must read 85310. Process one digit at a time, largest unplaced first,
-and protect every pad already completed.
+Before the first grasp, bind every visible digit identity and the left-to-right
+pad row from the current head image. Read every digit, sort the values
+descending, and assign that sequence to the pads from left to right. For
+example, digits 8,5,3,1,0 must read 85310. Process one digit at a time, largest
+unplaced first, and protect every pad already completed.
 
-Keep `allowed_tools` narrow for the active sub-phase. Never list the full motion
-set and never advance the phase until its observable gate is satisfied.
+State the active digit and its unmet gate in your reply, then immediately call
+the tool that gate needs. Do not spend a turn restating the plan when the scene
+is unchanged and the next action is already determined.
 
 ## Standard per-digit pipeline
 

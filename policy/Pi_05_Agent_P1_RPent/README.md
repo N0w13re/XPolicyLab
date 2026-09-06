@@ -234,6 +234,20 @@ marks loaded guidance as already read and treats the live snapshot as current,
 so the planner should not repeatedly read the guide or call `view_env_state`
 just to recover the latest state.
 
+Instruction contract (v4 only):
+
+```bash
+export RPENT_INSTRUCTION_CONTRACT=1   # default: understand_instruction gates motion
+export RPENT_INSTRUCTION_CONTRACT=0   # inline phase reasoning, no contract tool
+```
+
+The contract exists for tasks that must wait on an external actor. Its
+`allowed_tools` list is written by the planner and then enforced, so a task with
+no waiting condition spends one turn re-declaring the contract for every action.
+Setting `0` removes `understand_instruction` from the tool schema, drops the
+motion gate, and switches the v4 prompt to derive the active phase from the
+instruction, recipe, and current observation instead.
+
 Optional Qwen / loop settings:
 
 ```bash

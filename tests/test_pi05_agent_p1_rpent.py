@@ -2114,6 +2114,54 @@ def test_planner_v0_uses_and_records_upstream_rpent_prompt(tmp_path, monkeypatch
     assert turn["prompt_version"] == "v0"
 
 
+def test_disabled_instruction_contract_removes_tool_and_motion_gate(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("RPENT_PLANNER_PROMPT_VERSION", "v4")
+    monkeypatch.setenv("RPENT_INSTRUCTION_CONTRACT", "0")
+    env = _FakeEnv([_observation()])
+    env.task_name = "arrange_largest_number"
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+    planner = RpentPlanner(primitives, _UnusedQwen())
+
+    names = {
+        tool["function"]["name"] for tool in planner.tools_spec
+    }
+    assert "understand_instruction" not in names
+    assert "pi05_act" in names
+    assert planner._v4_motion_gate("pi05_act") is None
+
+    config = planner._prompt_config()
+    assert "There is no contract tool in this run" in config["system_prompt"]
+    assert "call\nunderstand_instruction" not in config["opening_prompt"]
+
+    blocked = planner._dispatch("understand_instruction", {})
+    assert "disabled in this run" in blocked["error"]
+
+
+def test_enabled_instruction_contract_still_gates_motion(tmp_path, monkeypatch):
+    monkeypatch.setenv("RPENT_PLANNER_PROMPT_VERSION", "v4")
+    monkeypatch.delenv("RPENT_INSTRUCTION_CONTRACT", raising=False)
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+    planner = RpentPlanner(primitives, _UnusedQwen())
+
+    names = {tool["function"]["name"] for tool in planner.tools_spec}
+    assert "understand_instruction" in names
+    blocked = planner._v4_motion_gate("pi05_act")
+    assert blocked is not None
+    assert "understand_instruction" in blocked["error"]
+
+
 def test_planner_rejects_unknown_context_mode(tmp_path, monkeypatch):
     monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "full")
     primitives = RpentPrimitives(
