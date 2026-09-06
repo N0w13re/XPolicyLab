@@ -58,6 +58,15 @@ For a parent workspace using uv as the evaluation environment, replace the last
 argument with that environment path. Official RoboDojo reward/termination is
 the only success signal.
 
+For one deterministic development layout, including local-Qwen startup when no
+remote key is configured:
+
+```bash
+ROBODOJO_RUN_ID=p2-general-pickup-layout0-v0 \
+  bash policy/RoboDojo_Agent_P2_RPent/run_fixed_layout.sh \
+  0 0 1 /path/to/RoboDojo-eval/.venv general_pickup
+```
+
 ## Debug startup
 
 Debug mode still requires a planner key; it deliberately does not fall back to
