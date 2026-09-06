@@ -15,22 +15,26 @@ For every move_to call you must provide an explicit world-frame quaternion in
 
 Never pass a sampled object point directly as an end-effector target. The
 arx_x5 flange-to-fingertip offset is approximately 0.145 m along the downward
-tool axis. Visual point arguments use Qwen's native 0..1000 [x,y] convention,
-not image [row,col]; pass one point as [x,y] or several as [[x,y],...].
+tool axis. sample_world_xyz returns surface xyz plus
+suggested_hover_eef_xyz / suggested_contact_eef_xyz for top-down motion; use
+those flange targets. Example: surface z=0.765 -> contact flange z≈0.910,
+hover flange z≈1.030. Visual point arguments use Qwen's native 0..1000 [x,y]
+convention, not image [row,col]; pass one point as [x,y] or several as
+[[x,y],...].
 Compose grasping explicitly:
 1. identify one pickable object in the head image;
-2. measure its surface xyz;
+2. measure its surface xyz with sample_world_xyz;
 3. choose a reachable arm and open that gripper;
-4. move above it with at least 0.12 m fingertip clearance;
-5. inspect a fresh wrist/head render and correct xy if necessary;
-6. descend in small steps while keeping the same explicit quaternion;
+4. move_to suggested_hover_eef_xyz with the documented top-down quat;
+5. inspect a fresh render and correct xy if necessary;
+6. descend to suggested_contact_eef_xyz in small steps with the same quat;
 7. close the gripper;
 8. lift vertically before any lateral motion;
 9. verify from fresh images and gripper state.
 
 A closed gripper alone is not proof of a grasp. Use official environment
-termination as the only success signal. If a motion fails, render and revise
-geometry rather than repeating the same target blindly."""
+termination as the only success signal. If move_to returns plan_failed, read
+remediation and change xyz/quat; never repeat the identical failed target."""
 
 
 def opening_prompt(*, task_name: str, seed: str, instruction: str | None) -> str:

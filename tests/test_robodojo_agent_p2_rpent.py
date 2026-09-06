@@ -124,3 +124,50 @@ def test_geometry_tool_schema_uses_qwen_normalized_xy_coordinates():
     assert "[x,y]" in functions["sample_world_xyz"]["description"]
     assert "0..1000" in functions["sample_world_xyz"]["description"]
     assert "[x0,y0,x1,y1]" in functions["query_world_map"]["description"]
+
+
+def test_top_down_eef_targets_raise_surface_points_by_flange_offset():
+    from XPolicyLab.policy.RoboDojo_Agent_P2_RPent.tools import (
+        top_down_eef_targets_from_surface,
+    )
+
+    targets = top_down_eef_targets_from_surface([0.36538, -0.03354, 0.76557])
+
+    assert targets["suggested_contact_eef_xyz"] == pytest.approx(
+        [0.36538, -0.03354, 0.91057], abs=1e-5
+    )
+    assert targets["suggested_hover_eef_xyz"] == pytest.approx(
+        [0.36538, -0.03354, 1.03057], abs=1e-5
+    )
+
+
+def test_failed_move_to_attaches_flange_offset_remediation(monkeypatch):
+    from XPolicyLab.policy.RoboDojo_Agent_P2_RPent import tools as tools_mod
+    from XPolicyLab.policy.RoboDojo_Agent_P2_RPent.tools import P2Primitives
+
+    primitives = P2Primitives.__new__(P2Primitives)
+
+    def _fake_parent_move_to(self, **kwargs):
+        return {
+            "success": False,
+            "stop_reason": "plan_failed",
+            "target_xyz": kwargs.get("xyz"),
+        }
+
+    monkeypatch.setattr(
+        tools_mod.RpentPrimitives,
+        "move_to",
+        _fake_parent_move_to,
+        raising=True,
+    )
+    result = P2Primitives.move_to(
+        primitives,
+        xyz=[0.36538, -0.03354, 0.76557],
+        arm="right",
+        quat=[-0.353523, 0.61239, -0.353524, -0.61239],
+    )
+    assert result["success"] is False
+    assert "remediation" in result
+    assert result["remediation"]["suggested_hover_eef_xyz"] == pytest.approx(
+        [0.36538, -0.03354, 1.03057], abs=1e-5
+    )

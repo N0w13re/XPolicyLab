@@ -97,9 +97,11 @@ TOOLS_SPEC = [
     _function(
         "move_to",
         (
-            "Move one arm to an explicit world-frame EEF pose. xyz is an EEF "
-            "target, not a sampled object point. quat is [qw,qx,qy,qz] and is "
-            "mandatory. The observed gripper is preserved unless gripper is given."
+            "Move one arm to an explicit world-frame flange pose. xyz must be a "
+            "flange target (use sample_world_xyz suggested_hover_eef_xyz / "
+            "suggested_contact_eef_xyz), never a raw surface sample. quat is "
+            "[qw,qx,qy,qz] and is mandatory. The observed gripper is preserved "
+            "unless gripper is given."
         ),
         {
             "type": "object",
@@ -176,7 +178,7 @@ class P2Planner(RpentPlanner):
         self.primitives = primitives
         self.qwen = qwen or primitives.qwen
         self.max_turns = max(1, int(os.environ.get("RPENT_MAX_TURNS", "120")))
-        self.prompt_version = "p2-v0"
+        self.prompt_version = "p2-v1"
         self.context_mode = os.environ.get(
             "RPENT_PLANNER_CONTEXT", DEFAULT_PLANNER_CONTEXT_MODE
         ).strip().lower()
