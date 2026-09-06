@@ -92,3 +92,12 @@ def test_eval_client_can_target_a_separate_robodojo_workspace():
     assert 'EVAL_ROOT="${ROBODOJO_ROOT:-${BENCH_ROOT}}"' in script
     assert '"${EVAL_ROOT}/scripts/eval_policy.sh"' in script
     assert '--root_dir "${EVAL_ROOT}"' in script
+
+
+def test_fixed_layout_runner_enables_metric_depth():
+    script = (
+        __import__("pathlib").Path(__file__).parents[1]
+        / "policy/RoboDojo_Agent_P2_RPent/run_fixed_layout.sh"
+    ).read_text(encoding="utf-8")
+
+    assert "export ROBODOJO_ENABLE_METRIC_DEPTH=1" in script

@@ -14,6 +14,7 @@ run_id=${ROBODOJO_RUN_ID:-p2-${task_name}-layout${layout//,/_}}
 export ROBODOJO_RUN_ID="${run_id}"
 export ROBODOJO_NUM_ENVS=1
 export ROBODOJO_ACTION_TYPE=joint
+export ROBODOJO_ENABLE_METRIC_DEPTH=1
 export ROBODOJO_POLICY_ENV="${ROBODOJO_POLICY_ENV:-uv}"
 export ROBODOJO_SIM_ENV="${ROBODOJO_SIM_ENV:-${ROBODOJO_ROOT:-${XPL_ROOT}/../RoboDojo-eval}/.venv}"
 export RPENT_TRACE_DIR="${RPENT_TRACE_DIR:-/tmp/xpolicylab-p2/${run_id}}"
