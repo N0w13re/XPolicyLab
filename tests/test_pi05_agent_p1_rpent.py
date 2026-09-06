@@ -8,6 +8,7 @@ import pytest
 
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner import (
     PLANNER_PROMPT_VERSION,
+    RECORDED_ACTIONS,
     SYSTEM_PROMPT,
     TOOLS_SPEC,
     RpentPlanner,
@@ -2335,6 +2336,61 @@ def test_observe_mode_retains_guidance_but_not_tool_transcript(
     assert "trace_step" not in suffix
     assert "step_003/head.jpg" not in suffix
     assert '"tool": "view_env_state"' in suffix
+
+
+def test_episode_log_records_pregrasp_and_retains_measured_geometry(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "observe")
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+    planner = RpentPlanner(primitives, _UnusedQwen())
+    assert "pregrasp" in RECORDED_ACTIONS
+
+    planner._remember_measurement(
+        "query_world_map",
+        {"view": "head", "bbox": [208, 281, 244, 318], "step": -1},
+        {
+            "view": "head",
+            "env_state_step": 4,
+            "bbox_rc": [208, 281, 244, 318],
+            "median_xyz": [-0.0466, -0.0612, 0.7705],
+            "min_xyz": [-0.06, -0.08, 0.7700],
+            "max_xyz": [-0.03, -0.04, 0.7710],
+        },
+    )
+    planner._remember_measurement(
+        "query_world_map",
+        {"view": "head", "bbox": [1, 2, 3, 4]},
+        {"error": "empty bbox"},
+    )
+    planner.successful_mutations.append(
+        {"action": "pregrasp", "arm": "right", "object_xyz": [0.25, -0.16, 0.77]}
+    )
+    # A later tool result must not evict the destination the release depends on.
+    planner._last_tool_memory = {
+        "tool": "pi05_act",
+        "arguments": {"focus": "place the digit"},
+        "result": {"candidate_evidence": False},
+    }
+
+    config = planner._prompt_config()
+    history = [
+        {"role": "system", "content": config["system_prompt"]},
+        planner._user_turn(config["opening_prompt"]),
+    ]
+    suffix = planner._messages_for_request(history)[-1]["content"][0]["text"]
+
+    assert len(planner.measurements) == 1
+    assert planner.measurements[0]["z_span_m"] == 0.001
+    assert "MEASURED GEOMETRY THIS EPISODE" in suffix
+    assert "-0.0466" in suffix
+    assert '"action": "pregrasp"' in suffix
+    assert "includes pregrasp" in suffix
 
 
 def test_planner_rejects_unknown_prompt_version(tmp_path, monkeypatch):

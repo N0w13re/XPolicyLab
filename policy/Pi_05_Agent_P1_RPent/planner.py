@@ -42,6 +42,21 @@ DEFAULT_PLANNER_CONTEXT_MODE = "history"
 SUPPORTED_PLANNER_CONTEXT_MODES = ("history", "observe")
 _OBSERVE_TOOL_RESULT_CHARS = 8000
 INSTRUCTION_CONTRACT_TOOL = "understand_instruction"
+# pregrasp carries the planner's target choice to Pi_05, which never sees focus,
+# so an episode log without it cannot show whether the active target was staged.
+RECORDED_ACTIONS = frozenset(
+    {
+        "hold_position",
+        "move_to",
+        "pregrasp",
+        "pi05_act",
+        "release",
+        "return_home",
+        "rotate_wrist",
+        "set_gripper",
+    }
+)
+MEASUREMENT_TOOLS = frozenset({"query_world_map", "sample_world_xyz"})
 
 
 SYSTEM_PROMPT_V2 = rpent_v2_system_prompt(
@@ -522,6 +537,7 @@ class RpentPlanner:
             instruction_contract=self.instruction_contract_enabled
         )
         self.successful_mutations: list[dict[str, Any]] = []
+        self.measurements: list[dict[str, Any]] = []
         self.instruction_contract: dict[str, Any] | None = None
         self._last_tool_memory: dict[str, Any] | None = None
         self._base_guidance_sources: list[str] = []
@@ -889,6 +905,37 @@ class RpentPlanner:
             "result": clean_result,
         }
 
+    def _remember_measurement(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        result: dict[str, Any],
+    ) -> None:
+        """Keep measured xyz alive past the next tool call.
+
+        A destination measured before transport is otherwise gone by the time
+        release has to decide whether the gripper actually reached it.
+        """
+        if name not in MEASUREMENT_TOOLS or result.get("error"):
+            return
+        entry: dict[str, Any] = {
+            "turn_index": len(self.measurements),
+            "tool": name,
+            "view": result.get("view") or arguments.get("view"),
+            "env_state_step": result.get("env_state_step"),
+        }
+        if name == "query_world_map":
+            entry["bbox_rc"] = result.get("bbox_rc") or arguments.get("bbox")
+            entry["median_xyz"] = result.get("median_xyz")
+            minimum = result.get("min_xyz")
+            maximum = result.get("max_xyz")
+            if isinstance(minimum, list) and isinstance(maximum, list):
+                entry["z_span_m"] = round(float(maximum[2]) - float(minimum[2]), 4)
+        else:
+            entry["pixels"] = arguments.get("pixels")
+            entry["samples"] = result.get("samples")
+        self.measurements.append(entry)
+
     def _observation_suffix(self, *, include_memory: bool) -> dict[str, Any]:
         last_tool = None if self._last_tool_memory is None else self._last_tool_memory.get("tool")
         attach_live_images = include_memory or last_tool is None or last_tool == "render"
@@ -933,8 +980,18 @@ class RpentPlanner:
                 )
             if self.successful_mutations:
                 parts.append(
-                    "SUCCESSFUL MUTATIONS THIS EPISODE:\n"
+                    "ACTIONS COMPLETED THIS EPISODE (includes pregrasp, so an "
+                    "active target with no later pregrasp entry is not "
+                    "staged):\n"
                     + self._json_blob(self.successful_mutations)
+                )
+            if self.measurements:
+                parts.append(
+                    "MEASURED GEOMETRY THIS EPISODE (retained across turns; "
+                    "reuse instead of re-querying an unchanged region, and "
+                    "compare the destination against the live end-effector "
+                    "xyz before release):\n"
+                    + self._json_blob(self.measurements)
                 )
             if self._last_tool_memory is not None:
                 parts.append(
@@ -1086,16 +1143,7 @@ class RpentPlanner:
                 )
                 print(f"[P1-RPent] tool {name} failed: {tool_result['error']}", flush=True)
             if (
-                name
-                in {
-                    "hold_position",
-                    "move_to",
-                    "rotate_wrist",
-                    "pi05_act",
-                    "set_gripper",
-                    "release",
-                    "return_home",
-                }
+                name in RECORDED_ACTIONS
                 and not tool_result.get("error")
                 and tool_result.get("success") is not False
             ):
@@ -1108,6 +1156,7 @@ class RpentPlanner:
                 "result": tool_result,
             }
             self._remember_guidance(str(name), arguments, tool_result)
+            self._remember_measurement(str(name), arguments, tool_result)
             if self.context_mode == "history":
                 history.append(assistant)
                 history.append(_tool_message(call_id, str(name), tool_result))
