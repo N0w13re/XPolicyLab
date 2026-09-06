@@ -81,3 +81,14 @@ def test_debug_without_planner_key_fails_instead_of_falling_back_to_pi05(monkeyp
     with pytest.raises(RuntimeError, match="planner backend"):
         deploy.eval_one_episode(object(), model_client)
     assert model_client.calls == [("reset", {})]
+
+
+def test_eval_client_can_target_a_separate_robodojo_workspace():
+    script = (
+        __import__("pathlib").Path(__file__).parents[1]
+        / "policy/RoboDojo_Agent_P2_RPent/setup_eval_env_client.sh"
+    ).read_text(encoding="utf-8")
+
+    assert 'EVAL_ROOT="${ROBODOJO_ROOT:-${BENCH_ROOT}}"' in script
+    assert '"${EVAL_ROOT}/scripts/eval_policy.sh"' in script
+    assert '--root_dir "${EVAL_ROOT}"' in script

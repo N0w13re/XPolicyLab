@@ -16,6 +16,7 @@ policy_server_ip=${11:-localhost}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 XPL_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 BENCH_ROOT="$(cd "${XPL_ROOT}/.." && pwd)"
+EVAL_ROOT="${ROBODOJO_ROOT:-${BENCH_ROOT}}"
 UTILS_DIR="${XPL_ROOT}/utils"
 policy_name="$(basename "${SCRIPT_DIR}")"
 
@@ -40,6 +41,31 @@ fi
 
 if [[ "${EVAL_ENV_TYPE:-sim}" != "debug" ]]; then
     export ROBODOJO_ENABLE_METRIC_DEPTH=1
+    eval_env_path="${eval_env_conda_env}"
+    if [[ "${eval_env_path}" == "uv" ]]; then
+        eval_env_path="${EVAL_ROOT}/.venv"
+    fi
+    if [[ -x "${eval_env_path}/bin/python" ]]; then
+        source "${eval_env_path}/bin/activate"
+        native_cuda="${EVAL_ROOT}/.cuda-native"
+        if [[ -e "${native_cuda}/libcuda.so.1" ]]; then
+            export LD_LIBRARY_PATH="${native_cuda}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+        fi
+        export OMNI_KIT_ACCEPT_EULA=YES
+        export PYTHONPATH="${BENCH_ROOT}:${EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+        exec bash "${EVAL_ROOT}/scripts/eval_policy.sh" \
+            --root_dir "${EVAL_ROOT}" \
+            --task_name "${task_name}" \
+            --env_cfg_type "${env_cfg_type}" \
+            --device_id "${env_gpu_id}" \
+            --policy_name "${policy_name}" \
+            --host "${policy_server_ip}" \
+            --port "${policy_server_port}" \
+            --protocol ws \
+            --eval_batch false \
+            --additional_info "${additional_info}" \
+            --seed "${seed}"
+    fi
 fi
 bash "${UTILS_DIR}/setup_env_client.sh" \
     "${UTILS_DIR}" \
@@ -51,7 +77,7 @@ bash "${UTILS_DIR}/setup_env_client.sh" \
     "${env_cfg_type}" \
     "${policy_name}" \
     "${additional_info}" \
-    "${BENCH_ROOT}" \
+    "${EVAL_ROOT}" \
     "${seed}" \
     "${env_gpu_id}" \
     "${policy_server_ip}"
