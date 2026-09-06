@@ -932,6 +932,52 @@ view_env_state(step=0). The current instruction and the fresh observation
 override every historical resource. Use a semantic recipe JSON as the phase
 plan and a recipe JSONL as evidence for action type and pi05_act cadence, never
 as a coordinate replay.""",
+        "PI_05 AND PRIMITIVE CONTROL": """Pi_05 receives images and the exact
+complete episode instruction; focus records the current phase only. Choose it
+when the active phase needs learned contact-rich behavior, bimanual
+coordination, insertion, hanging, tool use, or a grasp that benefits from its
+visual policy. Execute native Pi_05 chunks (execution_horizon default 50) near
+contact, success, or instability. Repeated calls are allowed when fresh
+evidence shows useful progress.
+
+Analytic geometry is optional and phase-dependent, not a universal opening
+sequence. When the active phase requires grasping a visually ambiguous object,
+sample its current geometry and call pregrasp once to make the intended object
+dominate the wrist view. Scale clearance_m in [0.12, 0.30] by object height and
+confirm the target on a fresh wrist image before pi05_act. Do not pregrasp when
+the instruction requires waiting, preserving pose, immediate learned
+coordination, or a non-grasp interaction.
+
+Use move_to only for measured free-space motion when the active phase permits
+it. Before transporting an object, verify that it left its source and moves
+with the TCP; gripper closure alone is insufficient. A grasped object still
+rests at source height, so lift it clear before any lateral motion; dragging it
+across the table catches it on the rim of whatever it must land on. Re-query
+geometry after scene motion. Follow guides/GUIDE_RPENT.md for EEF/TCP
+clearance. The current head and wrist images arrive with every request, so
+verify a primitive's outcome by reading them rather than by calling a capture
+tool.""",
+        "PERCEPTION": """This RoboDojo runtime has no SAM3 service, segment
+tool, or ground tool. Bind semantic identity from the current head RGB. Use
+the head view for actors, identity, distractors, destinations, language
+relations, temporal-event evidence, and global progress.
+
+Metric geometry is conditional: use sample_world_xyz or query_world_map only
+when the active phase needs coordinates. Choose interior [row,col] pixels or a
+[row0,col0,row1,col1] bbox from the same recorded view. Pair RGB and world maps
+from the same step, view, and resolution. Use a matching wrist view to refine
+geometry with sample_world_xyz or query_world_map when it materially improves
+the active target. World maps are [row,col] -> [x,y,z] metres and visible
+surface points are not automatically object centers.
+
+Every request carries the current head and wrist images alongside the live
+snapshot, so they are already a fresh post-motion observation and no capture
+tool exists to refresh them. Re-measuring a region you have already measured
+returns the same geometry and buys nothing: nudging a bbox by a few pixels is
+not new evidence. Measure a region once, act on it, and measure again only
+after something in that region has visibly moved. Relocalize after an external
+event, occlusion, contact, or substantial motion. Perception does not itself
+advance the simulator.""",
         "ACCURACY-FIRST LOOP": """Issue one registered action, inspect fresh
 before/after evidence, then decide again. Before each action, state in your
 reply the active phase, prerequisite status, achieved and protected relations,

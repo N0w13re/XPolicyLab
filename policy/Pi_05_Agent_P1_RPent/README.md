@@ -234,6 +234,12 @@ marks loaded guidance as already read and treats the live snapshot as current,
 so the planner should not repeatedly read the guide or call `view_env_state`
 just to recover the latest state.
 
+`observe` also drops `render` from the tool schema. That tool exists to attach
+a fresh camera set to the next request, which `observe` already does on every
+turn, so keeping it registered only spends turns re-fetching images the planner
+is looking at. `history` still registers it, because there images arrive only
+on the first turn and on the turn after a `render`.
+
 Persistent guidance never restores a document the opening prompt already
 quotes. A `read_text_file` that resolves to the embedded guide, recipe, or
 memory index is dropped instead of stored, so a redundant reread cannot append

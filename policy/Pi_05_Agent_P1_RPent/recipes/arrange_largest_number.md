@@ -23,37 +23,50 @@ State the active digit and its unmet gate in your reply, then immediately call
 the tool that gate needs. Do not spend a turn restating the plan when the scene
 is unchanged and the next action is already determined.
 
+The head and wrist images attached to the request are the current scene after
+your last action. Read them for every visual check below; there is no tool that
+captures a newer one.
+
 ## Standard per-digit pipeline
 
 Use this exact sequence for every digit:
 
-1. **Predict source bbox.** Call `render`. From that fresh head image, predict
-   one tight `[row0,col0,row1,col1]` bbox around the next digit only. Call
+1. **Predict source bbox.** From the attached head image, predict one tight
+   `[row0,col0,row1,col1]` bbox around the next digit only. Call
    `query_world_map` on that bbox and use `median_xyz` as `object_xyz`. Do not
    scatter `sample_world_xyz` points and do not mix neighbouring digits in one
    bbox. A wide `min_xyz`/`max_xyz` z range means the bbox caught an arm or a
    neighbour; tighten the bbox and query again.
 2. **Pregrasp.** Call `pregrasp` for that measured `object_xyz`, choosing the
-   reachable arm and `clearance_m` near 0.12. Call `render` and verify in the
-   wrist image that the intended digit is centred under the gripper.
+   reachable arm and `clearance_m` near 0.12. Verify in the attached wrist
+   image that the intended digit is centred under the gripper.
 3. **Learned grasp.** Call one short `pi05_act` (`execution_horizon` 12-20,
    `max_chunks` 1) for descent and closure. Its `focus` names only the current
-   digit and says not to disturb completed pads. Call `render` and verify that
-   the digit left its source and moves with the TCP.
-4. **Predict destination bbox.** On that fresh post-grasp head image, predict a
+   digit and says not to disturb completed pads. Verify in the attached images
+   that the digit left its source and moves with the TCP.
+4. **Lift clear before transporting.** A digit that was just grasped is still
+   at table height, and a pad is a raised disc, so any sideways motion at that
+   height drags the digit into the pad rim and strips it out of the gripper.
+   With the gripper still closed, call `move_to` to the same x and y with z at
+   least 0.10 m above the measured source z, and confirm in the attached head
+   image that the digit rose with the gripper. Keep that transport height for
+   the whole move and descend only once the digit is over its pad.
+5. **Predict destination bbox.** On the attached post-lift head image, predict a
    tight bbox around the assigned destination pad only. Call `query_world_map`
    on the bbox. The pad must not be occluded by the other arm, and its z must
-   agree with the other pads. If not, move the non-carrying arm home, call
-   `render`, and predict the destination bbox again.
-5. **Move.** With the carrying gripper closed, call `move_to` using the measured
-   destination and safe EEF/TCP clearance. Use the arm that can reach that side
-   of the row. Call `render` to verify the digit is over the correct pad.
-6. **Release.** Lower only as needed, then call `release` only after the digit
-   is supported by that pad. Call `render` and verify that the digit stayed on
-   the assigned pad and left the gripper.
-7. **Reset.** After a successful placement, call `return_home(arm="both")`,
-   then `render`. Do not predict the next source bbox until both arms are clear
-   of the pad row and the completed digit is still stable.
+   agree with the other pads. If it is occluded, move the non-carrying arm home
+   and predict the destination bbox again.
+6. **Move.** With the carrying gripper closed, call `move_to` to the measured
+   destination x and y while holding the transport height from step 4, then
+   lower to safe EEF/TCP clearance above the pad. Use the arm that can reach
+   that side of the row. Confirm in the attached head image that the digit hangs
+   over the correct pad and not over a neighbour.
+7. **Release.** Lower only as needed, then call `release` only after the digit
+   is supported by that pad. Verify in the attached images that the digit stayed
+   on the assigned pad and left the gripper.
+8. **Reset.** After a successful placement, call `return_home(arm="both")`.
+   Do not predict the next source bbox until both arms are clear of the pad
+   row and the completed digit is still stable.
 
 For 6 versus 9, and for a flipped 2, use `rotate_wrist` at safe clearance before
 release until the glyph has the required upright orientation. Zero may use
@@ -64,17 +77,20 @@ either equivalent upright direction.
 An interruption does not authorize skipping ahead. Retry from the first unmet
 gate:
 
-- If source `query_world_map` is mixed or stale, `render`, predict a tighter
-  source bbox, and query again.
+- If source `query_world_map` is mixed or stale, predict a tighter source bbox
+  and query again. Do not re-query a bbox you already measured while nothing in
+  that region has moved.
 - If `pregrasp` fails or the wrist shows the wrong digit, retreat or
-  `return_home` that arm, `render`, predict the source bbox again, and retry
-  `pregrasp`.
-- If `pi05_act` misses or the digit is no longer held, `render`, rebind the
-  digit at its new location, then repeat source bbox -> `pregrasp` ->
-  `pi05_act`. Never transport based only on a closed gripper.
+  `return_home` that arm, predict the source bbox again, and retry `pregrasp`.
+- If `pi05_act` misses or the digit is no longer held, rebind the digit at its
+  new location, then repeat source bbox -> `pregrasp` -> `pi05_act`. Never
+  transport based only on a closed gripper.
+- If the digit is lost during transport, it was almost certainly dragged rather
+  than lifted. Treat its dropped pose as a new source, restart the per-digit
+  pipeline, and do not omit the lift in step 4.
 - If destination `move_to` fails or reaches the wrong pad, keep the gripper
-  closed, `render`, predict the destination bbox again, and retry with a
-  changed safe height or approach. Do not release.
+  closed, predict the destination bbox again, and retry with a changed safe
+  height or approach. Do not release.
 - If release is interrupted and the digit is still held, retry destination
   bbox -> `move_to` -> `release`. If it dropped off-pad, treat its dropped pose
   as a new source and restart the full per-digit pipeline.
@@ -86,6 +102,6 @@ enough planner turns to complete the remaining digits.
 ## Finish
 
 When every pad holds the descending sequence, open both grippers and
-`return_home(arm="both")`, then call `render` for the final visual check.
-Official success also requires both arms back at the origin.
+`return_home(arm="both")`, then confirm the final scene in the attached head
+image. Official success also requires both arms back at the origin.
 Stop motion after `eval_success=true`.

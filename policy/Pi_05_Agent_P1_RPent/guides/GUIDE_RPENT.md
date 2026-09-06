@@ -8,6 +8,7 @@ geometry, and compact execution rules needed to apply it.
 
 - Resources: `list_dir`, `read_text_file`
 - Observation: `view_env_state`, `render`, `sample_world_xyz`, `query_world_map`
+  (`render` is registered only in `history` planner context; `observe` drops it)
 - Understanding: `understand_instruction`
 - Control: `hold_position`, `pi05_act`, `pregrasp`, `move_to`, `rotate_wrist`,
   `set_gripper`, `release`, `return_home`
@@ -56,11 +57,13 @@ necessarily an object center. Re-observe after occlusion or physical change:
 `render` captures a fresh state without moving the robot, while
 `view_env_state` only re-reads a state that already exists.
 
-The planner does not receive new camera images automatically after every tool.
-Tool results remain available as structured text. Call `render` explicitly
-whenever the next decision needs post-motion visual evidence, including after
-`pregrasp`, grasp, placement, reset, occlusion, or contact. Only the user turn
-following `render` contains the fresh labeled head and wrist images.
+How camera images reach the planner depends on the planner context. In
+`observe`, every request carries the current labeled head and wrist images
+captured after the last tool, so post-motion evidence is always present and
+`render` is not registered. In `history`, images are attached only on the first
+turn and on the turn after `render`, so call `render` explicitly whenever the
+next decision needs post-motion visual evidence, including after `pregrasp`,
+grasp, placement, reset, occlusion, or contact.
 
 The arx_x5 observation exposes `left_ee_pose` and `right_ee_pose` (xyz plus
 `[qw,qx,qy,qz]`) and normalized gripper values in `left_ee_joint_state` and

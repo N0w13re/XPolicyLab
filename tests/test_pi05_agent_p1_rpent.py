@@ -2338,6 +2338,49 @@ def test_observe_mode_retains_guidance_but_not_tool_transcript(
     assert '"tool": "view_env_state"' in suffix
 
 
+def test_observe_mode_drops_render_and_recipe_requires_a_lift(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "observe")
+    monkeypatch.setenv("RPENT_PLANNER_PROMPT_VERSION", "v4")
+    monkeypatch.setenv("RPENT_INSTRUCTION_CONTRACT", "0")
+    monkeypatch.setenv("RPENT_TASK_NAME", "arrange_largest_number")
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+    planner = RpentPlanner(primitives, _UnusedQwen())
+    names = {(tool.get("function") or {}).get("name") for tool in planner.tools_spec}
+
+    assert "render" not in names
+    assert "query_world_map" in names
+    blocked = planner._dispatch("render", {})
+    assert "unavailable in observe mode" in blocked["error"]
+
+    config = planner._prompt_config()
+    recipe = config["recipe"]
+    assert "Lift clear before transporting" in recipe
+    assert "0.10 m above the measured source z" in recipe
+    assert "`render`" not in recipe
+
+
+def test_history_mode_keeps_render_available(tmp_path, monkeypatch):
+    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "history")
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+    planner = RpentPlanner(primitives, _UnusedQwen())
+    names = {(tool.get("function") or {}).get("name") for tool in planner.tools_spec}
+
+    assert "render" in names
+    assert "error" not in planner._dispatch("render", {})
+
+
 def test_observe_mode_does_not_restore_documents_the_prompt_already_quotes(
     tmp_path, monkeypatch
 ):

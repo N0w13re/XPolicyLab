@@ -43,6 +43,7 @@ DEFAULT_PLANNER_CONTEXT_MODE = "history"
 SUPPORTED_PLANNER_CONTEXT_MODES = ("history", "observe")
 _OBSERVE_TOOL_RESULT_CHARS = 8000
 INSTRUCTION_CONTRACT_TOOL = "understand_instruction"
+RENDER_TOOL = "render"
 # pregrasp carries the planner's target choice to Pi_05, which never sees focus,
 # so an episode log without it cannot show whether the active target was staged.
 RECORDED_ACTIONS = frozenset(
@@ -486,13 +487,22 @@ def instruction_contract_enabled() -> bool:
     return raw not in {"0", "false", "off", "no"}
 
 
-def tools_spec_for(*, instruction_contract: bool) -> list[dict[str, Any]]:
-    if instruction_contract:
+def tools_spec_for(
+    *, instruction_contract: bool, context_mode: str = "history"
+) -> list[dict[str, Any]]:
+    dropped: set[str] = set()
+    if not instruction_contract:
+        dropped.add(INSTRUCTION_CONTRACT_TOOL)
+    # observe attaches a freshly captured observation to every request, so a
+    # render call only returns images the planner is already looking at.
+    if context_mode == "observe":
+        dropped.add(RENDER_TOOL)
+    if not dropped:
         return TOOLS_SPEC
     return [
         tool
         for tool in TOOLS_SPEC
-        if (tool.get("function") or {}).get("name") != INSTRUCTION_CONTRACT_TOOL
+        if (tool.get("function") or {}).get("name") not in dropped
     ]
 
 
@@ -535,7 +545,8 @@ class RpentPlanner:
         )
         self.instruction_contract_enabled = instruction_contract_enabled()
         self.tools_spec = tools_spec_for(
-            instruction_contract=self.instruction_contract_enabled
+            instruction_contract=self.instruction_contract_enabled,
+            context_mode=self.context_mode,
         )
         self.successful_mutations: list[dict[str, Any]] = []
         self.measurements: list[dict[str, Any]] = []
@@ -757,8 +768,18 @@ class RpentPlanner:
             if len(self.primitives.env_states) == 0:
                 self.primitives.observe()
             result = self.primitives.view_env_state(int(arguments.get("step", -1)))
-        elif name == "render":
-            result = self.primitives.observe()
+        elif name == RENDER_TOOL:
+            result = (
+                {
+                    "error": (
+                        "render is unavailable in observe mode; the current "
+                        "head and wrist images are already attached to every "
+                        "request"
+                    )
+                }
+                if self.context_mode == "observe"
+                else self.primitives.observe()
+            )
         elif name == INSTRUCTION_CONTRACT_TOOL:
             result = (
                 self._instruction_contract_result(arguments)
@@ -850,7 +871,7 @@ class RpentPlanner:
         self, name: str, result: dict[str, Any]
     ) -> dict[str, Any]:
         del result
-        if name == "render":
+        if name == RENDER_TOOL:
             return self._user_turn(
                 "Fresh render observation is in the current-camera suffix of "
                 "this request. The preceding structured tool result is "
@@ -958,7 +979,9 @@ class RpentPlanner:
 
     def _observation_suffix(self, *, include_memory: bool) -> dict[str, Any]:
         last_tool = None if self._last_tool_memory is None else self._last_tool_memory.get("tool")
-        attach_live_images = include_memory or last_tool is None or last_tool == "render"
+        attach_live_images = (
+            include_memory or last_tool is None or last_tool == RENDER_TOOL
+        )
         if attach_live_images and not include_memory:
             observation = self.primitives._obs()
         else:
