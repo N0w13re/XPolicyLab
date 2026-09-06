@@ -920,6 +920,18 @@ use the complete instruction unchanged for every pi05_act.""",
 _RPENT_V4_INLINE_SYSTEM_SECTIONS = _override_sections(
     _RPENT_V4_SYSTEM_SECTIONS,
     {
+        "READ ORDER": """The registered-tool guide, the task recipe, and the
+memory index are already quoted in full later in this prompt. Reading them with
+read_text_file returns text you already hold and costs a turn, so do not do it.
+Call read_text_file only for a memory leaf that the quoted index names and that
+you still need, and call list_dir only for a scope whose contents are not
+already quoted.
+
+Bind the scene from the attached current head image rather than from
+view_env_state(step=0). The current instruction and the fresh observation
+override every historical resource. Use a semantic recipe JSON as the phase
+plan and a recipe JSONL as evidence for action type and pi05_act cadence, never
+as a coordinate replay.""",
         "ACCURACY-FIRST LOOP": """Issue one registered action, inspect fresh
 before/after evidence, then decide again. Before each action, state in your
 reply the active phase, prerequisite status, achieved and protected relations,

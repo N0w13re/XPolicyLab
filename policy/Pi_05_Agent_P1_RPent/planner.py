@@ -30,6 +30,7 @@ from .resources import (
     list_resource_dir,
     planner_resources,
     read_resource_file,
+    resource_path,
     write_success_artifacts,
 )
 from .tools import RpentPrimitives
@@ -541,6 +542,7 @@ class RpentPlanner:
         self.instruction_contract: dict[str, Any] | None = None
         self._last_tool_memory: dict[str, Any] | None = None
         self._base_guidance_sources: list[str] = []
+        self._embedded_documents: set[Path] = set()
         self._guidance_memory: dict[str, dict[str, Any]] = {}
 
     def _task_name(self) -> str:
@@ -876,6 +878,20 @@ class RpentPlanner:
         self._base_guidance_sources = [
             str(source) for source in sources if source
         ]
+        self._embedded_documents = {
+            Path(source).resolve() for source in self._base_guidance_sources
+        }
+
+    def _is_embedded_document(self, name: str, arguments: dict[str, Any]) -> bool:
+        if name != "read_text_file":
+            return False
+        try:
+            resolved = resource_path(
+                str(arguments["scope"]), str(arguments["path"])
+            )
+        except (KeyError, ValueError):
+            return False
+        return resolved in self._embedded_documents
 
     @staticmethod
     def _guidance_key(name: str, arguments: dict[str, Any]) -> str:
@@ -893,6 +909,10 @@ class RpentPlanner:
             "list_dir",
             "read_text_file",
         }:
+            return
+        # The opening prompt already carries these in full; storing the reread
+        # would repeat the whole document in every later request.
+        if self._is_embedded_document(name, arguments):
             return
         clean_result = {
             key: value

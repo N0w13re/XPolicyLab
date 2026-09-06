@@ -2338,6 +2338,55 @@ def test_observe_mode_retains_guidance_but_not_tool_transcript(
     assert '"tool": "view_env_state"' in suffix
 
 
+def test_observe_mode_does_not_restore_documents_the_prompt_already_quotes(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "observe")
+    monkeypatch.setenv("RPENT_PLANNER_PROMPT_VERSION", "v4")
+    monkeypatch.setenv("RPENT_INSTRUCTION_CONTRACT", "0")
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+    planner = RpentPlanner(primitives, _UnusedQwen())
+    config = planner._prompt_config()
+    planner._seed_base_guidance(config)
+    guide_marker = "GUIDE_RPENT_DEDUPE_MARKER"
+    planner._remember_guidance(
+        "read_text_file",
+        {"scope": "guide", "path": "GUIDE_RPENT.md"},
+        {
+            "scope": "guide",
+            "path": "GUIDE_RPENT.md",
+            "available": True,
+            "content": guide_marker,
+        },
+    )
+    planner._remember_guidance(
+        "read_text_file",
+        {"scope": "memory", "path": "strategy.md"},
+        {
+            "scope": "memory",
+            "path": "strategy.md",
+            "available": True,
+            "content": "Use the left arm for the left workspace.",
+        },
+    )
+    history = [
+        {"role": "system", "content": config["system_prompt"]},
+        planner._user_turn(config["opening_prompt"]),
+    ]
+
+    suffix = planner._messages_for_request(history)[-1]["content"][0]["text"]
+
+    assert list(planner._guidance_memory) == ["read_text_file:memory:strategy.md"]
+    assert guide_marker not in suffix
+    assert "Use the left arm for the left workspace." in suffix
+    assert "already quoted in full later in this prompt" in config["system_prompt"]
+
+
 def test_episode_log_records_pregrasp_and_retains_measured_geometry(
     tmp_path, monkeypatch
 ):

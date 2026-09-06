@@ -23,6 +23,12 @@ def _safe_child(root: Path, relative: str) -> Path:
     return candidate
 
 
+def resource_path(scope: str, path: str) -> Path:
+    """Resolve a scoped resource so callers can compare it with embedded files."""
+    root = {"guide": GUIDE_DIR, "recipe": RECIPE_DIR, "memory": MEMORY_DIR}[scope]
+    return _safe_child(root, path)
+
+
 def list_resource_dir(scope: str, path: str = "") -> dict[str, Any]:
     root = {"guide": GUIDE_DIR, "recipe": RECIPE_DIR, "memory": MEMORY_DIR}[scope]
     directory = _safe_child(root, path)

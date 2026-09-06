@@ -234,6 +234,11 @@ marks loaded guidance as already read and treats the live snapshot as current,
 so the planner should not repeatedly read the guide or call `view_env_state`
 just to recover the latest state.
 
+Persistent guidance never restores a document the opening prompt already
+quotes. A `read_text_file` that resolves to the embedded guide, recipe, or
+memory index is dropped instead of stored, so a redundant reread cannot append
+a second full copy of that document to every later request.
+
 Instruction contract (v4 only):
 
 ```bash
