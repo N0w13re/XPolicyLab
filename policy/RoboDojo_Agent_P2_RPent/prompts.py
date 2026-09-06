@@ -29,12 +29,15 @@ Compose grasping explicitly:
 5. inspect a fresh render and correct xy if necessary;
 6. descend to suggested_contact_eef_xyz in small steps with the same quat;
 7. close the gripper;
-8. lift vertically before any lateral motion;
+8. lift vertically by only about 0.10-0.15 m above the contact flange
+   height (typically to z≈1.00-1.10); never command z above ~1.20 for tabletop
+   pickups;
 9. verify from fresh images and gripper state.
 
 A closed gripper alone is not proof of a grasp. Use official environment
 termination as the only success signal. If move_to returns plan_failed, read
-remediation and change xyz/quat; never repeat the identical failed target."""
+remediation and change the pose; never repeat the identical failed target and
+never keep increasing z after a vertical lift already failed."""
 
 
 def opening_prompt(*, task_name: str, seed: str, instruction: str | None) -> str:

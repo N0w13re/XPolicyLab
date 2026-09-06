@@ -178,7 +178,7 @@ class P2Planner(RpentPlanner):
         self.primitives = primitives
         self.qwen = qwen or primitives.qwen
         self.max_turns = max(1, int(os.environ.get("RPENT_MAX_TURNS", "120")))
-        self.prompt_version = "p2-v1"
+        self.prompt_version = "p2-v2"
         self.context_mode = os.environ.get(
             "RPENT_PLANNER_CONTEXT", DEFAULT_PLANNER_CONTEXT_MODE
         ).strip().lower()
