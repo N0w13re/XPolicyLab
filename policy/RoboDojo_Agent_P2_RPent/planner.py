@@ -43,7 +43,11 @@ TOOLS_SPEC = [
     ),
     _function(
         "sample_world_xyz",
-        "Sample robust world XYZ around [row,col] pixels in one captured view.",
+        (
+            "Sample world XYZ at Qwen visual points. pixels accepts one [x,y] "
+            "pair or a nested list of pairs, each normalized to 0..1000; the "
+            "runtime converts them to the captured image resolution."
+        ),
         {
             "type": "object",
             "properties": {
@@ -68,7 +72,10 @@ TOOLS_SPEC = [
     ),
     _function(
         "query_world_map",
-        "Summarize world XYZ inside [row0,col0,row1,col1] in one captured view.",
+        (
+            "Summarize world XYZ inside a Qwen visual bbox normalized to "
+            "0..1000 as [x0,y0,x1,y1]."
+        ),
         {
             "type": "object",
             "properties": {

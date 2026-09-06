@@ -101,3 +101,26 @@ def test_fixed_layout_runner_enables_metric_depth():
     ).read_text(encoding="utf-8")
 
     assert "export ROBODOJO_ENABLE_METRIC_DEPTH=1" in script
+
+
+@pytest.mark.parametrize(
+    ("points", "expected"),
+    [
+        ([700, 400], [[192, 448]]),
+        ([[700, 400], [1000, 1000]], [[192, 448], [479, 639]]),
+    ],
+)
+def test_qwen_normalized_xy_is_converted_to_pixel_row_col(points, expected):
+    from XPolicyLab.policy.RoboDojo_Agent_P2_RPent.tools import (
+        normalized_xy_to_pixel_rc,
+    )
+
+    assert normalized_xy_to_pixel_rc(points, (480, 640)) == expected
+
+
+def test_geometry_tool_schema_uses_qwen_normalized_xy_coordinates():
+    functions = _tool_functions()
+
+    assert "[x,y]" in functions["sample_world_xyz"]["description"]
+    assert "0..1000" in functions["sample_world_xyz"]["description"]
+    assert "[x0,y0,x1,y1]" in functions["query_world_map"]["description"]

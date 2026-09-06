@@ -15,7 +15,9 @@ For every move_to call you must provide an explicit world-frame quaternion in
 
 Never pass a sampled object point directly as an end-effector target. The
 arx_x5 flange-to-fingertip offset is approximately 0.145 m along the downward
-tool axis. Compose grasping explicitly:
+tool axis. Visual point arguments use Qwen's native 0..1000 [x,y] convention,
+not image [row,col]; pass one point as [x,y] or several as [[x,y],...].
+Compose grasping explicitly:
 1. identify one pickable object in the head image;
 2. measure its surface xyz;
 3. choose a reachable arm and open that gripper;
