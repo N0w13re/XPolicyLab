@@ -2442,6 +2442,30 @@ def test_history_mode_keeps_render_available(tmp_path, monkeypatch):
     assert "error" not in planner._dispatch("render", {})
 
 
+def test_v4_inline_prompt_states_image_delivery_for_its_context(monkeypatch):
+    monkeypatch.setenv("RPENT_PLANNER_PROMPT_VERSION", "v4")
+    monkeypatch.setenv("RPENT_INSTRUCTION_CONTRACT", "0")
+
+    observe = rpent_v4_system_prompt(
+        task_name="arrange_largest_number",
+        instruction_contract=False,
+        context_mode="observe",
+    )
+    history = rpent_v4_system_prompt(
+        task_name="arrange_largest_number",
+        instruction_contract=False,
+        context_mode="history",
+    )
+
+    assert "no capture tool exists" in observe
+    assert "render" not in observe
+    assert "call render when the next decision needs" in history
+    assert "images are not attached automatically" in history
+    for prompt in (observe, history):
+        assert "{{" not in prompt
+        assert "grasp analytically" in prompt or "analytic" in prompt
+
+
 def test_observe_mode_does_not_restore_documents_the_prompt_already_quotes(
     tmp_path, monkeypatch
 ):

@@ -613,6 +613,7 @@ class RpentPlanner:
                 system_prompt = partial(
                     rpent_v4_system_prompt,
                     instruction_contract=self.instruction_contract_enabled,
+                    context_mode=self.context_mode,
                 )
                 prompt_source = (
                     "XPolicyLab RoboDojo v4: instruction-first phase contract"

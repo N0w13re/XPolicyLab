@@ -927,8 +927,7 @@ Call read_text_file only for a memory leaf that the quoted index names and that
 you still need, and call list_dir only for a scope whose contents are not
 already quoted.
 
-Bind the scene from the attached current head image rather than from
-view_env_state(step=0). The current instruction and the fresh observation
+{{bind_scene}} The current instruction and the fresh observation
 override every historical resource. Use a semantic recipe JSON as the phase
 plan and a recipe JSONL as evidence for action type and pi05_act cadence, never
 as a coordinate replay.""",
@@ -962,9 +961,7 @@ with the TCP; gripper closure alone is insufficient. A grasped object still
 rests at source height, so lift it clear before any lateral motion; dragging it
 across the table catches it on the rim of whatever it must land on. Re-query
 geometry after scene motion. Follow guides/GUIDE_RPENT.md for EEF/TCP
-clearance. The current head and wrist images arrive with every request, so
-verify a primitive's outcome by reading them rather than by calling a capture
-tool.""",
+clearance. {{verify_outcome}}""",
         "PERCEPTION": """This RoboDojo runtime has no SAM3 service, segment
 tool, or ground tool. Bind semantic identity from the current head RGB. Use
 the head view for actors, identity, distractors, destinations, language
@@ -978,9 +975,7 @@ geometry with sample_world_xyz or query_world_map when it materially improves
 the active target. World maps are [row,col] -> [x,y,z] metres and visible
 surface points are not automatically object centers.
 
-Every request carries the current head and wrist images alongside the live
-snapshot, so they are already a fresh post-motion observation and no capture
-tool exists to refresh them. Re-measuring a region you have already measured
+{{image_delivery}} Re-measuring a region you have already measured
 returns the same geometry and buys nothing: nudging a bbox by a few pixels is
 not new evidence. Measure a region once, act on it, and measure again only
 after something in that region has visibly moved. Relocalize after an external
@@ -1059,19 +1054,63 @@ complete instruction unchanged for every pi05_act.""",
 )
 
 
+# How images reach the planner is a property of the planner context, not of the
+# prompt version, so the inline sections state it from these instead of
+# asserting one delivery model and being wrong in the other context.
+_OBSERVE_IMAGE_WORDING = {
+    "bind_scene": (
+        "Bind the scene from the attached current head image rather than from "
+        "view_env_state(step=0)."
+    ),
+    "image_delivery": (
+        "Every request carries the current head and wrist images alongside the "
+        "live snapshot, so they are already a fresh post-motion observation "
+        "and no capture tool exists to refresh them."
+    ),
+    "verify_outcome": (
+        "The current head and wrist images arrive with every request, so "
+        "verify a primitive's outcome by reading them rather than by calling a "
+        "capture tool."
+    ),
+}
+_HISTORY_IMAGE_WORDING = {
+    "bind_scene": (
+        "Bind the scene from the head image attached to this request, and call "
+        "render when you need a newer one."
+    ),
+    "image_delivery": (
+        "Camera images are attached on the first turn and on the turn after "
+        "render, so the images you hold may predate your last motion; call "
+        "render when the next decision needs post-motion evidence."
+    ),
+    "verify_outcome": (
+        "Call render after a primitive whenever its outcome requires visual "
+        "verification; images are not attached automatically."
+    ),
+}
+
+
 def rpent_v4_system_prompt(
     *,
     task_name: str,
     seed: str = "0",
     instruction_contract: bool = True,
+    context_mode: str = "history",
 ) -> str:
     """Render the instruction-first, phase-gated RoboDojo prompt."""
-    sections = (
-        _RPENT_V4_SYSTEM_SECTIONS
-        if instruction_contract
-        else _RPENT_V4_INLINE_SYSTEM_SECTIONS
+    if instruction_contract:
+        return _render_sections(
+            _RPENT_V4_SYSTEM_SECTIONS, {"task_name": task_name, "seed": seed}
+        )
+    wording = (
+        _OBSERVE_IMAGE_WORDING
+        if context_mode == "observe"
+        else _HISTORY_IMAGE_WORDING
     )
-    return _render_sections(sections, {"task_name": task_name, "seed": seed})
+    return _render_sections(
+        _RPENT_V4_INLINE_SYSTEM_SECTIONS,
+        {"task_name": task_name, "seed": seed, **wording},
+    )
 
 
 def rpent_v4_user_prompt(
