@@ -160,7 +160,7 @@ def test_top_down_eef_targets_raise_surface_points_by_flange_offset():
     )
 
 
-def test_failed_move_to_attaches_flange_offset_remediation(monkeypatch):
+def test_failed_move_to_never_suggests_a_pose_above_the_failed_one(monkeypatch):
     from XPolicyLab.policy.RoboDojo_Agent_P2_RPent import tools as tools_mod
     from XPolicyLab.policy.RoboDojo_Agent_P2_RPent.tools import P2Primitives
 
@@ -186,9 +186,16 @@ def test_failed_move_to_attaches_flange_offset_remediation(monkeypatch):
         quat=[-0.353523, 0.61239, -0.353524, -0.61239],
     )
     assert result["success"] is False
-    assert "remediation" in result
-    assert result["remediation"]["suggested_hover_eef_xyz"] == pytest.approx(
-        [0.36538, -0.03354, 1.03057], abs=1e-5
+    remediation = result["remediation"]
+    assert remediation["rejected_eef_xyz"] == pytest.approx(
+        [0.36538, -0.03354, 0.76557], abs=1e-5
+    )
+    # A retry ladder is exactly what a raised suggestion produced before.
+    assert "suggested_hover_eef_xyz" not in remediation
+    assert "suggested_contact_eef_xyz" not in remediation
+    assert not any(
+        isinstance(value, list) and len(value) == 3 and value[2] > 0.76557
+        for value in remediation.values()
     )
 
 

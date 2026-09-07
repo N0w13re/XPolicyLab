@@ -124,15 +124,21 @@ class P2Primitives(RpentPrimitives):
             substeps=substeps,
         )
         if result.get("success") is False and xyz is not None:
-            advice = top_down_eef_targets_from_surface(xyz)
+            # Offering a target one flange offset above the pose that just
+            # failed turns every retry into the next rung of a ladder, because
+            # move_to's xyz is already a flange target rather than a surface
+            # point. Report the rejection instead of inventing a pose.
+            rejected = np.asarray(xyz, dtype=np.float64).reshape(-1)[:3]
             result["remediation"] = {
-                **advice,
+                "rejected_eef_xyz": rejected.round(5).tolist(),
                 "note": (
-                    "plan_failed often means the commanded flange pose collides "
-                    "or is unreachable. If xyz was a surface sample, retry with "
-                    "suggested_hover_eef_xyz (then descend to "
-                    "suggested_contact_eef_xyz) and a documented top-down quat. "
-                    "Do not repeat the identical failed target."
+                    "plan_failed means this flange pose is unreachable or "
+                    "collides, and the arm has not moved. Height is not the "
+                    "fix: raising z leaves the pose just as unreachable. Try a "
+                    "different xy, the other arm, or a pose near the last one "
+                    "that reached. The flange offset applies to a surface "
+                    "sample from sample_world_xyz, never to a flange target "
+                    "that already failed."
                 ),
             }
         return result
