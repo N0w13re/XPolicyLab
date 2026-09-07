@@ -46,8 +46,20 @@ def _convert_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def _openai_message(text: str) -> dict[str, Any]:
     tool_calls = []
+    unparsed = []
     for index, raw in enumerate(_TOOL_CALL_RE.findall(text)):
-        parsed = json.loads(raw)
+        # A tool call the model emitted with broken JSON used to raise here,
+        # which answered the request with HTTP 500 and killed the episode. The
+        # planner already re-prompts a turn that produced no call, so hand the
+        # broken block back as text and let it ask again.
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            unparsed.append(f"{raw} ({exc})")
+            continue
+        if not isinstance(parsed, dict) or "name" not in parsed:
+            unparsed.append(f"{raw} (tool call needs a name field)")
+            continue
         arguments = parsed.get("arguments", {})
         tool_calls.append(
             {
@@ -60,6 +72,10 @@ def _openai_message(text: str) -> dict[str, Any]:
             }
         )
     clean_text = _TOOL_CALL_RE.sub("", text).strip()
+    if unparsed:
+        clean_text = "\n".join(
+            [clean_text, "Discarded unparsable tool_call blocks:", *unparsed]
+        ).strip()
     message: dict[str, Any] = {"role": "assistant", "content": clean_text}
     if tool_calls:
         message["tool_calls"] = tool_calls
@@ -109,16 +125,17 @@ class LocalQwen:
             skip_special_tokens=True,
             clean_up_tokenization_spaces=False,
         )[0]
+        message = _openai_message(text)
         return {
             "id": "local-qwen",
             "object": "chat.completion",
             "choices": [
                 {
                     "index": 0,
-                    "message": _openai_message(text),
-                    "finish_reason": "tool_calls"
-                    if "<tool_call>" in text
-                    else "stop",
+                    "message": message,
+                    "finish_reason": (
+                        "tool_calls" if message.get("tool_calls") else "stop"
+                    ),
                 }
             ],
         }
