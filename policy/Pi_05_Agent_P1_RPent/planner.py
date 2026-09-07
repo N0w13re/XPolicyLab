@@ -393,7 +393,9 @@ TOOLS_SPEC = [
             "name": "set_gripper",
             "description": (
                 "Hold the current end-effector pose and explicitly open or close "
-                "one gripper. Use closed to firm a verified grasp."
+                "one gripper. Use closed to firm a verified grasp. Closing runs "
+                "until the fingers stop moving; closed_on_object reports whether "
+                "they stalled on something rather than shutting on air."
             ),
             "parameters": {
                 "type": "object",

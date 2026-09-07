@@ -41,6 +41,16 @@ def _gripper_open_command() -> float:
     return float(os.environ.get("RPENT_GRIPPER_OPEN_CMD", "1.0"))
 
 
+def _gripper_settle_eps() -> float:
+    """Per-step travel below which the fingers count as stopped."""
+    return float(os.environ.get("RPENT_GRIPPER_SETTLE_EPS", "0.005"))
+
+
+def _gripper_object_gap() -> float:
+    """Finger opening above the commanded one that implies a held object."""
+    return float(os.environ.get("RPENT_GRIPPER_OBJECT_GAP", "0.02"))
+
+
 def _hover_max_steps() -> int:
     return max(8, int(os.environ.get("RPENT_MOVE_MAX_STEPS", "80")))
 
@@ -1087,7 +1097,14 @@ class RpentPrimitives:
             if state == "open"
             else float(os.environ.get("RPENT_GRIPPER_CLOSE_CMD", "0.0"))
         )
+        settle_eps = _gripper_settle_eps()
+        previous = float(
+            _state_vector(
+                self._obs()["state"], f"{arm}_ee_joint_state", 1, default=1.0
+            )[0]
+        )
         used = 0
+        settled = False
         for used in range(1, max(1, int(steps)) + 1):
             if self.task_env.is_episode_end():
                 break
@@ -1108,8 +1125,15 @@ class RpentPrimitives:
                     default=1.0,
                 )[0]
             )
-            is_open = actual >= _gripper_open_threshold()
-            if (state == "open" and is_open) or (state == "closed" and not is_open):
+            # Crossing the open/closed threshold only means the fingers began
+            # moving. Drive until they reach the command or stop travelling, so
+            # a close either bottoms out on air or stalls on what it holds.
+            settled = (
+                abs(actual - command) < settle_eps
+                or abs(actual - previous) < settle_eps
+            )
+            previous = actual
+            if settled:
                 break
         observation = self._obs()
         actual = float(
@@ -1117,17 +1141,20 @@ class RpentPrimitives:
                 observation["state"], f"{arm}_ee_joint_state", 1, default=1.0
             )[0]
         )
+        gap = abs(actual - command)
         return {
             "arm": arm,
             "requested_state": state,
             "steps_used": used,
             "gripper": actual,
             "opened": actual >= _gripper_open_threshold(),
-            "reached": (
-                actual >= _gripper_open_threshold()
-                if state == "open"
-                else actual < _gripper_open_threshold()
+            "settled": settled,
+            # A close that stalls short of the closed command has something
+            # between the fingers; one that reaches it closed on nothing.
+            "closed_on_object": (
+                state == "closed" and settled and gap > _gripper_object_gap()
             ),
+            "reached": settled and (state == "closed" or actual >= _gripper_open_threshold()),
             **self.snapshot(observation),
         }
 

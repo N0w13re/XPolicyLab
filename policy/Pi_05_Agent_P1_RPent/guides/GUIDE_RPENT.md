@@ -63,7 +63,10 @@ and no capture tool is registered to refresh it.
 
 The arx_x5 observation exposes `left_ee_pose` and `right_ee_pose` (xyz plus
 `[qw,qx,qy,qz]`) and normalized gripper values in `left_ee_joint_state` and
-`right_ee_joint_state`. Gripper near 1 is open and near 0 is closed. `move_to`
+`right_ee_joint_state`. Gripper near 1 is open and near 0 is closed. A `closed`
+snapshot state only means the value fell below the open threshold, so read
+`set_gripper`'s `gripper` value and `closed_on_object` flag for whether the
+fingers actually stalled on something. `move_to`
 targets EEF pose; EEF and TCP differ, so do not send a raw object surface point
 as an EEF contact target. The planner must add clearance and the
 task-appropriate EEF/TCP offset before `move_to`. Coordinates are world-frame

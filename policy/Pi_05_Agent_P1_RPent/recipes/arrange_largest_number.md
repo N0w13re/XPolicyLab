@@ -49,12 +49,16 @@ Use this exact sequence for every digit:
    the staged digit and approach a different one. If you find yourself staging
    the same digit a second time, that first grasp did not take: switch to the
    analytic grasp for this digit instead of calling `pi05_act` again. Keep the
-   gripper open, `move_to` the staged arm to the digit's x and y with
-   `z = object_z + tcp_offset_m` (the pregrasp `target_xyz` minus its
-   `clearance_m`), call `set_gripper` to close, then continue to step 4. The
-   analytic grasp cannot change target, so it is the reliable option once the
-   learned one has drifted. This choice applies only to the current digit; for
-   the next digit, start with `pi05_act` again.
+   gripper open and `move_to` the staged arm to the digit's x and y. The
+   pregrasp `target_xyz` minus its `clearance_m` puts the fingertips level with
+   the digit's top face, which closes on air, so descend roughly 0.015 m below
+   that so the fingers straddle the glyph. Then call `set_gripper` to close and
+   read `closed_on_object` in its result: `true` means the fingers stalled on
+   the digit, `false` means they shut on nothing and the descent was too high.
+   Only continue to step 4 once it is `true`. The analytic grasp cannot change
+   target, so it is the reliable option once the learned one has drifted. This
+   choice applies only to the current digit; for the next digit,
+   start with `pi05_act` again.
 4. **Lift clear before transporting.** A digit that was just grasped is still
    at table height, and a pad is a raised disc, so any sideways motion at that
    height drags the digit into the pad rim and strips it out of the gripper.

@@ -2374,6 +2374,62 @@ def test_tool_results_sent_to_the_model_drop_trace_and_constant_fields(
     assert "head_depth" not in suffix
 
 
+class _GripperEnv(_FakeEnv):
+    """Fingers travel toward the command but stall at whatever they hold."""
+
+    travel_per_step = 0.37
+
+    def __init__(self, observation, *, floor=0.0):
+        super().__init__([observation])
+        self.floor = floor
+
+    def take_action(self, action):
+        self.actions.append(action)
+        self.take_action_cnt[0] += 1
+        command = float(np.asarray(action["left_ee_joint_state"]).reshape(-1)[0])
+        state = self.observations[0]["state"]
+        current = float(state["left_ee_joint_state"][0])
+        step = min(self.travel_per_step, abs(command - current))
+        moved = current + step * (1.0 if command > current else -1.0)
+        state["left_ee_joint_state"][0] = max(moved, self.floor)
+
+
+def test_closing_the_gripper_runs_until_the_fingers_stop_moving(tmp_path):
+    env = _GripperEnv(_observation(), floor=0.0)
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    result = primitives.set_gripper("left", "closed", steps=10)
+
+    # Crossing the 0.8 open threshold takes a single step, so a run that stops
+    # there leaves the fingers most of the way open.
+    assert result["steps_used"] > 1
+    assert result["gripper"] == pytest.approx(0.0, abs=1e-6)
+    assert result["settled"] is True
+    assert result["reached"] is True
+    assert result["closed_on_object"] is False
+
+
+def test_a_close_that_stalls_on_an_object_is_reported_as_holding(tmp_path):
+    env = _GripperEnv(_observation(), floor=0.28)
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    result = primitives.set_gripper("left", "closed", steps=10)
+
+    assert result["gripper"] == pytest.approx(0.28, abs=1e-6)
+    assert result["settled"] is True
+    assert result["closed_on_object"] is True
+
+
 def test_return_home_reports_only_whether_each_arm_arrived(tmp_path):
     primitives = RpentPrimitives(
         _FakeEnv([_observation()]),
