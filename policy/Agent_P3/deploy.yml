@@ -1,0 +1,18 @@
+# Basic experiment configuration
+policy_name: Agent_P3
+protocol: ws
+host: localhost
+port: 6000
+bench_name: null
+task_name: null
+ckpt_name: null
+env_cfg_type: null
+seed: null
+gpu_id: null
+eval_batch: false
+
+# P3 holds no VLA: no checkpoint, no policy environment, no GPU for inference.
+# The condition is defined by the model behind P3_MODEL and by P3_MAX_CHUNK.
+result_dir: "./results/agent_p3/"
+obs_transform_pipeline: "xspark-v1.0"
+action_type: joint
