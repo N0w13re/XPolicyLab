@@ -30,7 +30,17 @@ right: [-0.353523, 0.61239, -0.353524, -0.61239]
 
 The planner must explicitly compose open, hover, descend, close, and lift.
 RGB-D object points are surface measurements, not EEF targets; the arx_x5
-flange-to-fingertip offset is approximately 0.145 m.
+flange-to-fingertip offset is approximately 0.145 m. `sample_world_xyz`
+converts a surface point into `suggested_contact_eef_xyz` and
+`suggested_hover_eef_xyz`, and the lift goes back to the hover target rather
+than to an absolute height: the descent routinely stops one to two centimetres
+short of the commanded contact z, so a lift measured from the commanded height
+undershoots the `general_pickup` threshold of 0.1 m.
+
+Every P2 motion target comes from the depth-backed `world_xyz` map, and untiled
+cameras publish no metric depth, so `run_fixed_layout.sh` pins
+`ROBODOJO_UNTILED_CAMERAS=0`. Without it the geometry tools raise for the whole
+episode.
 
 ## Install
 
@@ -56,7 +66,8 @@ bash policy/RoboDojo_Agent_P2_RPent/eval.sh \
 
 For a parent workspace using uv as the evaluation environment, replace the last
 argument with that environment path. Official RoboDojo reward/termination is
-the only success signal.
+the only success signal, and the shared `finish` tool refuses a success claim
+the environment has not verified while the episode is still running.
 
 For one deterministic development layout, including local-Qwen startup when no
 remote key is configured:
