@@ -2763,3 +2763,40 @@ def test_finish_stops_refusing_once_the_rejection_budget_runs_out(
     assert honoured["status"] == "failure"
     assert honoured["success"] is False
     assert primitives.finished is True
+
+
+def _repeat_gate_planner(tmp_path):
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+    return RpentPlanner(primitives, _UnusedQwen())
+
+
+def test_the_first_call_of_a_signature_passes_the_repeat_gate(tmp_path):
+    planner = _repeat_gate_planner(tmp_path)
+
+    assert planner._repeat_gate("view_env_state", {"step": -1}) is None
+
+
+def test_an_identical_consecutive_call_is_refused(tmp_path):
+    planner = _repeat_gate_planner(tmp_path)
+
+    planner._repeat_gate("view_env_state", {"step": -1})
+    refused = planner._repeat_gate("view_env_state", {"step": -1})
+
+    assert refused is not None
+    assert refused["repeat_rejected"] is True
+    assert refused["consecutive_repeats"] == 1
+
+
+def test_changed_arguments_reset_the_repeat_gate(tmp_path):
+    planner = _repeat_gate_planner(tmp_path)
+
+    planner._repeat_gate("view_env_state", {"step": -1})
+    planner._repeat_gate("view_env_state", {"step": -1})
+
+    assert planner._repeat_gate("view_env_state", {"step": 0}) is None
+    assert planner._repeat_gate("view_env_state", {"step": 0}) is not None

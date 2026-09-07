@@ -593,6 +593,8 @@ class RpentPlanner:
         self._base_guidance_sources: list[str] = []
         self._embedded_documents: set[Path] = set()
         self._guidance_memory: dict[str, dict[str, Any]] = {}
+        self._last_call_signature: str | None = None
+        self._consecutive_repeats = 0
 
     def _task_name(self) -> str:
         return str(
@@ -775,7 +777,37 @@ class RpentPlanner:
             }
         return None
 
+    def _repeat_gate(self, name: str, arguments: dict[str, Any]) -> dict[str, Any] | None:
+        signature = json.dumps(
+            [name, arguments], sort_keys=True, default=str, ensure_ascii=False
+        )
+        if signature != self._last_call_signature:
+            self._last_call_signature = signature
+            self._consecutive_repeats = 0
+            return None
+        self._consecutive_repeats += 1
+        # Greedy decoding on an unchanged context reproduces the previous call
+        # byte for byte, and running it again returns the same answer, so the
+        # episode spends its whole budget standing still. Refusing the repeat
+        # is the only reply that differs from the one it already has.
+        return {
+            "error": (
+                "repeat rejected: this is byte for byte the call you just "
+                "made, so running it again cannot tell you anything new"
+            ),
+            "repeat_rejected": True,
+            "consecutive_repeats": self._consecutive_repeats,
+            "next_step": (
+                "Act on the result you already have. Take the next step of "
+                "the task, or change the arguments if you need a different "
+                "measurement."
+            ),
+        }
+
     def _dispatch(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        repeated = self._repeat_gate(name, arguments)
+        if repeated is not None:
+            return self.primitives.record_tool_result(name, arguments, repeated)
         motion_tools = {
             "hold_position",
             "move_to",
