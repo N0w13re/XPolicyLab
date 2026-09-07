@@ -4,8 +4,23 @@ Date: 2026-08-27
 
 This note freezes the comparison we agreed to run on RoboDojo. It is not a
 leaderboard submission recipe. P0 is the already-measured official-protocol
-baseline. P1–P2 are the main scientific comparison. P3 is an extra-data
-extension, not a fourth column on the main table.
+baseline. P1–P2 are the main scientific comparison.
+
+**The axis is how close control sits to the LLM.** P0 has no LLM in the loop at
+all. Each step up hands the model more of the control problem and takes away
+one more non-learned or pretrained layer between it and the robot:
+
+| | Who emits the action | What stands between the model and the robot |
+| --- | --- | --- |
+| P0 | Frozen VLA | Everything; there is no LLM |
+| P1 | Frozen VLA | The LLM aims the arm, then hands off; it never emits an action |
+| P2 | Our primitives | A hand-written primitive vocabulary (`pick`, `place`, `move_ee`) |
+| P3 | The LLM | Nothing but action decoding |
+
+P3 is the endpoint of that axis, not an extra-data appendix. Retraining a VLA
+on subgoal text used to be called P3; it is a different question and now lives
+in §7 as the retrain extension, because it moves control *away* from the LLM
+and back into learned weights.
 
 Related design notes: [physical_policy_harness_design.md](physical_policy_harness_design.md)
 (harness vs high-rate policy). Official seed-0 numbers live in
@@ -21,7 +36,13 @@ On RoboDojo long-horizon / Open failures, is the missing piece
 The first P1 bet is **not** rewriting the official instruction into short
 subgoals. It is **gaze priming**: keep the official long instruction, move the
 end-effector above the object that should be used next, then call frozen
-Pi_05. Retraining on subgoal text remains P3 and is reported separately.
+Pi_05. Retraining on subgoal text is the §7 extension and is reported
+separately.
+
+P3 asks the third form of the question: can a frontier LLM be the policy
+outright, with no VLA and no primitive vocabulary? A P3 number that beats P2
+says the primitive layer was itself the bottleneck. A P3 number near zero while
+P2 is high says the LLM can plan manipulation but cannot output the actions.
 
 ## 2. Locked shared settings
 
@@ -184,18 +205,46 @@ any other action field. Guidance actions are allowed only between chunks and
 must preserve the observed gripper channels. A condition that violates either
 rule is P2, regardless of its adapter name.
 
-### P3 — Retrain VLA on subgoals, then agent-call (appendix)
+### P3 — The LLM is the policy
 
-Segment demos and train on fine-grained instructions, then let the agent invoke
-that VLA. Extra data and compute are reported. Not a fourth column next to
-P0–P2.
+No VLA and no primitive vocabulary. The LLM occupies exactly the slot a VLA
+occupies: it receives an observation and returns an action chunk, and the
+harness cannot tell from the contract which one it is talking to.
 
-`classify_objects_by_language` has no official training set; any P3 number there
-must say whether it is transfer from `classify_objects` or newly labeled data.
+```
+reset(scene) -> None
+act(observation) -> ActionChunk        # a VLA fills this; at P3 the LLM does
+```
 
-Official Mem_0 adapter ships per-segment language for only three Mn tasks:
-`cover_blocks`, `press_by_number`, `imitate_sorting_sequence`. That is not a
-RoboDojo-wide subtask corpus.
+The only thing between the model and the simulator is decoding its tool-call
+arguments into the action dict the websocket already accepts
+(`left_arm_joint_state` 6, `right_arm_joint_state` 6, `left_ee_joint_state` 1,
+`right_ee_joint_state` 1, or the `ee_pose` variant). No IK, no interpolation,
+no `pick`/`place`. If a condition needs one of those to work, it is P2.
+
+**Native control surface.** P3 uses each provider's own API rather than a
+lowest-common-denominator one, because the point is to measure the model as its
+vendor exposes it: Anthropic's `/messages` with thinking blocks and
+`cache_control`, OpenAI's `/responses` with reasoning items, and
+`/chat/completions` for everything else. The action space is a tool schema, so
+emitting an action and calling a tool are the same act for the model.
+
+**Action chunking.** The model returns a sequence of actions executed open-loop,
+the same handoff granularity a VLA chunk has. Chunk length is a reported
+condition, not a fixed constant: a one-action chunk is closed-loop LLM control
+at the simulator's rate, and a 50-action chunk matches Pi_05. Report which was
+used; they are different conditions.
+
+**What P3 does not get.** No GT object names, no layout JSON, no reward-script
+answers — the same observation contract as P0/P1. Privileged-pose variants are
+an upper bound, never the main table.
+
+**Executable boundary.** Every action field sent to the environment must come
+from the model's tool call or from the previous observation's state for the
+channels the call left unspecified. A condition that clamps, retargets, or
+interpolates the model's numbers is P2 wearing a P3 name. Approval that only
+*rejects* an action (safety clamp that aborts rather than edits) stays P3, and
+the rejection must be recorded.
 
 ## 4. First-cut tasks
 
@@ -217,7 +266,9 @@ clear.
 | P1-gaze > P0, full P2 not much higher | Bottleneck is *which object* / approach; VLA can finish contact |
 | P1-gaze ≈ P0, P2 clearly higher | VLA is not a callable skill even when aimed at the right object |
 | P1-text > P1-gaze | The model also needed a shorter prompt, not only gaze |
-| Only P3 rises | Need to change the VLA language-conditional distribution |
+| P3 > P2 | The primitive vocabulary was the ceiling, not the model |
+| P3 ≈ 0 while P2 is high | The LLM can plan manipulation but cannot emit actions |
+| P3 rises only at chunk length 1 | It is closed-loop correction, not open-loop control |
 | All low | Contact / precision; the agent taxonomy does not answer it |
 
 Do not use `push_T` / `insert_key` as the first proof of the agent paradigm.
@@ -234,12 +285,32 @@ Do not use `push_T` / `insert_key` as the first proof of the agent paradigm.
   length; keep original `step_lim`.
 - Isolate eval output from the live G05 sweep on the 8× A800 host.
 - Prefer a separate GPU/process for the detector VLM vs Pi_05 JAX.
+- P3 lives in `policy/Agent_P3/` and holds no VLA, so it needs no
+  `policy_uv_env_path` and no checkpoint. Its cost is API tokens, not GPUs, so
+  it can run alongside a GPU sweep.
 
-## 7. Status
+## 7. Retrain extension (was P3)
+
+Segment demos and train on fine-grained instructions, then let the agent invoke
+that VLA. Extra data and compute are reported. This is not a column on the
+P0–P3 axis: it moves control back into learned weights rather than toward the
+LLM, so it answers a different question and is reported on its own.
+
+`classify_objects_by_language` has no official training set; any number there
+must say whether it is transfer from `classify_objects` or newly labeled data.
+
+Official Mem_0 adapter ships per-segment language for only three Mn tasks:
+`cover_blocks`, `press_by_number`, `imitate_sorting_sequence`. That is not a
+RoboDojo-wide subtask corpus.
+
+## 8. Status
 
 | Item | Status |
 | --- | --- |
 | P0 seed-0 Pi_05 | Done (10.12% Average SR) |
 | P0 G05 / Xiaomi seed-0 | In progress / queued on the official sweep; do not steal GPUs |
 | Shared 2D→3D table map spec | Locked (this note, §3.1) |
-| P1–P3 code | Not started; next build is P1-gaze on `classify_objects_by_language` |
+| P1 code | `policy/Pi_05_Agent_P1_RPent/` running on `arrange_largest_number` |
+| P2 code | Not started |
+| P3 framework | Built (`policy/Agent_P3/`); no eval numbers yet |
+| Retrain extension | Not started |
