@@ -15,6 +15,11 @@ export ROBODOJO_RUN_ID="${run_id}"
 export ROBODOJO_NUM_ENVS=1
 export ROBODOJO_ACTION_TYPE=joint
 export ROBODOJO_ENABLE_METRIC_DEPTH=1
+# Untiled cameras, which the shared sim env turns on by default, publish no
+# metric depth, and every P2 motion target comes from the depth-backed
+# world_xyz map.
+export ROBODOJO_UNTILED_CAMERAS="${ROBODOJO_UNTILED_CAMERAS:-0}"
+export ROBODOJO_PATH_TRACING="${ROBODOJO_PATH_TRACING:-1}"
 export ROBODOJO_POLICY_ENV="${ROBODOJO_POLICY_ENV:-uv}"
 export ROBODOJO_SIM_ENV="${ROBODOJO_SIM_ENV:-${ROBODOJO_ROOT:-${XPL_ROOT}/../RoboDojo-eval}/.venv}"
 export RPENT_TRACE_DIR="${RPENT_TRACE_DIR:-/tmp/xpolicylab-p2/${run_id}}"

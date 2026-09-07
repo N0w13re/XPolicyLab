@@ -1103,6 +1103,17 @@ class RpentPlanner:
 
     def run(self) -> None:
         snapshot = self.primitives.observe()
+        if snapshot.get("rgbd_error"):
+            # Without depth no state is ever recorded, so every geometry tool
+            # fails for the whole episode. Say so once, up front, instead of
+            # leaving a turn budget of identical LookupErrors to read back.
+            print(
+                "[P1-RPent][WARN] no metric depth in the opening snapshot: "
+                f"{snapshot['rgbd_error']}. Geometry tools will fail all "
+                "episode; enable metric depth and unset "
+                "ROBODOJO_UNTILED_CAMERAS.",
+                flush=True,
+            )
         prompt_config = self._prompt_config()
         self._seed_base_guidance(prompt_config)
         self._bind_llm_session()
