@@ -33,6 +33,25 @@ def test_p2_exposes_only_atomic_motion_and_gripper_tools():
     }.isdisjoint(functions)
 
 
+def test_p2_registers_only_tools_the_p1_base_can_dispatch():
+    from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner import (
+        TOOLS_SPEC as P1_TOOLS_SPEC,
+    )
+
+    p1_names = {tool["function"]["name"] for tool in P1_TOOLS_SPEC}
+    # render was retired in the P1 base; keeping it would burn a planner turn
+    # on an "unknown tool" result.
+    assert "render" not in _tool_functions()
+    assert _tool_functions().keys() <= p1_names
+
+
+def test_geometry_step_params_explain_env_state_step():
+    for name in ("view_env_state", "sample_world_xyz", "query_world_map"):
+        step = _tool_functions()[name]["parameters"]["properties"]["step"]
+        assert "env_state_step" in step["description"]
+        assert "env_steps" in step["description"]
+
+
 def test_move_to_schema_requires_explicit_quaternion():
     move_to = _tool_functions()["move_to"]
 
