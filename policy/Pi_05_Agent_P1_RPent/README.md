@@ -137,10 +137,19 @@ On a Merlin GPU devbox, bind the viewer to IPv6 and use one of the instance's
 reserved ports before creating an instance link:
 
 ```bash
+merlin-cli gpu-devbox instance-links list \
+  --json '{"trial_sid":"'"$ARNOLD_TRIAL_ID"'"}'
 ... trace_viewer.py --host :: --port <reserved-port>
 merlin-cli gpu-devbox instance-links create \
   --json '{"trial_sid":"<ARNOLD_TRIAL_ID>","port":<reserved-port>,"is_public":false}'
 ```
+
+The instance exposes a fixed port list, so an arbitrary free port cannot be
+forwarded: binding one serves the viewer only on localhost and no link can be
+created for it. `create` rejects an unopened port and names the open ones in its
+error message. Pick a port from `list` (reusing an existing link's port is
+fastest, after stopping whatever stale viewer holds it) rather than incrementing
+past a busy port.
 
 Only rollouts created after `tool_frame_range` tracing was added can be aligned
 exactly. The trace directory and video directory must come from the same run.
