@@ -524,6 +524,19 @@ _RESULT_KEYS_NOT_FOR_MODEL = frozenset(
 )
 
 
+def text_only_turn_nudge(text: str) -> str:
+    # A turn that tried to call a tool and produced only text lost the call to
+    # invalid JSON, and telling it so is the only way it can fix the syntax.
+    if "tool_call" in text.lower():
+        return (
+            "Your tool call was discarded because its JSON was invalid. Emit "
+            "exactly one tool call with balanced brackets and quotes and "
+            "minimal arguments. The current-camera suffix has the live "
+            "snapshot."
+        )
+    return "You must call a tool. The current-camera suffix has the live snapshot."
+
+
 def model_facing_result(result: Mapping[str, Any]) -> dict[str, Any]:
     return {
         key: value
@@ -1134,12 +1147,7 @@ class RpentPlanner:
                 )
                 if self.context_mode == "history":
                     history.append(assistant)
-                    history.append(
-                        self._user_turn(
-                            "You must call a tool. The current-camera suffix "
-                            "has the live snapshot."
-                        )
-                    )
+                    history.append(self._user_turn(text_only_turn_nudge(text)))
                 else:
                     self._last_tool_memory = {
                         "error": "planner returned text without a tool call",

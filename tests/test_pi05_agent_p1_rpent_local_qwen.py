@@ -3,6 +3,7 @@ import json
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.local_qwen_server import (
     _openai_message,
 )
+from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner import text_only_turn_nudge
 
 
 def test_a_well_formed_tool_call_becomes_an_openai_tool_call():
@@ -54,3 +55,17 @@ def test_one_broken_call_does_not_discard_a_valid_sibling():
     assert [call["function"]["name"] for call in message["tool_calls"]] == [
         "finish"
     ]
+
+
+def test_a_text_only_turn_that_tried_a_tool_call_is_told_the_json_was_invalid():
+    nudge = text_only_turn_nudge(
+        'Discarded unparsable tool_call blocks:\n{"name": "finish"'
+    )
+
+    assert "JSON was invalid" in nudge
+
+
+def test_a_plain_text_turn_is_only_told_to_call_a_tool():
+    nudge = text_only_turn_nudge("I will now pick up the scissors.")
+
+    assert nudge.startswith("You must call a tool.")

@@ -12,6 +12,8 @@ import threading
 from typing import Any
 
 _TOOL_CALL_RE = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.DOTALL)
+_TOOL_CALL_RESAMPLES = 3
+_TOOL_CALL_RESAMPLE_TEMPERATURE = 0.7
 
 
 def _decode_data_url(url: str) -> Any:
@@ -101,6 +103,23 @@ class LocalQwen:
         self.model.eval()
         self.lock = threading.Lock()
 
+    def _generate(
+        self, inputs: Any, *, max_new_tokens: int, temperature: float
+    ) -> str:
+        with self.lock, self.torch.inference_mode():
+            output_ids = self.model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                do_sample=temperature > 0.0,
+                temperature=max(temperature, 1e-5),
+            )
+        generated = output_ids[:, inputs["input_ids"].shape[1] :]
+        return self.processor.batch_decode(
+            generated,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=False,
+        )[0]
+
     def chat(self, payload: dict[str, Any]) -> dict[str, Any]:
         messages = _convert_messages(payload["messages"])
         tools = payload.get("tools")
@@ -112,20 +131,29 @@ class LocalQwen:
             return_dict=True,
             return_tensors="pt",
         ).to(self.model.device)
-        with self.lock, self.torch.inference_mode():
-            output_ids = self.model.generate(
-                **inputs,
-                max_new_tokens=int(payload.get("max_tokens", 512)),
-                do_sample=float(payload.get("temperature", 0.0)) > 0.0,
-                temperature=max(float(payload.get("temperature", 0.0)), 1e-5),
-            )
-        generated = output_ids[:, inputs["input_ids"].shape[1] :]
-        text = self.processor.batch_decode(
-            generated,
-            skip_special_tokens=True,
-            clean_up_tokenization_spaces=False,
-        )[0]
+        max_new_tokens = int(payload.get("max_tokens", 512))
+        temperature = float(payload.get("temperature", 0.0))
+        text = self._generate(
+            inputs, max_new_tokens=max_new_tokens, temperature=temperature
+        )
         message = _openai_message(text)
+        # Greedy decoding repeats a malformed tool call verbatim on every
+        # retry, which burns the whole turn budget on one broken bracket.
+        # Sampling is the only way to get a different candidate.
+        for attempt in range(_TOOL_CALL_RESAMPLES):
+            if message.get("tool_calls") or "<tool_call>" not in text:
+                break
+            print(
+                f"[local-qwen] resampling turn after unparsable tool call "
+                f"(attempt {attempt + 1})",
+                flush=True,
+            )
+            text = self._generate(
+                inputs,
+                max_new_tokens=max_new_tokens,
+                temperature=max(temperature, _TOOL_CALL_RESAMPLE_TEMPERATURE),
+            )
+            message = _openai_message(text)
         return {
             "id": "local-qwen",
             "object": "chat.completion",
