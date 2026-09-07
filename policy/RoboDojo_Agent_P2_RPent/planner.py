@@ -6,11 +6,7 @@ import os
 from typing import Any
 from uuid import uuid4
 
-from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner import (
-    DEFAULT_PLANNER_CONTEXT_MODE,
-    SUPPORTED_PLANNER_CONTEXT_MODES,
-    RpentPlanner,
-)
+from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner import RpentPlanner
 
 from .prompts import SYSTEM_PROMPT, opening_prompt
 from .tools import P2Primitives
@@ -193,30 +189,14 @@ class P2Planner(RpentPlanner):
     """Reuse the planner loop while replacing its prompt and complete tool surface."""
 
     def __init__(self, primitives: P2Primitives, qwen: Any = None) -> None:
-        self.primitives = primitives
-        self.qwen = qwen or primitives.qwen
-        self.max_turns = max(1, int(os.environ.get("RPENT_MAX_TURNS", "120")))
+        # Re-listing the base attributes here would silently drop whatever the
+        # base loop starts tracking next, so only the P2 differences follow.
+        super().__init__(primitives, qwen)
         self.prompt_version = "p2-v3"
-        self.context_mode = os.environ.get(
-            "RPENT_PLANNER_CONTEXT", DEFAULT_PLANNER_CONTEXT_MODE
-        ).strip().lower()
-        if self.context_mode not in SUPPORTED_PLANNER_CONTEXT_MODES:
-            raise ValueError(
-                "RPENT_PLANNER_CONTEXT must be one of: "
-                + ", ".join(SUPPORTED_PLANNER_CONTEXT_MODES)
-            )
-        self.session_id = os.environ.get("RPENT_GPT_SESSION_ID", "").strip() or (
-            f"p2-{self.context_mode}-{uuid4().hex}"
-        )
         self.instruction_contract_enabled = False
         self.tools_spec = TOOLS_SPEC
-        self.successful_mutations: list[dict[str, Any]] = []
-        self.measurements: list[dict[str, Any]] = []
-        self.instruction_contract = None
-        self._last_tool_memory = None
-        self._base_guidance_sources: list[str] = []
-        self._embedded_documents = set()
-        self._guidance_memory: dict[str, dict[str, Any]] = {}
+        if not os.environ.get("RPENT_GPT_SESSION_ID", "").strip():
+            self.session_id = f"p2-{self.context_mode}-{uuid4().hex}"
 
     def _prompt_config(self) -> dict[str, Any]:
         task_env = self.primitives.task_env

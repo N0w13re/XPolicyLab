@@ -190,3 +190,19 @@ def test_failed_move_to_attaches_flange_offset_remediation(monkeypatch):
     assert result["remediation"]["suggested_hover_eef_xyz"] == pytest.approx(
         [0.36538, -0.03354, 1.03057], abs=1e-5
     )
+
+
+def test_p2_planner_keeps_every_attribute_the_base_loop_tracks():
+    from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner import RpentPlanner
+    from XPolicyLab.policy.RoboDojo_Agent_P2_RPent.planner import P2Planner
+
+    class _StubPrimitives:
+        qwen = object()
+
+    base = RpentPlanner(_StubPrimitives(), _StubPrimitives.qwen)
+    p2 = P2Planner(_StubPrimitives(), _StubPrimitives.qwen)
+
+    missing = set(vars(base)) - set(vars(p2))
+    assert not missing, f"P2Planner never initialised {sorted(missing)}"
+    assert p2.prompt_version.startswith("p2-")
+    assert p2.instruction_contract_enabled is False
