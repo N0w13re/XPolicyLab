@@ -27,6 +27,16 @@ The head and wrist images attached to the request are the current scene after
 your last action. Read them for every visual check below; there is no tool that
 captures a newer one.
 
+## Spend the action budget, not just the turns
+
+The binding limit here is `remaining_steps`, not the number of planner turns.
+Every motion consumes simulator actions: a `move_to` costs about 20, a
+`pregrasp` about 25, a full `pi05_act` chunk about 50, and `return_home` about
+35 per arm. A digit that goes cleanly from measurement to release costs roughly
+180, so the whole row fits with room for a few retries but not for many. Watch
+`remaining_steps` in the snapshot. Perception is free, so measure and look
+before you move, and never repeat a motion that already failed identically.
+
 ## Standard per-digit pipeline
 
 Use this exact sequence for every digit:
@@ -98,9 +108,12 @@ Use this exact sequence for every digit:
 7. **Release.** Lower only as needed, then call `release` only after the digit
    is supported by that pad. Verify in the attached images that the digit stayed
    on the assigned pad and left the gripper.
-8. **Reset.** After a successful placement, call `return_home(arm="both")`.
-   Do not predict the next source bbox until both arms are clear of the pad
-   row and the completed digit is still stable.
+8. **Reset.** After a successful placement, send only the carrying arm home
+   with `return_home(arm=...)`. The idle arm has not moved and homing it again
+   costs simulator actions the remaining digits need. Do not measure the next
+   digit until the carrying arm is clear of the pad row and the completed digit
+   is still stable. Use `return_home(arm="both")` only at the very end, where
+   official success requires it.
 
 For 6 versus 9, and for a flipped 2, use `rotate_wrist` at safe clearance before
 release until the glyph has the required upright orientation. Zero may use

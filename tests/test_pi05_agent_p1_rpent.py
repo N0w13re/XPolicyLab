@@ -1983,7 +1983,9 @@ def test_planner_v4_injects_arrange_largest_number_recipe(tmp_path):
     assert "start with `pi05_act` again" in prompt
     assert "retry destination" in prompt
     assert '`return_home(arm=\\"both\\")`' in prompt
-    assert "Do not predict the next source bbox" in prompt
+    assert "send only the carrying arm home" in prompt
+    # remaining_steps, not the turn count, is what runs out first.
+    assert "Spend the action budget" in prompt
     events = [
         json.loads(line)
         for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
