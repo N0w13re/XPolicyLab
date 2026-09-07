@@ -192,7 +192,7 @@ class P2Planner(RpentPlanner):
         # Re-listing the base attributes here would silently drop whatever the
         # base loop starts tracking next, so only the P2 differences follow.
         super().__init__(primitives, qwen)
-        self.prompt_version = "p2-v3"
+        self.prompt_version = "p2-v4"
         self.instruction_contract_enabled = False
         self.tools_spec = TOOLS_SPEC
         if not os.environ.get("RPENT_GPT_SESSION_ID", "").strip():
