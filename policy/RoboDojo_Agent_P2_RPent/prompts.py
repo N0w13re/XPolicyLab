@@ -2,6 +2,25 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+
+RECIPE_DIR = Path(__file__).resolve().parent / "recipes"
+
+
+def task_recipe(task_name: str) -> tuple[Path, str] | None:
+    """Load the P2 recipe for one task, or None when the task has none.
+
+    P2 keeps its own recipes because the P1 ones are written around
+    `pi05_act`, `pregrasp`, and `release`, none of which P2 registers.
+    """
+    if Path(task_name).name != task_name:
+        raise ValueError(f"invalid task name for recipe lookup: {task_name!r}")
+    path = RECIPE_DIR / f"{task_name}.md"
+    if not path.is_file():
+        return None
+    return path, path.read_text(encoding="utf-8")
+
 
 SYSTEM_PROMPT = """You are the low-frequency planner for a RoboDojo robot.
 Complete the task using only the registered perception, Cartesian motion, and

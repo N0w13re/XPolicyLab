@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner import RpentPlanner
 
-from .prompts import SYSTEM_PROMPT, opening_prompt
+from .prompts import SYSTEM_PROMPT, opening_prompt, task_recipe
 from .tools import P2Primitives
 
 
@@ -206,16 +206,23 @@ class P2Planner(RpentPlanner):
             or os.environ.get("EVAL_SEED", "0")
         )
         instruction = self.primitives.snapshot().get("instruction")
-        return {
+        opening = opening_prompt(
+            task_name=task_name,
+            seed=seed,
+            instruction=instruction,
+        )
+        recipe = task_recipe(task_name)
+        config: dict[str, Any] = {
             "prompt_version": self.prompt_version,
             "prompt_source": "XPolicyLab RoboDojo P2 atomic executor",
             "system_prompt": SYSTEM_PROMPT,
-            "opening_prompt": opening_prompt(
-                task_name=task_name,
-                seed=seed,
-                instruction=instruction,
-            ),
         }
+        if recipe is not None:
+            recipe_path, recipe_text = recipe
+            opening = f"{opening.rstrip()}\n\nTASK RECIPE:\n{recipe_text}"
+            config["recipe_paths"] = [str(recipe_path)]
+        config["opening_prompt"] = opening
+        return config
 
     def _dispatch(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if name not in ALLOWED_TOOLS:

@@ -42,6 +42,21 @@ cameras publish no metric depth, so `run_fixed_layout.sh` pins
 `ROBODOJO_UNTILED_CAMERAS=0`. Without it the geometry tools raise for the whole
 episode.
 
+## Task recipes
+
+`recipes/<task>.md` carries the task-level procedure and is appended to the
+opening prompt as `TASK RECIPE:` when the file exists; a task without one runs
+on the generic prompt alone. The recipes are P2's own rather than the P1 set,
+because every P1 recipe is written around `pi05_act`, `pregrasp`, `release`, and
+`rotate_wrist`, none of which P2 registers — a recipe naming them would spend
+the episode asking for tools that do not exist. A test asserts no P2 recipe
+mentions a disabled tool.
+
+The generic prompt only ever covers grasp and lift, so a transport task needs a
+recipe to know the placement order, the destination, and the orientation rule.
+Adding one roughly triples the opening prompt, which matters for a small local
+planner: the whole arrange row is 6 KB against 2.4 KB for `general_pickup`.
+
 ## Install
 
 ```bash

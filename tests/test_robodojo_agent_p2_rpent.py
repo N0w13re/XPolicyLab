@@ -226,3 +226,48 @@ def test_the_opening_prompt_only_waives_placement_for_general_pickup():
     assert "not invent a placement requirement" in pickup
     assert "not invent a placement requirement" not in transport
     assert "descend, open, retreat" in transport
+
+
+def test_a_task_with_a_p2_recipe_gets_it_appended_to_the_opening_prompt():
+    from XPolicyLab.policy.RoboDojo_Agent_P2_RPent.prompts import task_recipe
+
+    loaded = task_recipe("arrange_largest_number")
+
+    assert loaded is not None
+    path, text = loaded
+    assert path.name == "arrange_largest_number.md"
+    assert "form the largest" in text
+
+
+def test_a_task_without_a_p2_recipe_loads_nothing():
+    from XPolicyLab.policy.RoboDojo_Agent_P2_RPent.prompts import task_recipe
+
+    assert task_recipe("general_pickup") is None
+
+
+def test_a_recipe_lookup_cannot_escape_the_recipe_directory():
+    from XPolicyLab.policy.RoboDojo_Agent_P2_RPent.prompts import task_recipe
+
+    with pytest.raises(ValueError):
+        task_recipe("../../etc/passwd")
+
+
+def test_no_p2_recipe_asks_for_a_tool_p2_does_not_register():
+    from XPolicyLab.policy.RoboDojo_Agent_P2_RPent.prompts import RECIPE_DIR
+
+    disabled = {
+        "pi05_act",
+        "pi05_pick",
+        "pregrasp",
+        "release",
+        "rotate_wrist",
+        "hold_position",
+        "render",
+        "read_text_file",
+    }
+    recipes = sorted(RECIPE_DIR.glob("*.md"))
+    assert recipes, "P2 ships no recipes"
+    for recipe in recipes:
+        text = recipe.read_text(encoding="utf-8")
+        named = {tool for tool in disabled if tool in text}
+        assert not named, f"{recipe.name} calls for {sorted(named)}"
