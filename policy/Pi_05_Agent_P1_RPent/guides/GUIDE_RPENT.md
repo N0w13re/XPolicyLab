@@ -56,6 +56,11 @@ necessarily an object center. `view_env_state` only re-reads a state that
 already exists, so use it for an older immutable step, never to obtain the
 current scene.
 
+The `step` argument of these tools is an `env_state_step`: an index over the
+states recorded so far, where `-1` is the latest and is what you almost always
+want. It is not the snapshot's `env_steps`, which counts simulator actions
+and runs far ahead of the recorded states. Passing that count is rejected.
+
 Every request carries the current labeled head and wrist images, captured after
 the last tool, in both planner contexts. Post-motion evidence is therefore
 always present after `pregrasp`, grasp, placement, reset, occlusion, or contact,

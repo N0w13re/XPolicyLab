@@ -115,7 +115,16 @@ TOOLS_SPEC = [
             ),
             "parameters": {
                 "type": "object",
-                "properties": {"step": {"type": "integer", "default": -1}},
+                "properties": {
+                    "step": {
+                        "type": "integer",
+                        "default": -1,
+                        "description": (
+                            "env_state_step of a recorded state, not the "
+                            "snapshot's env_steps count. -1 is the latest."
+                        ),
+                    },
+                },
             },
         },
     },
@@ -216,7 +225,14 @@ TOOLS_SPEC = [
                             "maxItems": 2,
                         },
                     },
-                    "step": {"type": "integer", "default": -1},
+                    "step": {
+                        "type": "integer",
+                        "default": -1,
+                        "description": (
+                            "env_state_step of a recorded state, not the "
+                            "snapshot's env_steps count. -1 is the latest."
+                        ),
+                    },
                     "radius": {"type": "integer", "minimum": 0, "default": 2},
                 },
                 "required": ["view", "pixels"],
@@ -238,7 +254,14 @@ TOOLS_SPEC = [
                         "minItems": 4,
                         "maxItems": 4,
                     },
-                    "step": {"type": "integer", "default": -1},
+                    "step": {
+                        "type": "integer",
+                        "default": -1,
+                        "description": (
+                            "env_state_step of a recorded state, not the "
+                            "snapshot's env_steps count. -1 is the latest."
+                        ),
+                    },
                 },
                 "required": ["view", "bbox"],
             },

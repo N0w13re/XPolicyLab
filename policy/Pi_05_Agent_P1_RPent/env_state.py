@@ -92,6 +92,15 @@ class EnvStateStore:
     def get(self, step: int = -1) -> EnvStateRecord:
         if not self._records:
             raise LookupError("No environment state has been captured.")
+        # The live snapshot counts simulator actions, which run far ahead of the
+        # recorded states, so an out-of-range step is usually that number rather
+        # than an env_state_step.
+        if not -len(self._records) <= step < len(self._records):
+            raise LookupError(
+                f"step={step} is not a recorded environment state. step is an "
+                f"env_state_step, not the simulator action count; recorded "
+                f"states are 0..{len(self._records) - 1} and -1 is the latest."
+            )
         return self._records[step]
 
     def __len__(self) -> int:

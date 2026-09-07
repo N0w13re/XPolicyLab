@@ -279,7 +279,9 @@ class RpentPrimitives:
             "instruction": observation.get("instruction")
             or observation.get("instructions"),
             "env_idx": self.env_idx,
-            "step": step,
+            # Not an env_state_step: naming it "step" invited the planner to
+            # pass it to the geometry tools, which index recorded states.
+            "env_steps": step,
             "remaining_steps": (
                 max(0, int(step_limit) - step)
                 if step is not None and step_limit is not None
@@ -325,7 +327,7 @@ class RpentPrimitives:
         return {
             "episode_end": ended,
             "eval_success": success,
-            "native_steps": self.env_step(),
+            "env_steps": self.env_step(),
         }
 
     def observation_images(

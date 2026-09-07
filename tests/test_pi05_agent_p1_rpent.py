@@ -2430,6 +2430,31 @@ def test_a_close_that_stalls_on_an_object_is_reported_as_holding(tmp_path):
     assert result["closed_on_object"] is True
 
 
+def test_the_snapshot_step_counter_cannot_be_read_as_a_recorded_state(tmp_path):
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+    primitives.observe()
+    snapshot = primitives.snapshot()
+
+    # The simulator action count runs far ahead of the recorded states, so
+    # sharing the name "step" with the geometry tools' index invites the
+    # planner to pass one where the other is meant.
+    assert "step" not in snapshot
+    assert "env_steps" in snapshot
+
+    with pytest.raises(LookupError) as failure:
+        primitives.query_world_map("head", [0, 0, 4, 4], step=78)
+
+    message = str(failure.value)
+    assert "env_state_step" in message
+    assert "not the simulator action count" in message
+    assert "-1 is the latest" in message
+
+
 def test_return_home_reports_only_whether_each_arm_arrived(tmp_path):
     primitives = RpentPrimitives(
         _FakeEnv([_observation()]),
