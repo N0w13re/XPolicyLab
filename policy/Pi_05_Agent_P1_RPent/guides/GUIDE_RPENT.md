@@ -7,8 +7,7 @@ geometry, and compact execution rules needed to apply it.
 ## Registered tools
 
 - Resources: `list_dir`, `read_text_file`
-- Observation: `view_env_state`, `render`, `sample_world_xyz`, `query_world_map`
-  (`render` is registered only in `history` planner context; `observe` drops it)
+- Observation: `view_env_state`, `sample_world_xyz`, `query_world_map`
 - Understanding: `understand_instruction`
 - Control: `hold_position`, `pi05_act`, `pregrasp`, `move_to`, `rotate_wrist`,
   `set_gripper`, `release`, `return_home`
@@ -53,17 +52,14 @@ candidate using those geometry tools at the exact step, view, and resolution.
 World maps use `[row,col]`, contain world-frame `[x,y,z]` metres, and may contain
 NaN. Query the exact step/view/resolution whose RGB supplied the pixels. Sample
 several interior pixels and use robust geometry; an exposed surface point is not
-necessarily an object center. Re-observe after occlusion or physical change:
-`render` captures a fresh state without moving the robot, while
-`view_env_state` only re-reads a state that already exists.
+necessarily an object center. `view_env_state` only re-reads a state that
+already exists, so use it for an older immutable step, never to obtain the
+current scene.
 
-How camera images reach the planner depends on the planner context. In
-`observe`, every request carries the current labeled head and wrist images
-captured after the last tool, so post-motion evidence is always present and
-`render` is not registered. In `history`, images are attached only on the first
-turn and on the turn after `render`, so call `render` explicitly whenever the
-next decision needs post-motion visual evidence, including after `pregrasp`,
-grasp, placement, reset, occlusion, or contact.
+Every request carries the current labeled head and wrist images, captured after
+the last tool, in both planner contexts. Post-motion evidence is therefore
+always present after `pregrasp`, grasp, placement, reset, occlusion, or contact,
+and no capture tool is registered to refresh it.
 
 The arx_x5 observation exposes `left_ee_pose` and `right_ee_pose` (xyz plus
 `[qw,qx,qy,qz]`) and normalized gripper values in `left_ee_joint_state` and

@@ -43,7 +43,6 @@ DEFAULT_PLANNER_CONTEXT_MODE = "history"
 SUPPORTED_PLANNER_CONTEXT_MODES = ("history", "observe")
 _OBSERVE_TOOL_RESULT_CHARS = 8000
 INSTRUCTION_CONTRACT_TOOL = "understand_instruction"
-RENDER_TOOL = "render"
 # pregrasp carries the planner's target choice to Pi_05, which never sees focus,
 # so an episode log without it cannot show whether the active target was staged.
 RECORDED_ACTIONS = frozenset(
@@ -118,17 +117,6 @@ TOOLS_SPEC = [
                 "type": "object",
                 "properties": {"step": {"type": "integer", "default": -1}},
             },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "render",
-            "description": (
-                "Capture a fresh synchronized RGB-D observation as a new "
-                "immutable environment state. This does not move the robot."
-            ),
-            "parameters": {"type": "object", "properties": {}},
         },
     },
     {
@@ -487,18 +475,10 @@ def instruction_contract_enabled() -> bool:
     return raw not in {"0", "false", "off", "no"}
 
 
-def tools_spec_for(
-    *, instruction_contract: bool, context_mode: str = "history"
-) -> list[dict[str, Any]]:
-    dropped: set[str] = set()
-    if not instruction_contract:
-        dropped.add(INSTRUCTION_CONTRACT_TOOL)
-    # observe attaches a freshly captured observation to every request, so a
-    # render call only returns images the planner is already looking at.
-    if context_mode == "observe":
-        dropped.add(RENDER_TOOL)
-    if not dropped:
+def tools_spec_for(*, instruction_contract: bool) -> list[dict[str, Any]]:
+    if instruction_contract:
         return TOOLS_SPEC
+    dropped = {INSTRUCTION_CONTRACT_TOOL}
     return [
         tool
         for tool in TOOLS_SPEC
@@ -563,7 +543,6 @@ class RpentPlanner:
         self.instruction_contract_enabled = instruction_contract_enabled()
         self.tools_spec = tools_spec_for(
             instruction_contract=self.instruction_contract_enabled,
-            context_mode=self.context_mode,
         )
         self.successful_mutations: list[dict[str, Any]] = []
         self.measurements: list[dict[str, Any]] = []
@@ -613,7 +592,6 @@ class RpentPlanner:
                 system_prompt = partial(
                     rpent_v4_system_prompt,
                     instruction_contract=self.instruction_contract_enabled,
-                    context_mode=self.context_mode,
                 )
                 prompt_source = (
                     "XPolicyLab RoboDojo v4: instruction-first phase contract"
@@ -786,18 +764,6 @@ class RpentPlanner:
             if len(self.primitives.env_states) == 0:
                 self.primitives.observe()
             result = self.primitives.view_env_state(int(arguments.get("step", -1)))
-        elif name == RENDER_TOOL:
-            result = (
-                {
-                    "error": (
-                        "render is unavailable in observe mode; the current "
-                        "head and wrist images are already attached to every "
-                        "request"
-                    )
-                }
-                if self.context_mode == "observe"
-                else self.primitives.observe()
-            )
         elif name == INSTRUCTION_CONTRACT_TOOL:
             result = (
                 self._instruction_contract_result(arguments)
@@ -889,19 +855,12 @@ class RpentPlanner:
         self, name: str, result: dict[str, Any]
     ) -> dict[str, Any]:
         del result
-        if name == RENDER_TOOL:
-            return self._user_turn(
-                "Fresh render observation is in the current-camera suffix of "
-                "this request. The preceding structured tool result is "
-                "authoritative. Inspect every labeled camera view before "
-                "choosing exactly one next tool."
-            )
         return self._user_turn(
             f"Post-{name} state. The preceding structured tool result is "
-            "authoritative. No new camera images are stored in the dialogue; "
-            "the current-camera suffix of this request has the latest views. "
-            "Call render when you need a new captured observation before the "
-            "next mutation."
+            "authoritative. No camera images are stored in the dialogue; the "
+            "current-camera suffix of this request always holds head and "
+            "wrist views captured after this tool, so read them there rather "
+            "than asking for a new capture."
         )
 
     def _json_blob(self, value: Any, *, limit: int | None = None) -> str:
@@ -991,16 +950,7 @@ class RpentPlanner:
         self.measurements.append(entry)
 
     def _observation_suffix(self, *, include_memory: bool) -> dict[str, Any]:
-        last_tool = None if self._last_tool_memory is None else self._last_tool_memory.get("tool")
-        attach_live_images = (
-            include_memory or last_tool is None or last_tool == RENDER_TOOL
-        )
-        if attach_live_images and not include_memory:
-            observation = self.primitives._obs()
-        else:
-            observation = (
-                self.primitives._last_observation or self.primitives._obs()
-            )
+        observation = self.primitives._obs()
         snapshot = self.primitives.snapshot(observation)
         parts: list[str] = []
         if include_memory:
@@ -1059,15 +1009,15 @@ class RpentPlanner:
                 )
         else:
             parts.append(
-                "Current cameras are attached only in this suffix. Earlier "
-                "dialogue messages are text-only so the prompt prefix stays "
-                "stable for cache hits."
+                "The head and wrist images below were captured after your "
+                "last tool and are the current scene. They are attached only "
+                "in this suffix; earlier dialogue messages are text-only so "
+                "the prompt prefix stays stable for cache hits."
             )
         parts.append("Live RoboDojo snapshot:\n" + self._json_blob(snapshot))
         content: list[dict[str, Any]] = [{"type": "text", "text": "\n\n".join(parts)}]
         try:
-            if attach_live_images:
-                content.extend(self.primitives.image_parts(observation))
+            content.extend(self.primitives.image_parts(observation))
         except Exception as exc:
             content.append(
                 {

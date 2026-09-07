@@ -35,7 +35,6 @@ not know about categories, baskets, or benchmark rewards.
 The planner calls exactly one structured tool per turn:
 
 - `view_env_state`: inspect one immutable RGB-D state
-- `render`: capture a fresh RGB-D state without moving the robot
 - `understand_instruction`: create or update the v4 phase contract before motion
 - `hold_position`: preserve both policy arms and grippers while advancing the
   simulator for a pending external event
@@ -61,10 +60,11 @@ judges task evidence from fresh images. In v4 the runtime additionally blocks
 motion until an instruction contract exists, while prerequisites are pending,
 or when a tool is not allowed by the active phase.
 
-Every tool result is returned as structured text, but new camera images are
-attached to the planner only after an explicit `render` call. The persistent
-trace still records state JSON and JPEG observations for every tool under
-`RPENT_TRACE_DIR`; trace capture is separate from planner image input.
+Every tool result is returned as structured text, and every request also
+carries head and wrist JPEGs captured after the last tool, so the planner never
+has to spend a turn asking for a picture. The persistent trace separately
+records state JSON and JPEG observations for every tool under
+`RPENT_TRACE_DIR`; trace capture is independent of planner image input.
 
 Planner prompts are explicitly versioned:
 
@@ -233,21 +233,21 @@ export RPENT_PLANNER_CONTEXT=observe   # no multi-turn history; current obs only
 
 `history` keeps the original assistant payload (including
 `tool_calls_content` when present) and never rewrites earlier messages.
-Camera JPEGs are attached only as a per-request suffix so the text prefix can
-hit prompt cache. `observe` does not replay assistant/tool-call transcripts.
-It keeps the guide, recipe, and memory index in the stable opening prompt,
-retains additional `list_dir` / `read_text_file` results as persistent
-guidance, and sends the current snapshot/images, instruction contract,
-successful mutations, and last tool result each turn. The request explicitly
-marks loaded guidance as already read and treats the live snapshot as current,
-so the planner should not repeatedly read the guide or call `view_env_state`
-just to recover the latest state.
+`observe` does not replay assistant/tool-call transcripts. It keeps the guide,
+recipe, and memory index in the stable opening prompt, retains additional
+`list_dir` / `read_text_file` results as persistent guidance, and sends the
+instruction contract, successful mutations, and last tool result each turn. The
+request explicitly marks loaded guidance as already read and treats the live
+snapshot as current, so the planner should not repeatedly read the guide or
+call `view_env_state` just to recover the latest state.
 
-`observe` also drops `render` from the tool schema. That tool exists to attach
-a fresh camera set to the next request, which `observe` already does on every
-turn, so keeping it registered only spends turns re-fetching images the planner
-is looking at. `history` still registers it, because there images arrive only
-on the first turn and on the turn after a `render`.
+Both contexts capture a fresh observation for every request and attach its
+head and wrist JPEGs, plus the live snapshot, as a per-request suffix. Keeping
+the images out of the stored dialogue lets the text prefix stay stable for
+prompt cache while the planner still sees the post-motion scene on every turn.
+Because of that, `render` is not registered in either context: it existed to
+attach a camera set to the next request, so calling it would only spend a turn
+re-fetching images the planner is already looking at.
 
 Persistent guidance never restores a document the opening prompt already
 quotes. A `read_text_file` that resolves to the embedded guide, recipe, or

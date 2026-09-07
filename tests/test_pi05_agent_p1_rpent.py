@@ -254,9 +254,11 @@ class _ToolSequenceQwen:
     def __init__(self, calls):
         self.calls = list(calls)
         self.index = 0
+        self.chats = []
 
     def chat(self, messages, **kwargs):
-        del messages, kwargs
+        del kwargs
+        self.chats.append(messages)
         name, arguments = self.calls[min(self.index, len(self.calls) - 1)]
         self.index += 1
         return {
@@ -980,7 +982,7 @@ def test_guide_rpent_preserves_upstream_operational_sections():
     assert "No tool judges visual evidence for you" in guide
     assert "`understand_instruction` before any motion" in guide
     assert "`hold_position` in short intervals" in guide
-    assert "`render` captures a fresh state without moving the robot" in guide
+    assert "no capture tool is registered to refresh it" in guide
     assert "return_home" in guide
     assert "left_ee_pose" in guide
     assert "RoboTwin" not in guide
@@ -993,19 +995,21 @@ def test_ground_is_not_a_registered_planner_tool():
     assert "ground" not in names
 
 
-def test_render_is_registered_and_takes_no_arguments():
-    render = next(
-        tool for tool in TOOLS_SPEC if tool["function"]["name"] == "render"
-    )
+def test_render_is_not_a_registered_planner_tool():
+    names = [tool["function"]["name"] for tool in TOOLS_SPEC]
 
-    assert render["function"]["parameters"]["properties"] == {}
-    assert "required" not in render["function"]["parameters"]
+    assert "render" not in names
 
 
-def test_render_captures_a_fresh_state_without_moving_the_robot(tmp_path):
+def test_every_request_carries_a_fresh_observation_without_moving_the_robot(
+    tmp_path,
+):
     env = _FakeEnv([_observation(), _observation(left_z=0.95)])
     qwen = _ToolSequenceQwen(
-        [("render", {}), ("finish", {"status": "test", "summary": "done"})]
+        [
+            ("view_env_state", {"step": -1}),
+            ("finish", {"status": "test", "summary": "done"}),
+        ]
     )
     primitives = RpentPrimitives(
         env,
@@ -1013,22 +1017,22 @@ def test_render_captures_a_fresh_state_without_moving_the_robot(tmp_path):
         qwen,
         trace=EpisodeTrace(tmp_path),
     )
-    before = len(primitives.env_states)
 
     RpentPlanner(primitives, qwen).run()
 
     assert not env.actions
-    events = [
-        json.loads(line)
-        for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
-    ]
-    render = next(
-        event
-        for event in events
-        if event["type"] == "tool_result" and event["tool"] == "render"
-    )
-    assert render["result"]["env_state_step"] >= before
-    assert set(render["result"]["views"]) == {"head", "left_wrist", "right_wrist"}
+    assert len(qwen.chats) == 2
+    for messages in qwen.chats:
+        labels = [
+            part["text"]
+            for part in messages[-1]["content"]
+            if part["type"] == "text" and part["text"].startswith("[")
+        ]
+        assert labels == [
+            "[head camera]",
+            "[left_wrist camera]",
+            "[right_wrist camera]",
+        ]
 
 
 def test_no_detector_primitive_remains_on_the_runtime(tmp_path):
@@ -1276,7 +1280,10 @@ def test_planner_frame_range_excludes_automatic_post_tool_observation(tmp_path):
         "right_wrist": {"start": 2, "end": 3},
     }
     assert ranges[1]["tool"] == "finish"
-    assert ranges[1]["cameras"]["head"] == {"start": 3, "end": 5}
+    assert ranges[1]["cameras"]["head"] == {"start": 4, "end": 6}
+    # The observation captured for the next request falls in the gap between
+    # the two ranges rather than inside either tool's frames.
+    assert ranges[1]["cameras"]["head"]["start"] > ranges[0]["cameras"]["head"]["end"]
 
 
 def test_trace_viewer_manifest_merges_tool_calls_and_extends_video_edges(tmp_path):
@@ -1802,7 +1809,7 @@ def test_trace_viewer_supports_per_tool_depth_preview():
     assert "/artifact?path=" in HTML
 
 
-def test_post_tool_turn_omits_images_until_render(tmp_path):
+def test_post_tool_turn_points_at_the_camera_suffix_instead_of_a_capture(tmp_path):
     env = _FakeEnv([_observation()])
     primitives = RpentPrimitives(
         env,
@@ -1816,25 +1823,9 @@ def test_post_tool_turn_omits_images_until_render(tmp_path):
 
     assert message["role"] == "user"
     assert isinstance(message["content"], str)
-    assert "No new camera images are stored in the dialogue" in message["content"]
-    assert "Call render" in message["content"]
-
-
-def test_post_render_turn_is_text_only_for_stable_prefix(tmp_path):
-    env = _FakeEnv([_observation()])
-    primitives = RpentPrimitives(
-        env,
-        _FakeModelClient(),
-        _UnusedQwen(),
-        trace=EpisodeTrace(tmp_path),
-    )
-    planner = RpentPlanner(primitives, _UnusedQwen())
-
-    message = planner._post_tool_turn("render", {"env_state_step": 1})
-
-    assert message["role"] == "user"
-    assert isinstance(message["content"], str)
-    assert "current-camera suffix" in message["content"]
+    assert "No camera images are stored in the dialogue" in message["content"]
+    assert "captured after this tool" in message["content"]
+    assert "render" not in message["content"]
 
 
 def test_request_attaches_images_only_in_camera_suffix(tmp_path):
@@ -1849,7 +1840,7 @@ def test_request_attaches_images_only_in_camera_suffix(tmp_path):
     history = [
         {"role": "system", "content": "sys"},
         planner._user_turn("opening"),
-        planner._post_tool_turn("render", {}),
+        planner._post_tool_turn("move_to", {}),
     ]
 
     request = planner._messages_for_request(history)
@@ -2185,7 +2176,7 @@ def test_planner_rejects_unknown_context_mode(tmp_path, monkeypatch):
         raise AssertionError("unknown context mode was accepted")
 
 
-class _RenderThenFinishQwen:
+class _ViewThenFinishQwen:
     def __init__(self):
         self.chats = []
         self.calls = 0
@@ -2194,10 +2185,10 @@ class _RenderThenFinishQwen:
         del kwargs
         self.chats.append(messages)
         self.calls += 1
-        name = "render" if self.calls == 1 else "finish"
+        name = "view_env_state" if self.calls == 1 else "finish"
         arguments = (
-            {}
-            if name == "render"
+            {"step": -1}
+            if name == "view_env_state"
             else {"status": "test", "summary": "second turn"}
         )
         return {
@@ -2229,7 +2220,7 @@ class _RenderThenFinishQwen:
 def test_history_mode_keeps_original_assistant_and_grows_prefix(tmp_path, monkeypatch):
     monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "history")
     env = _FakeEnv([_observation(), _observation()])
-    qwen = _RenderThenFinishQwen()
+    qwen = _ViewThenFinishQwen()
     primitives = RpentPrimitives(
         env,
         _FakeModelClient(),
@@ -2248,8 +2239,8 @@ def test_history_mode_keeps_original_assistant_and_grows_prefix(tmp_path, monkey
     assistant = next(
         message for message in second if message.get("role") == "assistant"
     )
-    assert assistant["tool_calls_content"] == "raw-render"
-    assert assistant["tool_calls"][0]["function"]["name"] == "render"
+    assert assistant["tool_calls_content"] == "raw-view_env_state"
+    assert assistant["tool_calls"][0]["function"]["name"] == "view_env_state"
     assert any(message.get("role") == "tool" for message in second)
     history_text = [
         message
@@ -2264,7 +2255,7 @@ def test_history_mode_keeps_original_assistant_and_grows_prefix(tmp_path, monkey
 def test_observe_mode_does_not_replay_dialogue_history(tmp_path, monkeypatch):
     monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "observe")
     env = _FakeEnv([_observation(), _observation()])
-    qwen = _RenderThenFinishQwen()
+    qwen = _ViewThenFinishQwen()
     primitives = RpentPrimitives(
         env,
         _FakeModelClient(),
@@ -2285,7 +2276,9 @@ def test_observe_mode_does_not_replay_dialogue_history(tmp_path, monkeypatch):
     assert "Do not call list_dir or read_text_file" in suffix
     assert "Do not call view_env_state merely" in suffix
     assert "LAST TOOL RESULT" in suffix
-    assert '"tool": "render"' in suffix or '"tool":"render"' in suffix
+    assert (
+        '"tool": "view_env_state"' in suffix or '"tool":"view_env_state"' in suffix
+    )
     events = [
         json.loads(line)
         for line in (tmp_path / "transcript.jsonl").read_text().splitlines()
@@ -2355,7 +2348,9 @@ def test_tool_results_sent_to_the_model_drop_trace_and_constant_fields(
     )
     planner = RpentPlanner(primitives, _UnusedQwen())
 
-    recorded = primitives.record_tool_result("render", {}, primitives.observe())
+    recorded = primitives.record_tool_result(
+        "view_env_state", {"step": -1}, primitives.observe()
+    )
     assert "artifacts" in recorded and "trace_step" in recorded
     assert "instruction" in recorded
 
@@ -2366,8 +2361,8 @@ def test_tool_results_sent_to_the_model_drop_trace_and_constant_fields(
     assert "env_state_step" in trimmed
 
     planner._last_tool_memory = {
-        "tool": "render",
-        "arguments": {},
+        "tool": "view_env_state",
+        "arguments": {"step": -1},
         "result": model_facing_result(recorded),
     }
     config = planner._prompt_config()
@@ -2399,10 +2394,11 @@ def test_return_home_reports_only_whether_each_arm_arrived(tmp_path):
         }
 
 
-def test_observe_mode_drops_render_and_recipe_requires_a_lift(
-    tmp_path, monkeypatch
+@pytest.mark.parametrize("context_mode", ["observe", "history"])
+def test_no_context_registers_render_and_recipe_requires_a_lift(
+    tmp_path, monkeypatch, context_mode
 ):
-    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "observe")
+    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", context_mode)
     monkeypatch.setenv("RPENT_PLANNER_PROMPT_VERSION", "v4")
     monkeypatch.setenv("RPENT_INSTRUCTION_CONTRACT", "0")
     monkeypatch.setenv("RPENT_TASK_NAME", "arrange_largest_number")
@@ -2417,8 +2413,7 @@ def test_observe_mode_drops_render_and_recipe_requires_a_lift(
 
     assert "render" not in names
     assert "query_world_map" in names
-    blocked = planner._dispatch("render", {})
-    assert "unavailable in observe mode" in blocked["error"]
+    assert "unknown tool render" in planner._dispatch("render", {})["error"]
 
     config = planner._prompt_config()
     recipe = config["recipe"]
@@ -2427,43 +2422,42 @@ def test_observe_mode_drops_render_and_recipe_requires_a_lift(
     assert "`render`" not in recipe
 
 
-def test_history_mode_keeps_render_available(tmp_path, monkeypatch):
-    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "history")
+@pytest.mark.parametrize("context_mode", ["observe", "history"])
+def test_every_context_attaches_current_images_to_each_request(
+    tmp_path, monkeypatch, context_mode
+):
+    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", context_mode)
+    env = _FakeEnv([_observation(), _observation()])
+    qwen = _ViewThenFinishQwen()
     primitives = RpentPrimitives(
-        _FakeEnv([_observation()]),
+        env,
         _FakeModelClient(),
-        _UnusedQwen(),
+        qwen,
         trace=EpisodeTrace(tmp_path),
     )
-    planner = RpentPlanner(primitives, _UnusedQwen())
-    names = {(tool.get("function") or {}).get("name") for tool in planner.tools_spec}
 
-    assert "render" in names
-    assert "error" not in planner._dispatch("render", {})
+    RpentPlanner(primitives, qwen).run()
+
+    assert len(qwen.chats) == 2
+    for messages in qwen.chats:
+        images = [
+            part
+            for part in messages[-1]["content"]
+            if part["type"] == "image_url"
+        ]
+        assert len(images) == 3
 
 
-def test_v4_inline_prompt_states_image_delivery_for_its_context(monkeypatch):
-    monkeypatch.setenv("RPENT_PLANNER_PROMPT_VERSION", "v4")
-    monkeypatch.setenv("RPENT_INSTRUCTION_CONTRACT", "0")
-
-    observe = rpent_v4_system_prompt(
+def test_v4_inline_prompt_states_that_images_arrive_with_every_request():
+    prompt = rpent_v4_system_prompt(
         task_name="arrange_largest_number",
         instruction_contract=False,
-        context_mode="observe",
-    )
-    history = rpent_v4_system_prompt(
-        task_name="arrange_largest_number",
-        instruction_contract=False,
-        context_mode="history",
     )
 
-    assert "no capture tool exists" in observe
-    assert "render" not in observe
-    assert "call render when the next decision needs" in history
-    assert "images are not attached automatically" in history
-    for prompt in (observe, history):
-        assert "{{" not in prompt
-        assert "grasp analytically" in prompt or "analytic" in prompt
+    assert "no capture tool exists" in prompt
+    assert "render" not in prompt
+    assert "{{" not in prompt
+    assert "analytically instead of calling pi05_act again" in prompt
 
 
 def test_observe_mode_does_not_restore_documents_the_prompt_already_quotes(
