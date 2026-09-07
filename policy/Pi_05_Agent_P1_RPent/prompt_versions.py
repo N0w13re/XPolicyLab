@@ -946,13 +946,23 @@ confirm the target on a fresh wrist image before pi05_act. Do not pregrasp when
 the instruction requires waiting, preserving pose, immediate learned
 coordination, or a non-grasp interaction.
 
-Pi_05 never receives focus and selects its own target, so a learned grasp can
-leave the staged object and approach a different one. Staging the same object a
-second time means the first grasp did not take. When that happens, grasp
-analytically instead of calling pi05_act again: with the gripper open, move_to
-the staged arm down to the object z plus the TCP offset, close with
-set_gripper, then lift. An analytic grasp cannot change target. This choice
-belongs to the current object only; begin the next object with pi05_act again.
+A grasp needs the whole native chunk: approach, descent, closure, and lift are
+spread across all 50 actions, so a short prefix stops the arm mid-approach and
+can only report a failure it was never given the chance to avoid. Use the full
+execution_horizon whenever the active phase is a grasp, and give Pi_05 several
+full chunks, re-measuring and re-staging between them, before concluding it
+cannot grasp that object. One chunk without candidate_evidence is not failure;
+the object still sitting at its source after several chunks is.
+
+Only then grasp analytically: with the gripper open, move_to the arm down onto
+the object, close with set_gripper, then lift. An analytic grasp cannot change
+target, but it also cannot choose a good contact point for you, so aim at the
+widest part of the object rather than at the centre of a bounding box. Closure
+alone proves nothing; the lift is the test. If the object stays behind, the
+contact point was too thin, so move to a different one or turn the wrist to
+close across the object instead of along it. Repeating the same point twice
+changes nothing. This choice belongs to the current object only; begin the next
+object with pi05_act again.
 
 Use move_to only for measured free-space motion when the active phase permits
 it. Before transporting an object, verify that it left its source and moves

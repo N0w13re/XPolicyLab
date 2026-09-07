@@ -1972,10 +1972,14 @@ def test_planner_v4_injects_arrange_largest_number_recipe(tmp_path):
     prompt = json.dumps(qwen.messages, ensure_ascii=False)
     assert "TASK RECIPE:" in prompt
     assert "look-alike digits" in prompt
-    assert "Predict source bbox" in prompt
+    assert "Measure the glyph" in prompt
     assert "Predict destination bbox" in prompt
-    assert "source bbox -> `pregrasp`" in prompt
-    assert "grasp analytically" in prompt
+    # A grasp spans the whole native chunk, and one truncated chunk is not
+    # evidence that the learned policy cannot grasp the digit.
+    assert "`execution_horizon` 50" in prompt
+    assert "three full-chunk attempts" in prompt
+    assert "Only then switch to the analytic grasp" in prompt
+    assert "thickest visible part of the stroke" in prompt
     assert "start with `pi05_act` again" in prompt
     assert "retry destination" in prompt
     assert '`return_home(arm=\\"both\\")`' in prompt
@@ -2538,7 +2542,7 @@ def test_v4_inline_prompt_states_that_images_arrive_with_every_request():
     assert "no capture tool exists" in prompt
     assert "render" not in prompt
     assert "{{" not in prompt
-    assert "analytically instead of calling pi05_act again" in prompt
+    assert "Only then grasp analytically" in prompt
 
 
 def test_observe_mode_does_not_restore_documents_the_prompt_already_quotes(

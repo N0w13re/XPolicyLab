@@ -31,33 +31,52 @@ captures a newer one.
 
 Use this exact sequence for every digit:
 
-1. **Predict source bbox.** From the attached head image, predict one tight
-   `[row0,col0,row1,col1]` bbox around the next digit only. Call
-   `query_world_map` on that bbox and use `median_xyz` as `object_xyz`. Do not
-   scatter `sample_world_xyz` points and do not mix neighbouring digits in one
-   bbox. A wide `min_xyz`/`max_xyz` z range means the bbox caught an arm or a
-   neighbour; tighten the bbox and query again.
+1. **Measure the glyph, not its bounding box.** From the attached head image,
+   predict one tight `[row0,col0,row1,col1]` bbox around the next digit only and
+   call `query_world_map` on it. A digit is a thin glyph lying on the table, so
+   most pixels inside any bbox around it are table: `median_xyz` describes the
+   table, not the digit, and the thinner the glyph the worse it is. Use the
+   bbox only for `max_xyz[2]`, the highest surface in it, which is the top face
+   of the glyph. Take the grasp x and y from `sample_world_xyz` on two or three
+   pixels you place on the thickest visible part of the stroke, never on the
+   bbox centre, which for a `7`, `1`, or `4` falls between strokes onto bare
+   table. Do not mix neighbouring digits in one bbox. A `min_xyz`/`max_xyz` z
+   range much wider than a digit's thickness means the bbox caught an arm or a
+   neighbour; tighten it and query again.
 2. **Pregrasp.** Call `pregrasp` for that measured `object_xyz`, choosing the
    reachable arm and `clearance_m` near 0.12. Verify in the attached wrist
    image that the intended digit is centred under the gripper.
-3. **Grasp.** Start with one short `pi05_act` (`execution_horizon` 12-20,
-   `max_chunks` 1) for descent and closure. Its `focus` names only the current
-   digit and says not to disturb completed pads. Verify in the attached images
-   that the digit left its source and moves with the TCP.
+3. **Grasp with Pi_05, at full chunk length.** Call `pi05_act` with
+   `execution_horizon` 50 and `max_chunks` 1. Fifty actions is the model's
+   native chunk and one grasp needs all of it: approach, descend, close, and
+   lift are spread across the whole chunk, so a 12-20 action prefix stops the
+   arm mid-approach and can only ever report a failure. Its `focus` names only
+   the current digit and says not to disturb completed pads. Verify in the
+   attached images that the digit left its source and moves with the TCP.
 
-   Pi_05 never sees `focus` and picks its own target, so it may walk away from
-   the staged digit and approach a different one. If you find yourself staging
-   the same digit a second time, that first grasp did not take: switch to the
-   analytic grasp for this digit instead of calling `pi05_act` again. Keep the
-   gripper open and `move_to` the staged arm to the digit's x and y. The
-   pregrasp `target_xyz` minus its `clearance_m` puts the fingertips level with
-   the digit's top face, which closes on air, so descend roughly 0.015 m below
-   that so the fingers straddle the glyph. Then call `set_gripper` to close and
-   read `closed_on_object` in its result: `true` means the fingers stalled on
-   the digit, `false` means they shut on nothing and the descent was too high.
-   Only continue to step 4 once it is `true`. The analytic grasp cannot change
-   target, so it is the reliable option once the learned one has drifted. This
-   choice applies only to the current digit; for the next digit,
+   Give Pi_05 three full-chunk attempts on a digit before concluding it cannot
+   grasp it. Between attempts, re-measure the digit and call `pregrasp` again,
+   because it will have drifted. `candidate_evidence: false` on one chunk is
+   not failure by itself; what counts as failure is the digit still sitting at
+   its source after three chunks.
+
+   Only then switch to the analytic grasp for this digit. Keep the gripper open
+   and `move_to` the staged arm to the stroke x and y from step 1, with z about
+   0.015 m below the measured `max_xyz[2]` so the fingers straddle the glyph
+   rather than resting on its top face. Call `set_gripper` to close and read
+   `closed_on_object`: `false` means they shut on nothing and the descent was
+   too high or the x and y missed the stroke. `true` means they stalled on
+   something, which is necessary but not sufficient — a thin stroke pinched
+   near its edge slips out the moment you lift. Continue to step 4 and treat
+   the lift as the real test.
+
+   If the lift leaves the digit behind, do not retry the same point: the grasp
+   was on too thin a part of the glyph. Re-measure and pick a visibly wider
+   part of the stroke, or approach it from the perpendicular direction with
+   `rotate_wrist` so the fingers close across the stroke instead of along it.
+   Two failures at one point mean the point is wrong, not the depth.
+
+   This whole choice applies only to the current digit; for the next digit,
    start with `pi05_act` again.
 4. **Lift clear before transporting.** A digit that was just grasped is still
    at table height, and a pad is a raised disc, so any sideways motion at that
@@ -97,9 +116,9 @@ gate:
   that region has moved.
 - If `pregrasp` fails or the wrist shows the wrong digit, retreat or
   `return_home` that arm, predict the source bbox again, and retry `pregrasp`.
-- If `pi05_act` misses or the digit is no longer held, rebind the digit at its
-  new location and repeat source bbox -> `pregrasp`, but grasp analytically
-  this time rather than calling `pi05_act` on the same digit twice. Never
+- If `pi05_act` misses, rebind the digit at its new location and repeat
+  measure -> `pregrasp` -> full-chunk `pi05_act`. Three chunks are allowed on
+  one digit before the analytic grasp; do not escalate on the first one. Never
   transport based only on a closed gripper.
 - If the digit is lost during transport, it was almost certainly dragged rather
   than lifted. Treat its dropped pose as a new source, restart the per-digit
