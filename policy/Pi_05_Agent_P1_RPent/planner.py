@@ -6,7 +6,7 @@ import json
 import os
 from functools import partial
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 from uuid import uuid4
 
 from .prompt_versions import (
@@ -506,6 +506,23 @@ def tools_spec_for(
     ]
 
 
+# The viewer needs the artifact paths and the run loop needs trace_step, but
+# neither means anything to the planner, and the live snapshot repeats the
+# episode instruction on every request. None of it has to ride along inside
+# each tool result.
+_RESULT_KEYS_NOT_FOR_MODEL = frozenset(
+    {"artifacts", "trace_step", "instruction", "model_instruction"}
+)
+
+
+def model_facing_result(result: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        key: value
+        for key, value in result.items()
+        if key not in _RESULT_KEYS_NOT_FOR_MODEL
+    }
+
+
 def _tool_message(tool_call_id: str, name: str, result: dict[str, Any]) -> dict[str, Any]:
     return {
         "role": "tool",
@@ -935,15 +952,10 @@ class RpentPlanner:
         # would repeat the whole document in every later request.
         if self._is_embedded_document(name, arguments):
             return
-        clean_result = {
-            key: value
-            for key, value in result.items()
-            if key not in {"trace_step", "artifacts"}
-        }
         self._guidance_memory[self._guidance_key(name, arguments)] = {
             "tool": name,
             "arguments": arguments,
-            "result": clean_result,
+            "result": model_facing_result(result),
         }
 
     def _remember_measurement(
@@ -1196,13 +1208,17 @@ class RpentPlanner:
             self._last_tool_memory = {
                 "tool": name,
                 "arguments": arguments,
-                "result": tool_result,
+                "result": model_facing_result(tool_result),
             }
             self._remember_guidance(str(name), arguments, tool_result)
             self._remember_measurement(str(name), arguments, tool_result)
             if self.context_mode == "history":
                 history.append(assistant)
-                history.append(_tool_message(call_id, str(name), tool_result))
+                history.append(
+                    _tool_message(
+                        call_id, str(name), model_facing_result(tool_result)
+                    )
+                )
                 for skipped in tool_calls[1:]:
                     skipped_fn = skipped.get("function") or {}
                     skipped_name = skipped_fn.get("name") or skipped.get("name") or "unknown"

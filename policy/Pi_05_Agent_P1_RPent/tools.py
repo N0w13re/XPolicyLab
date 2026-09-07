@@ -1009,9 +1009,6 @@ class RpentPrimitives:
         )
         return {
             "focus": focus,
-            "model_instruction": str(
-                start.get("instruction") or start.get("instructions") or ""
-            ),
             "chunks_used": chunks_used,
             "execution_horizon": execution_horizon,
             "actions_executed": actions_executed,
@@ -1163,11 +1160,17 @@ class RpentPrimitives:
                 raise ValueError("arm must be 'left', 'right', or 'both'")
             if self.task_env.is_episode_end():
                 break
-            results[selected] = self.move_to(
+            moved = self.move_to(
                 self.reset_poses[selected][:3].tolist(),
                 selected,
                 quat=self.reset_poses[selected][3:].tolist(),
             )
+            # Going home has one question: did the arm get there. The full
+            # per-arm planning receipt answers nothing the next turn can use.
+            results[selected] = {
+                key: moved.get(key)
+                for key in ("success", "reached", "stop_reason", "final_error_m")
+            }
         return {"arms": results, **self.snapshot()}
 
     def finish(self, status: str, summary: str) -> dict[str, Any]:

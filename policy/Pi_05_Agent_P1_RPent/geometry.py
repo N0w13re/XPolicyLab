@@ -108,8 +108,6 @@ def sample_world_xyz(
 def query_world_map(
     world_xyz: Any,
     bbox_rc: Sequence[int],
-    *,
-    max_samples: int = 16,
 ) -> dict[str, Any]:
     """Summarize valid XYZ values inside a half-open pixel bbox."""
     world = np.asarray(world_xyz, dtype=np.float64)
@@ -132,17 +130,15 @@ def query_world_map(
             "min_xyz": None,
             "max_xyz": None,
             "median_xyz": None,
-            "samples": [],
         }
-    count = min(max(1, int(max_samples)), len(valid))
-    indices = np.linspace(0, len(valid) - 1, count).astype(int)
+    # min/max already express how much the region spreads, which is the only
+    # thing the raw point list was ever read for.
     return {
         "bbox_rc": [row0, col0, row1, col1],
         "valid_samples": int(len(valid)),
         "min_xyz": np.min(valid, axis=0).astype(np.float32).tolist(),
         "max_xyz": np.max(valid, axis=0).astype(np.float32).tolist(),
         "median_xyz": np.median(valid, axis=0).astype(np.float32).tolist(),
-        "samples": valid[indices].astype(np.float32).tolist(),
     }
 
 

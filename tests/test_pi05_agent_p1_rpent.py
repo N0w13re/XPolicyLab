@@ -12,6 +12,7 @@ from XPolicyLab.policy.Pi_05_Agent_P1_RPent.planner import (
     SYSTEM_PROMPT,
     TOOLS_SPEC,
     RpentPlanner,
+    model_facing_result,
 )
 from XPolicyLab.policy.Pi_05_Agent_P1_RPent.prompt_versions import (
     RPENT_V0_UPSTREAM_COMMIT,
@@ -1086,6 +1087,8 @@ def test_world_map_sampling_ignores_invalid_depth():
     np.testing.assert_allclose(sampled["xyz"], [0.2, 0.3, 0.4])
     np.testing.assert_allclose(summary["median_xyz"], [0.2, 0.3, 0.4])
     assert summary["valid_samples"] == 2
+    # min/max carry the spread; the raw point list only inflated the prompt.
+    assert "samples" not in summary
 
 
 def test_curobo_plan_failure_executes_no_action(tmp_path):
@@ -2336,6 +2339,62 @@ def test_observe_mode_retains_guidance_but_not_tool_transcript(
     assert "trace_step" not in suffix
     assert "step_003/head.jpg" not in suffix
     assert '"tool": "view_env_state"' in suffix
+
+
+def test_tool_results_sent_to_the_model_drop_trace_and_constant_fields(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("RPENT_PLANNER_CONTEXT", "observe")
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+    planner = RpentPlanner(primitives, _UnusedQwen())
+
+    recorded = primitives.record_tool_result("render", {}, primitives.observe())
+    assert "artifacts" in recorded and "trace_step" in recorded
+    assert "instruction" in recorded
+
+    trimmed = model_facing_result(recorded)
+    assert "artifacts" not in trimmed
+    assert "trace_step" not in trimmed
+    assert "instruction" not in trimmed
+    assert "env_state_step" in trimmed
+
+    planner._last_tool_memory = {
+        "tool": "render",
+        "arguments": {},
+        "result": model_facing_result(recorded),
+    }
+    config = planner._prompt_config()
+    history = [
+        {"role": "system", "content": config["system_prompt"]},
+        planner._user_turn(config["opening_prompt"]),
+    ]
+    suffix = planner._messages_for_request(history)[-1]["content"][0]["text"]
+    assert "head_depth" not in suffix
+
+
+def test_return_home_reports_only_whether_each_arm_arrived(tmp_path):
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    result = primitives.return_home("both")
+
+    assert set(result["arms"]) == {"left", "right"}
+    for report in result["arms"].values():
+        assert set(report) == {
+            "success",
+            "reached",
+            "stop_reason",
+            "final_error_m",
+        }
 
 
 def test_observe_mode_drops_render_and_recipe_requires_a_lift(
