@@ -948,6 +948,14 @@ confirm the target on a fresh wrist image before pi05_act. Do not pregrasp when
 the instruction requires waiting, preserving pose, immediate learned
 coordination, or a non-grasp interaction.
 
+Pi_05 never receives focus and selects its own target, so a learned grasp can
+leave the staged object and approach a different one. Staging the same object a
+second time means the first grasp did not take. When that happens, grasp
+analytically instead of calling pi05_act again: with the gripper open, move_to
+the staged arm down to the object z plus the TCP offset, close with
+set_gripper, then lift. An analytic grasp cannot change target. This choice
+belongs to the current object only; begin the next object with pi05_act again.
+
 Use move_to only for measured free-space motion when the active phase permits
 it. Before transporting an object, verify that it left its source and moves
 with the TCP; gripper closure alone is insufficient. A grasped object still

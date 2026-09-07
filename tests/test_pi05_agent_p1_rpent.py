@@ -1983,7 +1983,9 @@ def test_planner_v4_injects_arrange_largest_number_recipe(tmp_path):
     assert "look-alike digits" in prompt
     assert "Predict source bbox" in prompt
     assert "Predict destination bbox" in prompt
-    assert "source bbox -> `pregrasp` ->" in prompt
+    assert "source bbox -> `pregrasp`" in prompt
+    assert "grasp analytically" in prompt
+    assert "start with `pi05_act` again" in prompt
     assert "retry destination" in prompt
     assert '`return_home(arm=\\"both\\")`' in prompt
     assert "Do not predict the next source bbox" in prompt

@@ -40,10 +40,21 @@ Use this exact sequence for every digit:
 2. **Pregrasp.** Call `pregrasp` for that measured `object_xyz`, choosing the
    reachable arm and `clearance_m` near 0.12. Verify in the attached wrist
    image that the intended digit is centred under the gripper.
-3. **Learned grasp.** Call one short `pi05_act` (`execution_horizon` 12-20,
+3. **Grasp.** Start with one short `pi05_act` (`execution_horizon` 12-20,
    `max_chunks` 1) for descent and closure. Its `focus` names only the current
    digit and says not to disturb completed pads. Verify in the attached images
    that the digit left its source and moves with the TCP.
+
+   Pi_05 never sees `focus` and picks its own target, so it may walk away from
+   the staged digit and approach a different one. If you find yourself staging
+   the same digit a second time, that first grasp did not take: switch to the
+   analytic grasp for this digit instead of calling `pi05_act` again. Keep the
+   gripper open, `move_to` the staged arm to the digit's x and y with
+   `z = object_z + tcp_offset_m` (the pregrasp `target_xyz` minus its
+   `clearance_m`), call `set_gripper` to close, then continue to step 4. The
+   analytic grasp cannot change target, so it is the reliable option once the
+   learned one has drifted. This choice applies only to the current digit; for
+   the next digit, start with `pi05_act` again.
 4. **Lift clear before transporting.** A digit that was just grasped is still
    at table height, and a pad is a raised disc, so any sideways motion at that
    height drags the digit into the pad rim and strips it out of the gripper.
@@ -83,7 +94,8 @@ gate:
 - If `pregrasp` fails or the wrist shows the wrong digit, retreat or
   `return_home` that arm, predict the source bbox again, and retry `pregrasp`.
 - If `pi05_act` misses or the digit is no longer held, rebind the digit at its
-  new location, then repeat source bbox -> `pregrasp` -> `pi05_act`. Never
+  new location and repeat source bbox -> `pregrasp`, but grasp analytically
+  this time rather than calling `pi05_act` on the same digit twice. Never
   transport based only on a closed gripper.
 - If the digit is lost during transport, it was almost certainly dragged rather
   than lifted. Treat its dropped pose as a new source, restart the per-digit
