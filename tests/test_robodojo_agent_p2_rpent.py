@@ -206,3 +206,16 @@ def test_p2_planner_keeps_every_attribute_the_base_loop_tracks():
     assert not missing, f"P2Planner never initialised {sorted(missing)}"
     assert p2.prompt_version.startswith("p2-")
     assert p2.instruction_contract_enabled is False
+
+
+def test_the_opening_prompt_only_waives_placement_for_general_pickup():
+    from XPolicyLab.policy.RoboDojo_Agent_P2_RPent.prompts import opening_prompt
+
+    pickup = opening_prompt(task_name="general_pickup", seed="0", instruction="x")
+    transport = opening_prompt(
+        task_name="arrange_largest_number", seed="0", instruction="x"
+    )
+
+    assert "not invent a placement requirement" in pickup
+    assert "not invent a placement requirement" not in transport
+    assert "descend, open, retreat" in transport

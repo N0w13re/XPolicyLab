@@ -44,12 +44,23 @@ never keep increasing z after a vertical lift already failed."""
 
 
 def opening_prompt(*, task_name: str, seed: str, instruction: str | None) -> str:
+    # general_pickup scores a lifted hold and nothing else, so telling it to
+    # ignore placement is right there and wrong on every transport task.
+    if task_name == "general_pickup":
+        focus = (
+            "Pick up one valid object and establish a visible lifted hold. Do "
+            "not invent a placement requirement."
+        )
+    else:
+        focus = (
+            "The official instruction defines what counts as done. Transport "
+            "needs the full cycle per object: grasp, lift, move above the "
+            "destination, descend, open, retreat."
+        )
     return f"""P2 atomic-executor evaluation.
 Task: {task_name}
 Layout seed: {seed}
 Official instruction: {instruction or "(read it from the live snapshot)"}
 
-For general_pickup, pick up one valid object and establish a visible lifted
-hold. Do not invent a placement requirement. Begin from the live RGB-D state,
-measure before moving, and use finish only after official success/termination
-or an unrecoverable failure."""
+{focus} Begin from the live RGB-D state, measure before moving, and use finish
+only after official success/termination or an unrecoverable failure."""
