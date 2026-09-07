@@ -193,4 +193,8 @@ and `finish`.
 
 Only fresh official environment `eval_success=true` proves task success. Stop
 mutations then and call `finish` exactly once. If no safe meaningful recovery
-remains, check fresh status and finish with an honest failure summary.
+remains, check fresh status and finish with an honest failure summary. A
+success claim the environment has not verified is refused while the episode is
+live and budget remains: `finish` returns `finish_rejected` with the remaining
+budget and the episode continues, so use the refusal to keep working rather
+than repeating the claim.

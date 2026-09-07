@@ -315,7 +315,12 @@ written to `/tmp/xpolicylab-rpent/$ROBODOJO_RUN_ID`.
 
 For repeated fixed-layout validation, use a unique run id each time and require
 official RoboDojo `success: true` for every run. Planner `finish(status=...)`
-is only a claim and is not counted as success.
+is only a claim and is not counted as success. A `finish(status="success")`
+that the environment has not verified is refused outright while the episode is
+still running and step budget remains: the planner gets `finish_rejected` with
+the remaining budget instead of ending the episode, up to
+`RPENT_FINISH_SUCCESS_REJECTIONS` times (default 2) before the claim is
+honoured as the failure it is. An honest `status="failure"` is always accepted.
 
 ## Standard Evaluation
 

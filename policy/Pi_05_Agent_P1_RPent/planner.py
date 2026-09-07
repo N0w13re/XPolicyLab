@@ -473,7 +473,11 @@ TOOLS_SPEC = [
         "type": "function",
         "function": {
             "name": "finish",
-            "description": "Stop the planner. Does not override official scoring.",
+            "description": (
+                "Stop the planner. Does not override official scoring, and "
+                'status "success" is rejected while eval_success is false '
+                "and step budget remains."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {

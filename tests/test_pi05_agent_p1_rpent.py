@@ -2687,3 +2687,79 @@ def test_incomplete_planner_exit_is_never_counted_as_success():
 
     assert env.success == [False]
     assert env.end_flag == [True]
+
+
+def test_finish_refuses_an_unverified_success_claim(tmp_path):
+    env = _FakeEnv([_observation()])
+    primitives = RpentPrimitives(
+        env,
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    result = primitives.finish("success", "picked it up")
+
+    assert result["finish_rejected"] is True
+    assert "_finish" not in result
+    assert primitives.finished is False
+    assert result["episode_status"]["eval_success"] is False
+    assert result["rejections_left"] == 1
+
+
+def test_finish_honours_a_success_claim_the_environment_verified(tmp_path):
+    class VerifiedEnv(_FakeEnv):
+        success = [True]
+        end_flag = [True]
+
+        def is_episode_end(self):
+            return True
+
+    primitives = RpentPrimitives(
+        VerifiedEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    result = primitives.finish("success", "picked it up")
+
+    assert result["_finish"] is True
+    assert result["success"] is True
+    assert primitives.finished is True
+
+
+def test_finish_always_accepts_a_failure_report(tmp_path):
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    result = primitives.finish("failure", "cannot reach the object")
+
+    assert result["_finish"] is True
+    assert result["status"] == "failure"
+    assert primitives.finished is True
+
+
+def test_finish_stops_refusing_once_the_rejection_budget_runs_out(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("RPENT_FINISH_SUCCESS_REJECTIONS", "1")
+    primitives = RpentPrimitives(
+        _FakeEnv([_observation()]),
+        _FakeModelClient(),
+        _UnusedQwen(),
+        trace=EpisodeTrace(tmp_path),
+    )
+
+    assert primitives.finish("success", "first claim")["finish_rejected"] is True
+    honoured = primitives.finish("success", "second claim")
+
+    assert honoured["_finish"] is True
+    # The claim ends the episode but is still recorded as the failure it is.
+    assert honoured["status"] == "failure"
+    assert honoured["success"] is False
+    assert primitives.finished is True

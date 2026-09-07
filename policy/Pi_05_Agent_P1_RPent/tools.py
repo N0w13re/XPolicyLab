@@ -51,6 +51,11 @@ def _gripper_object_gap() -> float:
     return float(os.environ.get("RPENT_GRIPPER_OBJECT_GAP", "0.02"))
 
 
+def _finish_success_rejections() -> int:
+    """Unverified success claims refused before finish is honoured anyway."""
+    return max(0, int(os.environ.get("RPENT_FINISH_SUCCESS_REJECTIONS", "2")))
+
+
 def _hover_max_steps() -> int:
     return max(8, int(os.environ.get("RPENT_MOVE_MAX_STEPS", "80")))
 
@@ -212,6 +217,7 @@ class RpentPrimitives:
         self.env_states = EnvStateStore()
         self.reset_poses: dict[str, np.ndarray] | None = None
         self.finished = False
+        self.unverified_success_claims = 0
         self.last_tool: str | None = None
         self._last_observation: dict[str, Any] | None = None
 
@@ -1203,10 +1209,42 @@ class RpentPrimitives:
         return {"arms": results, **self.snapshot()}
 
     def finish(self, status: str, summary: str) -> dict[str, Any]:
-        self.finished = True
         native = self.episode_status()
         requested_success = status.lower() == "success"
         verified_success = native["eval_success"] is True
+        snapshot = self.snapshot()
+        remaining = snapshot.get("remaining_steps")
+        budget = _finish_success_rejections()
+        if (
+            requested_success
+            and not verified_success
+            and not native["episode_end"]
+            and (remaining is None or remaining > 0)
+            and self.unverified_success_claims < budget
+        ):
+            self.unverified_success_claims += 1
+            # Honouring the claim would end the episode on a verdict the
+            # reward already contradicts and abandon the remaining step
+            # budget, so the claim is refused while there is room to recover.
+            return {
+                "error": (
+                    "finish rejected: eval_success is false and the episode "
+                    "has not terminated, so the task is not solved yet"
+                ),
+                "finish_rejected": True,
+                "requested_status": status,
+                "summary": summary,
+                "rejections_left": budget - self.unverified_success_claims,
+                "next_step": (
+                    "Keep acting. Re-measure, correct the pose, and claim "
+                    'status "success" only once a tool result reports '
+                    'eval_success or episode_end true. Report status '
+                    '"failure" to stop on an unrecoverable failure.'
+                ),
+                "episode_status": native,
+                **snapshot,
+            }
+        self.finished = True
         return {
             "_finish": True,
             "status": (
@@ -1220,5 +1258,5 @@ class RpentPrimitives:
             "requested_success": requested_success,
             "success": verified_success,
             "episode_status": native,
-            **self.snapshot(),
+            **snapshot,
         }
