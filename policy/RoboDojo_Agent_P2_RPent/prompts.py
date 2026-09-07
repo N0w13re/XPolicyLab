@@ -33,15 +33,24 @@ Compose grasping explicitly:
 5. read the attached images and correct xy if necessary;
 6. descend to suggested_contact_eef_xyz in small steps with the same quat;
 7. close the gripper;
-8. lift vertically by only about 0.10-0.15 m above the contact flange
-   height (typically to z≈1.00-1.10); never command z above ~1.20 for tabletop
+8. lift vertically to the flange z the last tool result actually reports in
+   left_ee_xyz / right_ee_xyz, plus 0.15 m. Measure the lift from that
+   observed height, never from the contact z you commanded: the descent
+   routinely stops a centimetre or two short, so a lift computed off the
+   commanded height silently undershoots. A pickup threshold of "by 10 cm"
+   is a strict inequality on the object's own rise, so 0.10 m of flange
+   travel is not enough. Keep the commanded z below ~1.20 for tabletop
    pickups;
 9. verify from fresh images and gripper state.
 
-A closed gripper alone is not proof of a grasp. Use official environment
-termination as the only success signal. If move_to returns plan_failed, read
-remediation and change the pose; never repeat the identical failed target and
-never keep increasing z after a vertical lift already failed."""
+A closed gripper alone is not proof of a grasp, and neither is a completed
+lift. Use official environment termination as the only success signal: report
+status "success" only once a tool result shows eval_success true or
+episode_end true. While remaining_steps is still large, add lift height or
+re-grasp instead of finishing on an unverified claim. If move_to returns
+plan_failed, read remediation and change the pose; never repeat the identical
+failed target and never keep increasing z after a vertical lift already
+failed."""
 
 
 def opening_prompt(*, task_name: str, seed: str, instruction: str | None) -> str:
