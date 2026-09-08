@@ -1,412 +1,318 @@
-"""The LLM as the policy, on the inspect-robots-agent protocol.
+"""Thin RoboDojo bridge around the published inspect-robots-agent policy.
 
-`LlmPolicy.act` occupies the same slot a served VLA occupies: observation in,
-`ActionChunk` out. Inside the call the model never sees raw actuation. It names
-partial targets through `move_joints` / `move_to`; this module interpolates
-them, feeds tool results back, and ends the trial on `done` / `give_up`. That
-is the inspect-robots-agent condition, running on the RoboDojo websocket.
+All strategy-bearing behavior -- prompts, tools, motion interpolation, history,
+repair, image modes, call budget, hindsight, and wire capture -- stays in the
+pinned upstream package. This module only maps RoboDojo arrays/configuration to
+Inspect Robots types and maps its returned vector chunks back to XPolicyLab
+action dictionaries.
 """
 
 from __future__ import annotations
 
-import base64
-import io
-import json
 import os
-import time
 from collections.abc import Mapping
-from pathlib import Path
+from dataclasses import asdict, dataclass
+from importlib.metadata import version
 from typing import Any
 
 import numpy as np
-
-from .motion import (
-    EMBODIMENT_NOTES,
-    ToolCall,
-    Toolset,
-    build_toolset,
+from inspect_robots.embodiment import EmbodimentInfo
+from inspect_robots.scene import Scene
+from inspect_robots.rollout import TrialRecord
+from inspect_robots.spaces import (
+    ActionSemantics,
+    Box,
+    CameraSpec,
+    ObservationSpace,
+    StateField,
+    StateSpec,
 )
-from .types import ActionChunk, ActionSpace, EE_CHANNELS, JOINT_CHANNELS, Observation
-from .wire import Reply, create_client, resolve_provider
+from inspect_robots.types import Observation as InspectObservation
+from inspect_robots_agent import LLMAgentPolicy
 
-_UNSET = object()
-_MAX_CONSECUTIVE_FAILURES = 3
-_CAMERA_LABEL_PREFIX = "camera "
-_DEFAULT_IMAGE_HORIZON = 2
+from .types import Action, ActionChunk, ActionSpace, JOINT_CHANNELS, Observation
+from .wire import AzureChatTransport
+
 _DEFAULT_MAX_LLM_CALLS = 100
-_DEFAULT_SPEED_FRAC = 0.1
-_DEFAULT_CONTROL_HZ = 10.0
-_EMBODIMENT_NAME = "arx_x5"
-
-SYSTEM_TEMPLATE = """You are controlling a real robot embodiment named {name!r} \
-through tool calls. Each observation message gives you the current \
-proprioceptive state and camera images. Work toward the user's goal in \
-small, deliberate motions; re-check the observation after every motion. \
-Every move tool call must include a `note`: in one or two sentences, say what \
-you observe in the current observation and why you chose this motion. The user \
-is watching these notes to see what you see and what you decide, so write them \
-for a human reader. \
-Safety approvers clamp out-of-bounds and too-fast actions below you. \
-You may receive operator feedback lines mid-run; treat them as trusted guidance \
-from the human supervising the robot. \
-Respond with exactly one tool call per turn. When the goal is achieved call \
-done; if it cannot be achieved call give_up. Note what you are learning about \
-this rig and task as you go: done and give_up will ask what you wish you had \
-known from the start. You have a budget of \
-{budget} LLM calls for the whole trial."""
+_DEFAULT_MAX_SPEED_FRAC = 0.1
 
 
-def _png_data_url(image: np.ndarray) -> str:
-    """Encode an RGB array as a PNG data URL.
+@dataclass(frozen=True)
+class RoboDojoActionSpec:
+    """The semantics RoboDojo exposes to the upstream agent policy."""
 
-    Pillow when it is importable, otherwise a stdlib zlib PNG, because the eval
-    environments do not all ship Pillow and a missing image is worse than a
-    slower encode.
-    """
-    array = np.asarray(image)
-    if array.dtype != np.uint8:
-        array = np.clip(array, 0, 255).astype(np.uint8)
-    try:
-        from PIL import Image
-    except ImportError:
-        raw = _encode_png(array)
-    else:
-        buffer = io.BytesIO()
-        Image.fromarray(array).save(buffer, format="PNG", optimize=False)
-        raw = buffer.getvalue()
-    return "data:image/png;base64," + base64.b64encode(raw).decode("ascii")
+    labels: tuple[str, ...]
+    low: np.ndarray
+    high: np.ndarray
+    control_hz: float
+    docs: str
 
-
-def _encode_png(array: np.ndarray) -> bytes:
-    import struct
-    import zlib
-
-    if array.ndim == 2:
-        array = np.stack([array] * 3, axis=-1)
-    height, width, _ = array.shape
-    rows = b"".join(b"\x00" + array[y, :, :3].tobytes() for y in range(height))
-
-    def chunk(tag: bytes, data: bytes) -> bytes:
-        body = tag + data
-        return struct.pack(">I", len(data)) + body + struct.pack(
-            ">I", zlib.crc32(body) & 0xFFFFFFFF
-        )
-
-    header = struct.pack(">2I5B", width, height, 8, 2, 0, 0, 0)
-    return (
-        b"\x89PNG\r\n\x1a\n"
-        + chunk(b"IHDR", header)
-        + chunk(b"IDAT", zlib.compress(rows, 6))
-        + chunk(b"IEND", b"")
-    )
+    def __post_init__(self) -> None:
+        width = len(self.labels)
+        if self.low.shape != (width,) or self.high.shape != (width,):
+            raise ValueError("action bounds must be flat and match labels")
+        if not np.all(np.isfinite(self.low)) or not np.all(np.isfinite(self.high)):
+            raise ValueError("action bounds must be finite")
+        if np.any(self.low > self.high):
+            raise ValueError("action lower bounds must not exceed upper bounds")
+        if not np.isfinite(self.control_hz) or self.control_hz <= 0:
+            raise ValueError("control_hz must be finite and > 0")
 
 
-def _env_int(env: Mapping[str, str], name: str, default: int) -> int:
-    raw = env.get(name)
-    return default if raw is None or raw == "" else int(raw)
+def _optional_number(env: Mapping[str, str], key: str, kind: type[int] | type[float]) -> Any:
+    raw = env.get(key)
+    return None if raw is None or raw == "" else kind(raw)
 
 
-def _env_float(env: Mapping[str, str], name: str, default: float) -> float:
-    raw = env.get(name)
-    return default if raw is None or raw == "" else float(raw)
-
-
-def _env_optional_int(env: Mapping[str, str], name: str, default: int | None) -> int | None:
-    raw = env.get(name)
+def _bool(env: Mapping[str, str], key: str, default: bool) -> bool:
+    raw = env.get(key)
     if raw is None:
         return default
-    if raw.strip().lower() in {"", "none"}:
-        return None
-    return int(raw)
+    normalized = raw.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"{key} must be true or false, got {raw!r}")
+
+
+def _agent_kwargs(
+    env: Mapping[str, str],
+    *,
+    transport: Any = None,
+) -> tuple[dict[str, Any], str]:
+    model = env.get("P3_MODEL", "")
+    if not model:
+        raise ValueError("P3_MODEL is required")
+    requested_wire = env.get("P3_WIRE", "")
+    kwargs: dict[str, Any] = {
+        "model": model,
+        "max_llm_calls": int(env.get("P3_MAX_LLM_CALLS", _DEFAULT_MAX_LLM_CALLS)),
+        "max_speed_frac": float(
+            env.get("P3_MAX_SPEED_FRAC", _DEFAULT_MAX_SPEED_FRAC)
+        ),
+        "transcript_echo": _bool(env, "P3_TRANSCRIPT_ECHO", False),
+        "images": env.get("P3_IMAGES", "always"),
+        "depth": env.get("P3_DEPTH", "render"),
+        "wire_capture": _bool(env, "P3_WIRE_CAPTURE", True),
+        "env": dict(env),
+    }
+    aliases = {
+        "P3_BASE_URL": "base_url",
+        "P3_API_KEY_ENV": "api_key_env",
+        "P3_SPEED": "speed",
+        "P3_PRIOR_LEARNINGS": "prior_learnings",
+    }
+    for source, destination in aliases.items():
+        if value := env.get(source):
+            kwargs[destination] = value
+    for source, destination, kind in (
+        ("P3_MAX_OUTPUT_TOKENS", "max_output_tokens", int),
+        ("P3_TEMPERATURE", "temperature", float),
+    ):
+        if (value := _optional_number(env, source, kind)) is not None:
+            kwargs[destination] = value
+    if "P3_EFFORT" in env:
+        effort = env["P3_EFFORT"].strip()
+        kwargs["effort"] = None if effort == "" else effort
+    if "P3_IMAGE_HORIZON" in env:
+        horizon = env["P3_IMAGE_HORIZON"].strip()
+        kwargs["image_horizon"] = None if horizon.lower() == "none" else int(horizon)
+
+    if requested_wire == "azure-chat":
+        base_url = env.get("P3_BASE_URL")
+        api_version = env.get("P3_API_VERSION")
+        if not base_url or not api_version:
+            raise ValueError("azure-chat requires P3_BASE_URL and P3_API_VERSION")
+        deployment = model.split("/", 1)[-1]
+        key_env = env.get("P3_API_KEY_ENV", "P3_API_KEY")
+        kwargs.update(
+            model=deployment,
+            base_url=base_url,
+            api_key_env=key_env,
+            wire="chat",
+            transport=transport
+            or AzureChatTransport(
+                base_url=base_url,
+                deployment=deployment,
+                api_version=api_version,
+            ),
+        )
+    elif requested_wire:
+        kwargs["wire"] = requested_wire
+        if transport is not None:
+            kwargs["transport"] = transport
+    elif transport is not None:
+        kwargs["transport"] = transport
+    return kwargs, requested_wire or "auto"
 
 
 class LlmPolicy:
-    """An LLM in the slot a VLA occupies, on the inspect-robots-agent loop."""
+    """XPolicyLab-shaped facade over the exact upstream LLMAgentPolicy."""
 
     def __init__(
         self,
         *,
-        provider=None,
-        action_space: ActionSpace | None = None,
-        system_prompt: str | None = None,
-        max_llm_calls: int | None = None,
-        max_speed_frac: float | None = None,
-        control_hz: float | None = None,
-        image_horizon: Any = _UNSET,
-        client: Any = None,
+        action_spec: RoboDojoActionSpec,
         env: Mapping[str, str] | None = None,
-        toolset: Toolset | None = None,
+        transport: Any = None,
     ) -> None:
-        env = os.environ if env is None else env
-        pose = env.get("P3_ACTION_TYPE", "joint") == "ee"
-        self.action_space = action_space or ActionSpace(
-            EE_CHANNELS if pose else JOINT_CHANNELS
-        )
-        self._max_llm_calls = (
-            max_llm_calls
-            if max_llm_calls is not None
-            else _env_int(env, "P3_MAX_LLM_CALLS", _DEFAULT_MAX_LLM_CALLS)
-        )
-        speed = (
-            max_speed_frac
-            if max_speed_frac is not None
-            else _env_float(env, "P3_MAX_SPEED_FRAC", _DEFAULT_SPEED_FRAC)
-        )
-        hz = (
-            control_hz
-            if control_hz is not None
-            else _env_float(env, "P3_CONTROL_HZ", _DEFAULT_CONTROL_HZ)
-        )
-        if image_horizon is _UNSET:
-            self.image_horizon = _env_optional_int(
-                env, "P3_IMAGE_HORIZON", _DEFAULT_IMAGE_HORIZON
+        self._env = dict(os.environ if env is None else env)
+        kwargs, self.requested_wire = _agent_kwargs(self._env, transport=transport)
+        self.inner = LLMAgentPolicy(**kwargs)
+        self.action_spec = action_spec
+        self.action_space = ActionSpace(JOINT_CHANNELS)
+        if len(action_spec.labels) != self.action_space.width:
+            raise ValueError(
+                f"RoboDojo joint action spec has {len(action_spec.labels)} dimensions; "
+                f"expected {self.action_space.width}"
             )
-        else:
-            self.image_horizon = image_horizon
-        self._toolset = toolset or build_toolset(
-            self.action_space,
-            control_hz=hz,
-            max_speed_frac=speed,
-            pose=pose,
-        )
-        formatted = SYSTEM_TEMPLATE.format(
-            name=_EMBODIMENT_NAME, budget=self._max_llm_calls
-        )
-        notes = f"\n\nEmbodiment notes:\n{EMBODIMENT_NOTES}"
-        prior = env.get("P3_PRIOR_LEARNINGS", "")
-        if prior:
-            prior_path = Path(prior)
-            extra = prior_path.read_text(encoding="utf-8")
-            notes += "\n\nPrior learnings:\n" + extra
-        self.system_prompt = system_prompt if system_prompt is not None else formatted + notes
-        self._provider = provider
-        self._client = client
-        self._messages: list[dict[str, Any]] = []
-        self.usage_totals: dict[str, int] = {}
-        self.calls = 0
-        self.transcript: list[dict[str, Any]] = []
-        self._hindsight: str | None = None
+        self._bound = False
+        self._scene: Scene | None = None
 
-    @property
-    def client(self) -> Any:
-        if self._client is None:
-            provider = self._provider or resolve_provider()
-            self._client = create_client(provider)
-        return self._client
+    def _bind(self, observation: Observation) -> None:
+        cameras = tuple(
+            CameraSpec(
+                name=name,
+                height=int(np.asarray(image).shape[0]),
+                width=int(np.asarray(image).shape[1]),
+                channels=int(np.asarray(image).shape[2]),
+            )
+            for name, image in observation.images.items()
+        )
+        semantics = ActionSemantics(
+            control_mode="joint_pos",
+            rotation_repr="none",
+            gripper="continuous",
+            frame="base",
+            dim_labels=self.action_spec.labels,
+        )
+        box = Box(
+            shape=(self.action_space.width,),
+            low=np.asarray(self.action_spec.low, dtype=np.float64),
+            high=np.asarray(self.action_spec.high, dtype=np.float64),
+            semantics=semantics,
+        )
+        state = StateSpec(
+            fields=(
+                StateField(
+                    key="joint_pos",
+                    shape=(self.action_space.width,),
+                    unit="rad+normalized_gripper",
+                    dtype="float64",
+                ),
+            )
+        )
+        info = EmbodimentInfo(
+            name="robodojo-arx-x5",
+            action_space=box,
+            observation_space=ObservationSpace(cameras=cameras, state=state),
+            control_hz=self.action_spec.control_hz,
+            is_simulated=True,
+            docs=self.action_spec.docs,
+        )
+        self.inner.bind(info)
+        scene = Scene(
+            id=f"{self._env.get('P3_TASK_NAME', 'robodojo')}-layout-"
+            f"{self._env.get('P3_LAYOUT_ID', 'unknown')}",
+            instruction=observation.instruction or "",
+            init_seed=_optional_number(self._env, "P3_LAYOUT_ID", int),
+        )
+        self.inner.reset(scene)
+        self._scene = scene
+        self._bound = True
 
     def reset(self) -> None:
-        self._messages.clear()
-        self._hindsight = None
+        """Defer upstream reset until the first observation supplies the scene."""
+        self._bound = False
+        self._scene = None
+
+    def prepare(self, observation: Observation) -> None:
+        """Bind/reset before capture starts, without issuing an LLM request."""
+        if not self._bound:
+            self._bind(observation)
+
+    def start_capture(self, log_dir: str, run_id: str) -> None:
+        scene_id = self._scene.id if self._scene is not None else "robodojo"
+        self.inner.on_trial_start(scene_id, 0, log_dir, run_id)
+
+    def finish_capture(
+        self,
+        log_dir: str,
+        run_id: str,
+        *,
+        terminated: bool,
+        truncated: bool,
+        termination_reason: str | None,
+    ) -> dict[str, Any]:
+        scene = self._scene or Scene(id="robodojo", instruction="")
+        record = TrialRecord(
+            scene_id=scene.id,
+            epoch=0,
+            seed=scene.init_seed,
+            terminated=terminated,
+            truncated=truncated,
+            termination_reason=termination_reason,
+        )
+        self.inner.on_trial_end(record, log_dir, run_id)
+        return dict(record.metadata)
 
     def act(self, observation: Observation) -> ActionChunk:
-        toolset = self._toolset
-        self._messages.append({"role": "user", "content": _observation_content(observation, toolset)})
-        started = time.monotonic()
-        failures = 0
-        last_error: str | None = None
-        usage: dict[str, int] = {}
-
-        while True:
-            if self.calls >= self._max_llm_calls:
-                stopped = self._forced_give_up(toolset, observation, "LLM call budget exhausted")
-                return ActionChunk(
-                    actions=stopped.actions,
-                    reasoning=stopped.reasoning,
-                    latency_s=time.monotonic() - started,
-                    usage=dict(self.usage_totals),
-                )
-
-            outgoing = self._messages
-            if self.image_horizon is not None:
-                outgoing = _evicted_view(self._messages, self.image_horizon)
-
-            reply: Reply = self.client.complete(
-                outgoing, toolset.schemas(), system=self.system_prompt
-            )
-            self.calls += 1
-            for key, value in reply.usage.items():
-                usage[key] = usage.get(key, 0) + value
-                self.usage_totals[key] = self.usage_totals.get(key, 0) + value
-
-            self._messages.append(_assistant_message(reply))
-            calls = _tool_calls(reply)
-            if not calls:
-                failures += 1
-                if failures >= _MAX_CONSECUTIVE_FAILURES:
-                    raise RuntimeError(
-                        f"LLM produced no tool call in {failures} consecutive turns"
-                    )
-                self._messages.append(
-                    {"role": "user", "content": "Respond with exactly one tool call."}
-                )
-                continue
-
-            chunk: ActionChunk | None = None
-            closed = False
-            for call in calls:
-                if closed:
-                    result_text = "ignored: one tool call per turn"
-                else:
-                    result = toolset.execute(call, observation)
-                    if result.error is not None:
-                        result_text = result.error
-                        failures += 1
-                        last_error = result.error
-                        closed = True
-                    else:
-                        result_text = result.note
-                        if result.chunk is not None:
-                            chunk = result.chunk
-                            stopped = bool(
-                                chunk.actions[0].meta.get("request_stop")
-                            )
-                            if stopped:
-                                self._hindsight = chunk.actions[0].meta.get(
-                                    "stop_hindsight"
-                                )
-                            closed = True
-                            failures = 0
-                self._messages.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": call.id,
-                        "content": result_text,
-                    }
-                )
-
-            if chunk is not None:
-                filled = ActionChunk(
-                    actions=chunk.actions,
-                    reasoning=reply.text,
-                    latency_s=time.monotonic() - started,
-                    usage=dict(usage),
-                )
-                self.transcript.append(
-                    {
-                        "step": observation.step,
-                        "actions": len(filled.actions),
-                        "note": filled.actions[0].meta.get("stop_reason")
-                        or (calls[0].name if calls else None),
-                        "reasoning": reply.text or "",
-                        "usage": dict(usage),
-                        "hindsight": self._hindsight,
-                    }
-                )
-                return filled
-            if failures >= _MAX_CONSECUTIVE_FAILURES:
-                raise RuntimeError(
-                    f"LLM tool calls kept failing; last error: {last_error or 'unknown'}"
-                )
-
-    def _forced_give_up(
-        self, toolset: Toolset, observation: Observation, why: str
-    ) -> ActionChunk:
-        synthetic = ToolCall(
-            id="budget",
-            name="give_up",
-            arguments=json.dumps({"reason": why}),
+        if not self._bound:
+            self._bind(observation)
+        vector = np.asarray(self.action_space.encode(observation.state), dtype=np.float64)
+        inspect_observation = InspectObservation(
+            images={
+                name: np.asarray(image, dtype=np.uint8)
+                for name, image in observation.images.items()
+            },
+            state={"joint_pos": vector},
+            instruction=observation.instruction,
+            extra={"env_step": observation.step, **dict(observation.extra)},
         )
-        result = toolset.execute(synthetic, observation)
-        if result.chunk is None:
-            raise RuntimeError(f"forced give_up failed: {result.error}")
-        return result.chunk
-
-
-def _tool_calls(reply: Reply) -> list[ToolCall]:
-    if reply.tool_calls:
-        return [
-            ToolCall(id=call.id, name=call.name, arguments=call.arguments)
-            for call in reply.tool_calls
-        ]
-    if reply.tool_name:
-        return [
-            ToolCall(
-                id="call_0",
-                name=reply.tool_name,
-                arguments=reply.tool_arguments or "{}",
+        chunk = self.inner.act(inspect_observation)
+        actions = []
+        for upstream_action in chunk.actions:
+            decoded = self.action_space.decode(
+                np.asarray(upstream_action.data, dtype=np.float64).tolist()
             )
-        ]
-    return []
-
-
-def _assistant_message(reply: Reply) -> dict[str, Any]:
-    if reply.assistant_message:
-        return dict(reply.assistant_message)
-    calls = _tool_calls(reply)
-    message: dict[str, Any] = {"role": "assistant", "content": reply.text}
-    if calls:
-        message["tool_calls"] = [
-            {
-                "id": call.id,
-                "type": "function",
-                "function": {"name": call.name, "arguments": call.arguments},
-            }
-            for call in calls
-        ]
-    return message
-
-
-def _state_line(observation: Observation, toolset: Toolset) -> str:
-    values = toolset.current_state(observation)
-    rounded = np.round(values, 4).tolist()
-    labeled = " ".join(
-        f"{label}={item}" for label, item in zip(toolset.labels, rounded, strict=True)
-    )
-    return f"state[joints]: {labeled}"
-
-
-def _observation_content(observation: Observation, toolset: Toolset) -> list[dict[str, Any]]:
-    lines = ["Current observation."]
-    lines.append(f"step {observation.step}")
-    if observation.remaining_steps is not None:
-        lines.append(f"{observation.remaining_steps} steps remain")
-    if observation.instruction:
-        lines.append(f"Instruction: {observation.instruction}")
-    lines.append(_state_line(observation, toolset))
-    parts: list[dict[str, Any]] = [{"type": "text", "text": "\n".join(lines)}]
-    for name, image in observation.images.items():
-        parts.append({"type": "text", "text": f"{_CAMERA_LABEL_PREFIX}{name!r}:"})
-        parts.append({"type": "image_url", "image_url": {"url": _png_data_url(image)}})
-    return parts
-
-
-def _evicted_view(messages: list[dict[str, Any]], horizon: int) -> list[dict[str, Any]]:
-    """Stub camera frames older than the image horizon, matching inspect-robots-agent."""
-    image_message_indices = [
-        index
-        for index, message in enumerate(messages)
-        if isinstance((content := message.get("content")), list)
-        and any(isinstance(part, dict) and part.get("type") == "image_url" for part in content)
-    ]
-    stubbed_indices = image_message_indices[:-horizon]
-    if not stubbed_indices:
-        return list(messages)
-
-    view = list(messages)
-    for message_index in stubbed_indices:
-        message = messages[message_index]
-        content = message["content"]
-        assert isinstance(content, list)
-        image_indices = [
-            index
-            for index, part in enumerate(content)
-            if isinstance(part, dict) and part.get("type") == "image_url"
-        ]
-        removed_indices = set(image_indices)
-        for image_index in image_indices:
-            if image_index == 0:
-                continue
-            label = content[image_index - 1]
-            if isinstance(label, dict) and label.get("type") == "text":
-                removed_indices.add(image_index - 1)
-        stubbed_content = [
-            part for index, part in enumerate(content) if index not in removed_indices
-        ]
-        stubbed_content.append(
-            {
-                "type": "text",
-                "text": f"[{len(image_indices)} camera frame(s) elided]",
-            }
+            actions.append(
+                Action(data=decoded.data, meta=dict(upstream_action.meta))
+            )
+        return ActionChunk(
+            actions=actions,
+            latency_s=chunk.inference_latency_s,
+            control_hz=chunk.control_hz,
+            meta=dict(chunk.meta),
         )
-        view[message_index] = {**message, "content": stubbed_content}
-    return view
+
+    @property
+    def calls(self) -> int:
+        return int(self.inner._calls_used)
+
+    @property
+    def usage_totals(self) -> dict[str, int]:
+        return dict(self.inner._usage_totals)
+
+    @property
+    def hindsight(self) -> str | None:
+        return self.inner._hindsight
+
+    def transcript(self) -> list[dict[str, Any]] | None:
+        return self.inner.transcript()
+
+    def audit_config(self) -> dict[str, Any]:
+        return {
+            "adapter": "inspect-robots-agent",
+            "inspect_robots_version": version("inspect-robots"),
+            "inspect_robots_agent_version": version("inspect-robots-agent"),
+            "requested_wire": self.requested_wire,
+            "upstream_policy_config": asdict(self.inner.config),
+            "embodiment": {
+                "labels": list(self.action_spec.labels),
+                "low": self.action_spec.low.tolist(),
+                "high": self.action_spec.high.tolist(),
+                "control_hz": self.action_spec.control_hz,
+                "docs": self.action_spec.docs,
+            },
+        }

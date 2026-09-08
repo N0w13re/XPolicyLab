@@ -15,6 +15,8 @@ dependencies = [
     "msgpack>=1.0.8",
     "msgpack-numpy>=0.4.8",
     "pydantic>=2.5",
+    "inspect-robots==0.58.0",
+    "inspect-robots-agent==0.26.0",
 ]
 
 [tool.setuptools]

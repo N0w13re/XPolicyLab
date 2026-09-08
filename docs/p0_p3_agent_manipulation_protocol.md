@@ -222,18 +222,18 @@ reset(scene) -> None
 act(observation) -> ActionChunk        # a VLA fills this; at P3 the LLM does
 ```
 
-The only thing between the model and the simulator is the
-inspect-robots-agent motion layer: named partial targets (`move_joints` /
-`move_to`) interpolated at a declared safe speed, then decoded into the
-websocket action dict. No IK and no `pick`/`place`. A condition that adds those
-skills is P2.
+The only thing between the model and the simulator is the published, pinned
+inspect-robots-agent policy: named partial joint targets (`move_joints`)
+interpolated at a declared safe speed, then losslessly decoded into the
+websocket action dict. No IK and no `pick`/`place`. RoboDojo quaternion EE mode
+is rejected because upstream does not consider component-wise quaternion
+interpolation safe. A condition that adds IK or Cartesian primitives is P2.
 
 **Native control surface.** P3 uses each provider's own API rather than a
 lowest-common-denominator one, because the point is to measure the model as its
-vendor exposes it: Anthropic's `/messages` with thinking blocks and
-`cache_control`, Azure/OpenAI chat completions, and `/chat/completions` for
-everything else. The tools are `move_joints` (or `move_to`), `done`, and
-`give_up`, matching inspect-robots-agent.
+vendor exposes it. Chat, Messages, Responses, Gemini Live, and Interactions
+execute in upstream code; Azure Chat is a transport-only URL/auth adaptation.
+The tools are `move_joints`, `done`, and `give_up`.
 
 **Action chunking.** One LLM call produces one interpolant, whose length is
 set by distance and `max_speed_frac` (inspect defaults: 0.1 of range per

@@ -1,13 +1,14 @@
 # Agent_P3 — L5, aligned with inspect-robots-agent
 
-This directory is the **L5** condition (`policy_name` stays `Agent_P3`). The
-LLM occupies the same `reset` / `act` slot a served VLA occupies. The
-**strategy** of that `act` matches
+This directory is the **L5** condition (`policy_name` stays `Agent_P3`). It
+uses the published, pinned
 [`inspect-robots-agent`](https://github.com/robocurve/inspect-robots/tree/main/plugins/inspect-robots-agent):
-the model never emits a raw 14-D dump. It names partial targets; a motion
-layer interpolates them.
+`inspect-robots-agent==0.26.0` with `inspect-robots==0.58.0`. Prompt, tool
+schema, motion interpolation, history, repair, image modes, budget, hindsight,
+provider wires, usage accounting, and replay-grade capture execute in that
+package rather than in an XPolicyLab fork.
 
-The comparison table, deferred items, and test map live in
+The source-level comparison and harness mapping live in
 [`docs/l5_inspect_robots_alignment.md`](../../docs/l5_inspect_robots_alignment.md).
 
 | Level | System | What stands between the model and the robot |
@@ -19,27 +20,26 @@ The comparison table, deferred items, and test map live in
 
 ## How an action gets made
 
-1. `deploy.py` reads RGB, joint state, remaining steps, and the task instruction.
-2. The observation is labeled state (`left_j0=…`) plus camera PNGs, matching
-   inspect's `_observation_content`.
-3. The model calls exactly one of `move_joints` (or `move_to` in EE mode),
-   `done`, or `give_up`. Every move requires a human-readable `note`.
-4. `motion.py` interpolates named absolute targets from the current state at
-   `max_speed_frac=0.1` with a 5%-of-range per-step ceiling and a 10 s cap —
-   the same numbers as inspect-robots-agent.
-5. The interpolated chunk is played on the RoboDojo websocket. `done` /
+1. `deploy.py` reads RGB, joint state, task instruction, the live Isaac joint
+   limits, and RoboDojo's actual observation/control rate (25 Hz).
+2. `policy.py` presents those as an Inspect `EmbodimentInfo` and `Observation`.
+3. The upstream policy emits `move_joints`, `done`, or `give_up`; it also owns
+   optional `images=on_demand`, depth rendering, all supported provider wires,
+   and `prior_learnings`.
+4. The upstream interpolated chunk is converted losslessly to RoboDojo's four
+   action dictionary channels and played in full. `done` /
    `give_up` end the trial; the official scorer still judges success.
 
-Malformed calls come back as tool results. Three consecutive failures abort.
-`P3_MAX_LLM_CALLS` (default 100) forces `give_up`. Camera frames older than
-`P3_IMAGE_HORIZON` (default 2) are elided; the text history stays.
+EE mode is rejected. RoboDojo exposes EE actions as quaternion poses followed
+by IK; upstream intentionally rejects quaternion pose spaces because linear
+per-dimension interpolation is unsafe. Silently advertising `move_to` would
+not be an aligned condition.
 
 ## Wires
 
 | Wire | Endpoint |
 | --- | --- |
-| `messages` | Anthropic `POST /messages` |
-| `chat` | OpenAI-compatible `POST /chat/completions` |
+| `messages`, `responses`, `gemini-live`, `interactions`, `chat` | Upstream implementation |
 | `azure-chat` | Azure `.../openai/deployments/<model>/chat/completions` |
 
 ## Configuration
@@ -49,12 +49,17 @@ Malformed calls come back as tool results. Three consecutive failures abort.
 | `P3_MODEL` | required | `provider/model` |
 | `P3_MAX_LLM_CALLS` | 100 | Trial LLM budget |
 | `P3_MAX_SPEED_FRAC` | 0.1 | Inspect interpolant speed |
-| `P3_CONTROL_HZ` | 10 | Used to turn speed into steps |
+| control rate | live RoboDojo value | `obs_manager.collect_freq` (25 Hz for `arx_x5`) |
 | `P3_IMAGE_HORIZON` | 2 | Keep this many image-bearing turns (`none` = all) |
-| `P3_ACTION_TYPE` | `joint` | `joint` → `move_joints`; `ee` → `move_to` |
+| `P3_IMAGES` | `always` | `always` or upstream `on_demand` |
+| `P3_DEPTH` | `render` | `render` or `off`; renders only when depth exists |
+| `P3_ACTION_TYPE` | `joint` | `ee` is rejected for unsafe quaternion semantics |
 | `P3_PRIOR_LEARNINGS` | unset | UTF-8 notes file appended to the system prompt |
-| `P3_WIRE` / `P3_BASE_URL` / `P3_API_VERSION` | | Endpoint override |
-| `P3_TRACE_DIR` | | Writes `p3_transcript.json` |
+| `P3_WIRE` / `P3_BASE_URL` / `P3_API_KEY_ENV` | upstream resolution | Endpoint override |
+| `P3_API_VERSION` | required for `azure-chat` | Azure API version |
+| `P3_TEMPERATURE`, `P3_EFFORT`, `P3_MAX_OUTPUT_TOKENS`, `P3_SPEED` | upstream defaults | Provider controls |
+| `P3_WIRE_CAPTURE` | `true` | Replay-grade request/response JSONL + deduplicated PNGs |
+| `P3_TRACE_DIR` | unset | Transcript, full config, usage, hindsight, capture |
 
 ## Running
 
@@ -66,5 +71,5 @@ export P3_TRACE_DIR=/tmp/xpolicylab-p3/$RUN_ID
 bash policy/Agent_P3/run_fixed_layout.sh <layout> <env_gpu> general_pickup
 ```
 
-No VLA checkpoint. `deploy.yml` borrows `policy/Pi_05/openpi` only for the
-shared harness packages.
+No VLA checkpoint. The Python process running RoboDojo must contain the two
+pinned Inspect packages; `install.sh` installs them.

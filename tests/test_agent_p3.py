@@ -1,13 +1,16 @@
 import json
+from dataclasses import replace
+from types import SimpleNamespace
 
+import httpx
 import numpy as np
 import pytest
 from XPolicyLab.policy.Agent_P3.deploy import (
+    _action_spec,
     _mark_incomplete_episode_failed,
     eval_one_episode,
 )
-from XPolicyLab.policy.Agent_P3.motion import JOINT_LABELS, build_toolset
-from XPolicyLab.policy.Agent_P3.policy import LlmPolicy
+from XPolicyLab.policy.Agent_P3.policy import LlmPolicy, RoboDojoActionSpec
 from XPolicyLab.policy.Agent_P3.types import (
     EE_CHANNELS,
     JOINT_CHANNELS,
@@ -16,13 +19,7 @@ from XPolicyLab.policy.Agent_P3.types import (
     Observation,
     Policy,
 )
-from XPolicyLab.policy.Agent_P3.wire import (
-    ChatClient,
-    ConfigError,
-    MessagesClient,
-    Provider,
-    resolve_provider,
-)
+from XPolicyLab.policy.Agent_P3.wire import AzureChatTransport
 
 
 def _observation(step: int = 0) -> Observation:
@@ -39,50 +36,97 @@ def _observation(step: int = 0) -> Observation:
     )
 
 
-class _ScriptedClient:
-    """Answers with a queued reply and records what it was sent."""
-
-    def __init__(self, replies):
-        self.replies = list(replies)
-        self.requests = []
-
-    def complete(self, messages, tools=(), *, system=None):
-        self.requests.append({"messages": list(messages), "tools": list(tools), "system": system})
-        return self.replies.pop(0)
-
-
-def _policy(client, **kwargs):
-    kwargs.setdefault("env", {})
-    return LlmPolicy(client=client, **kwargs)
-
-
-def _move(targets=None, *, note="the arm is at rest; inch the named joint", text=None, usage=None):
-    from XPolicyLab.policy.Agent_P3.wire import Reply
-
-    if targets is None:
-        targets = {"left_j0": 0.0}
-    arguments = json.dumps({"targets": targets, "note": note})
-    return Reply(
-        text=text,
-        tool_name="move_joints",
-        tool_arguments=arguments,
-        usage=usage or {},
+def _spec(control_hz=25.0):
+    labels = tuple(
+        [f"left_joint{i}" for i in range(1, 7)]
+        + ["left_gripper"]
+        + [f"right_joint{i}" for i in range(1, 7)]
+        + ["right_gripper"]
+    )
+    return RoboDojoActionSpec(
+        labels=labels,
+        low=np.array([-10.0] * 6 + [0.0] + [-10.0] * 6 + [0.0]),
+        high=np.array([10.0] * 5 + [3.14, 1.0] + [10.0] * 5 + [3.14, 1.0]),
+        control_hz=control_hz,
+        docs="dual ARX X5",
     )
 
 
-def _stop(name, *, summary="", reason="", hindsight="none", text=None, usage=None):
-    from XPolicyLab.policy.Agent_P3.wire import Reply
+def _move(targets=None, *, note="at rest; move one joint", text=None):
+    return {
+        "choices": [
+            {
+                "message": {
+                    "content": text,
+                    "tool_calls": [
+                        {
+                            "id": "call-move",
+                            "type": "function",
+                            "function": {
+                                "name": "move_joints",
+                                "arguments": json.dumps(
+                                    {
+                                        "targets": targets or {"left_joint1": 0.0},
+                                        "note": note,
+                                    }
+                                ),
+                            },
+                        }
+                    ],
+                }
+            }
+        ]
+    }
 
-    payload = {"hindsight": hindsight}
+
+def _stop(name, *, summary="", reason="", hindsight="none"):
+    arguments = {"hindsight": hindsight}
     if name == "done":
-        payload["summary"] = summary or "finished"
+        arguments["summary"] = summary or "finished"
     else:
-        payload["reason"] = reason or "stuck"
-    return Reply(
-        text=text,
-        tool_name=name,
-        tool_arguments=json.dumps(payload),
-        usage=usage or {},
+        arguments["reason"] = reason or "stuck"
+    return {
+        "choices": [
+            {
+                "message": {
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call-stop",
+                            "type": "function",
+                            "function": {
+                                "name": name,
+                                "arguments": json.dumps(arguments),
+                            },
+                        }
+                    ],
+                }
+            }
+        ]
+    }
+
+
+def _policy(payloads, *, env=None, seen=None):
+    queue = list(payloads)
+    requests = [] if seen is None else seen
+
+    def handler(request):
+        requests.append(json.loads(request.content))
+        return httpx.Response(200, json=queue.pop(0))
+
+    config = {
+        "P3_MODEL": "test-model",
+        "P3_BASE_URL": "https://example.test/v1",
+        "P3_API_KEY_ENV": "TEST_KEY",
+        "TEST_KEY": "secret",
+        "P3_WIRE_CAPTURE": "false",
+    }
+    if env:
+        config.update(env)
+    return LlmPolicy(
+        action_spec=_spec(),
+        env=config,
+        transport=httpx.MockTransport(handler),
     )
 
 
@@ -146,281 +190,115 @@ def test_an_empty_chunk_cannot_be_constructed():
         ActionChunk(actions=[])
 
 
-# --- provider resolution ----------------------------------------------------
-
-
-def test_a_known_prefix_resolves_to_its_native_wire():
-    provider = resolve_provider(
-        "anthropic/claude-sonnet-4", env={"ANTHROPIC_API_KEY": "k"}
-    )
-
-    assert provider.base_url == "https://api.anthropic.com/v1"
-    assert provider.model == "claude-sonnet-4"
-    assert provider.wire == "messages"
-
-
-def test_a_missing_direct_key_falls_back_to_the_router_with_the_full_name():
-    provider = resolve_provider(
-        "anthropic/claude-sonnet-4", env={"OPENROUTER_API_KEY": "k"}
-    )
-
-    assert provider.base_url == "https://openrouter.ai/api/v1"
-    assert provider.model == "anthropic/claude-sonnet-4"
-    assert provider.wire == "chat"
-
-
-def test_an_explicit_base_url_wins_over_the_prefix_table():
-    provider = resolve_provider(
-        "anthropic/claude-sonnet-4",
-        env={
-            "ANTHROPIC_API_KEY": "k",
-            "P3_BASE_URL": "http://localhost:8000/v1",
-        },
-    )
-
-    assert provider.base_url == "http://localhost:8000/v1"
-    assert provider.wire == "chat"
-
-
-def test_no_key_anywhere_is_a_config_error_that_names_the_fix():
-    with pytest.raises(ConfigError) as failure:
-        resolve_provider("anthropic/claude-sonnet-4", env={})
-
-    message = str(failure.value)
-    assert "ANTHROPIC_API_KEY" in message
-    assert "OPENROUTER_API_KEY" in message
-
-
-def test_no_model_at_all_is_a_config_error():
-    with pytest.raises(ConfigError, match="P3_MODEL"):
-        resolve_provider(env={})
-
-
-# --- wires ------------------------------------------------------------------
-
-
-def _capture_transport(status=200, payload=None):
-    seen = {}
-
-    def transport(url, headers, body, timeout):
-        seen["url"] = url
-        seen["headers"] = dict(headers)
-        seen["body"] = json.loads(body.decode("utf-8"))
-        seen["timeout"] = timeout
-        return status, json.dumps(payload or {}).encode("utf-8")
-
-    return transport, seen
-
-
-def test_the_chat_wire_requires_a_tool_call_and_reads_usage():
-    payload = {
-        "choices": [
-            {
-                "message": {
-                    "content": "moving",
-                    "tool_calls": [
-                        {"function": {"name": "act", "arguments": '{"actions": []}'}}
-                    ],
-                }
-            }
-        ],
-        "usage": {
-            "prompt_tokens": 100,
-            "completion_tokens": 20,
-            "prompt_tokens_details": {"cached_tokens": 80},
-        },
-    }
-    transport, seen = _capture_transport(payload=payload)
-    client = ChatClient(
-        Provider("m", "http://x/v1", "key", "chat"), transport=transport
-    )
-
-    reply = client.complete(
-        [{"role": "user", "content": "hi"}],
-        [ActionSpace().tool_schema()],
-        system="sys",
-    )
-
-    assert seen["url"] == "http://x/v1/chat/completions"
-    assert seen["headers"]["Authorization"] == "Bearer key"
-    assert seen["body"]["messages"][0] == {"role": "system", "content": "sys"}
-    assert seen["body"]["tool_choice"] == "required"
-    assert reply.tool_name == "act"
-    assert reply.usage["cache_read_input_tokens"] == 80
-
-
-def test_the_messages_wire_caches_the_system_block_and_translates_images():
-    payload = {
-        "content": [
-            {"type": "text", "text": "thinking"},
-            {"type": "tool_use", "name": "act", "input": {"actions": [[0.0]]}},
-        ],
-        "usage": {
-            "input_tokens": 10,
-            "output_tokens": 4,
-            "cache_read_input_tokens": 7,
-        },
-    }
-    transport, seen = _capture_transport(payload=payload)
-    client = MessagesClient(
-        Provider("m", "http://x/v1", "key", "messages"), transport=transport
-    )
-
-    reply = client.complete(
-        [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": "look"},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": "data:image/png;base64,AAA"},
-                    },
-                ],
-            }
-        ],
-        [ActionSpace().tool_schema()],
-        system="sys",
-    )
-
-    assert seen["url"] == "http://x/v1/messages"
-    assert seen["headers"]["x-api-key"] == "key"
-    assert seen["body"]["system"][0]["cache_control"] == {"type": "ephemeral"}
-    image = seen["body"]["messages"][0]["content"][1]
-    assert image["source"] == {
-        "type": "base64",
-        "media_type": "image/png",
-        "data": "AAA",
-    }
-    assert seen["body"]["tools"][0]["input_schema"]["type"] == "object"
-    assert reply.tool_name == "act"
-    assert reply.usage["cache_read_input_tokens"] == 7
-
-
-def test_a_rate_limit_is_retried_with_exponential_backoff():
-    attempts = []
-    slept = []
-
-    def transport(url, headers, body, timeout):
-        attempts.append(1)
-        if len(attempts) < 3:
-            return 429, b"slow down"
-        return 200, json.dumps({"choices": [{"message": {"content": "ok"}}]}).encode()
-
-    client = ChatClient(
-        Provider("m", "http://x/v1", "k", "chat"),
-        transport=transport,
-        sleep=slept.append,
-    )
-
-    reply = client.complete([{"role": "user", "content": "hi"}])
-
-    assert len(attempts) == 3
-    assert slept == [1.0, 2.0]
-    assert reply.text == "ok"
-
-
-def test_a_bad_request_fails_immediately_rather_than_retrying():
-    attempts = []
-
-    def transport(url, headers, body, timeout):
-        attempts.append(1)
-        return 400, b"bad model"
-
-    client = ChatClient(
-        Provider("m", "http://x/v1", "k", "chat"), transport=transport, sleep=lambda _: None
-    )
-
-    with pytest.raises(RuntimeError, match="rejected"):
-        client.complete([{"role": "user", "content": "hi"}])
-    assert len(attempts) == 1
-
-
 # --- inspect-robots-agent protocol ------------------------------------------
 
 
 def test_the_llm_policy_satisfies_the_same_contract_a_vla_fills():
-    assert isinstance(_policy(_ScriptedClient([])), Policy)
+    policy = _policy([])
+    assert isinstance(policy, Policy)
+    assert policy.inner.__class__.__module__ == "inspect_robots_agent.policy"
 
 
 def test_the_default_tools_are_move_joints_done_and_give_up():
-    client = _ScriptedClient([_move()])
-    policy = _policy(client)
+    seen = []
+    policy = _policy([_move()], seen=seen)
     policy.act(_observation())
-    names = [tool["function"]["name"] for tool in client.requests[0]["tools"]]
+    names = [tool["function"]["name"] for tool in seen[0]["tools"]]
     assert names == ["move_joints", "done", "give_up"]
-    assert "note" in client.requests[0]["tools"][0]["function"]["parameters"]["required"]
-    assert "controlling a real robot embodiment named 'arx_x5'" in client.requests[0]["system"]
-    assert "Embodiment notes:" in client.requests[0]["system"]
-    assert "budget of 100 LLM calls" in client.requests[0]["system"]
+    assert "note" in seen[0]["tools"][0]["function"]["parameters"]["required"]
+    system = seen[0]["messages"][0]["content"]
+    assert "controlling a real robot embodiment named 'robodojo-arx-x5'" in system
+    assert "Embodiment notes:" in system
+    assert "budget of 100 LLM calls" in system
 
 
 def test_prior_learnings_are_appended_to_the_system_prompt(tmp_path):
     notes = tmp_path / "hindsight.md"
     notes.write_text("the white sphere is the ball\n", encoding="utf-8")
-    client = _ScriptedClient([_move()])
-    _policy(client, env={"P3_PRIOR_LEARNINGS": str(notes)}).act(_observation())
-    assert "Prior learnings:" in client.requests[0]["system"]
-    assert "white sphere is the ball" in client.requests[0]["system"]
+    seen = []
+    _policy(
+        [_move()],
+        env={"P3_PRIOR_LEARNINGS": str(notes)},
+        seen=seen,
+    ).act(_observation())
+    system = seen[0]["messages"][0]["content"]
+    assert "Notes from a previous attempt" in system
+    assert "white sphere is the ball" in system
 
 
-def test_named_targets_are_interpolated_from_the_current_state():
-    client = _ScriptedClient([_move({"left_j0": 0.2}, text="inching")])
-    policy = _policy(client)
+def test_named_targets_use_upstream_speed_limited_interpolation():
+    policy = _policy([_move({"left_joint1": 0.2}, text="inching")])
 
     chunk = policy.act(_observation())
 
-    assert len(chunk) > 1
+    # Range is 20 rad, max_speed_frac=.1 at 25 Hz => .08 rad/control step.
+    assert len(chunk) == 3
     last = chunk.actions[-1].data["left_arm_joint_state"]
     assert last[0] == pytest.approx(0.2)
     assert last[1:].tolist() == pytest.approx([0, 0, 0, 0, 0])
     assert chunk.actions[-1].meta.get("chunk_final") is True
-    assert chunk.reasoning == "inching"
+    assert chunk.control_hz == 25.0
     assert policy.calls == 1
 
 
-def test_the_request_labels_state_with_inspect_dimension_names():
-    client = _ScriptedClient([_move()])
-    _policy(client).act(_observation())
+def test_the_request_uses_the_live_embodiment_labels_and_goal_turn():
+    seen = []
+    _policy([_move()], seen=seen).act(_observation())
 
-    text = client.requests[0]["messages"][0]["content"][0]["text"]
+    assert seen[0]["messages"][1] == {
+        "role": "user",
+        "content": "Goal: pick up the block",
+    }
+    text = seen[0]["messages"][2]["content"][0]["text"]
     assert "Instruction: pick up the block" in text
-    assert "left_j0=" in text
+    assert "left_joint1=" in text
     assert "right_gripper=" in text
-    assert text.index("left_j0=") < text.index("right_gripper=")
-    assert JOINT_LABELS[0] == "left_j0"
-    assert len(JOINT_LABELS) == 14
+    assert text.index("left_joint1=") < text.index("right_gripper=")
 
 
 def test_every_request_carries_the_current_camera_images():
-    client = _ScriptedClient([_move()])
-    _policy(client).act(_observation())
+    seen = []
+    _policy([_move()], seen=seen).act(_observation())
 
-    parts = client.requests[0]["messages"][0]["content"]
+    parts = seen[0]["messages"][2]["content"]
     images = [part for part in parts if part.get("type") == "image_url"]
     assert len(images) == 1
     assert images[0]["image_url"]["url"].startswith("data:image/png;base64,")
-    assert any(part.get("text") == "camera 'head':" for part in parts)
+    assert any(part.get("text") == "camera 'head' (step 0):" for part in parts)
+
+
+def test_metric_depth_is_forwarded_to_upstream_rendering():
+    seen = []
+    observation = replace(
+        _observation(),
+        extra={"head_depth": np.full((4, 4), 0.7, dtype=np.float32)},
+    )
+    _policy([_move()], seen=seen).act(observation)
+
+    parts = seen[0]["messages"][2]["content"]
+    assert any("depth 'head' (step 0)" in part.get("text", "") for part in parts)
+    assert len([part for part in parts if part.get("type") == "image_url"]) == 2
 
 
 def test_a_malformed_call_comes_back_as_a_tool_result_for_repair():
-    bad = _move({"not_a_joint": 0.1})
-    client = _ScriptedClient([bad, _move({"left_j0": 0.0})])
-    policy = _policy(client)
+    seen = []
+    policy = _policy(
+        [_move({"not_a_joint": 0.1}), _move({"left_joint1": 0.0})],
+        seen=seen,
+    )
 
     chunk = policy.act(_observation())
 
     assert len(chunk) == 1
     assert policy.calls == 2
     repair = next(
-        message for message in client.requests[1]["messages"] if message.get("role") == "tool"
+        message for message in seen[1]["messages"] if message.get("role") == "tool"
     )
     assert "unknown dimension" in repair["content"]
 
 
 def test_three_consecutive_tool_failures_end_the_turn():
-    client = _ScriptedClient([_move({"not_a_joint": 0.1}) for _ in range(3)])
-    policy = _policy(client)
+    policy = _policy([_move({"not_a_joint": 0.1}) for _ in range(3)])
 
     with pytest.raises(RuntimeError, match="kept failing"):
         policy.act(_observation())
@@ -428,43 +306,46 @@ def test_three_consecutive_tool_failures_end_the_turn():
 
 
 def test_prose_without_a_tool_call_is_nudged_then_rejected():
-    from XPolicyLab.policy.Agent_P3.wire import Reply
-
-    client = _ScriptedClient(
-        [Reply(text="I will move the arm", usage={}) for _ in range(3)]
-    )
-    policy = _policy(client)
+    prose = {"choices": [{"message": {"content": "I will move the arm"}}]}
+    seen = []
+    policy = _policy([prose, prose, prose], seen=seen)
 
     with pytest.raises(RuntimeError, match="no tool call"):
         policy.act(_observation())
-    assert "exactly one tool call" in client.requests[1]["messages"][-1]["content"]
+    assert "exactly one tool call" in seen[1]["messages"][-1]["content"]
 
 
 def test_a_move_past_the_playout_cap_is_a_structured_error():
-    client = _ScriptedClient(
-        [_move({"left_j0": 3.0}), _move({"left_j0": 0.0})]
+    seen = []
+    policy = _policy(
+        [_move({"left_joint1": 3.0}), _move({"left_joint1": 0.0})],
+        env={"P3_MAX_SPEED_FRAC": "0.01"},
+        seen=seen,
     )
-    policy = _policy(client, max_speed_frac=0.01, control_hz=10.0)
 
     policy.act(_observation())
 
     tool_messages = [
         message["content"]
-        for message in client.requests[1]["messages"]
+        for message in seen[1]["messages"]
         if message.get("role") == "tool"
     ]
     assert any("playout cap" in (text or "") for text in tool_messages)
 
 
 def test_image_horizon_elides_older_camera_frames():
-    client = _ScriptedClient([_move() for _ in range(3)])
-    policy = _policy(client, image_horizon=1)
+    seen = []
+    policy = _policy(
+        [_move() for _ in range(3)],
+        env={"P3_IMAGE_HORIZON": "1"},
+        seen=seen,
+    )
 
     for step in range(3):
         policy.act(_observation(step))
 
-    outgoing = client.requests[2]["messages"]
-    first_user = outgoing[0]
+    outgoing = seen[2]["messages"]
+    first_user = outgoing[2]
     assert any(
         "[1 camera frame(s) elided]" in (part.get("text") or "")
         for part in first_user["content"]
@@ -474,34 +355,18 @@ def test_image_horizon_elides_older_camera_frames():
 
 
 def test_reset_clears_the_window_between_episodes():
-    client = _ScriptedClient([_move() for _ in range(2)])
-    policy = _policy(client)
+    seen = []
+    policy = _policy([_move() for _ in range(2)], seen=seen)
 
     policy.act(_observation(0))
     policy.reset()
     policy.act(_observation(1))
 
-    assert len(client.requests[1]["messages"]) == 1
-
-
-def test_usage_accumulates_across_the_episode():
-    client = _ScriptedClient(
-        [
-            _move(usage={"input_tokens": 10, "output_tokens": 2}),
-            _move(usage={"input_tokens": 7, "output_tokens": 3}),
-        ]
-    )
-    policy = _policy(client)
-
-    policy.act(_observation(0))
-    policy.act(_observation(1))
-
-    assert policy.usage_totals == {"input_tokens": 17, "output_tokens": 5}
+    assert len(seen[1]["messages"]) == 3
 
 
 def test_llm_call_budget_forces_give_up():
-    client = _ScriptedClient([_move()])
-    policy = _policy(client, max_llm_calls=1)
+    policy = _policy([_move()], env={"P3_MAX_LLM_CALLS": "1"})
 
     policy.act(_observation(0))
     chunk = policy.act(_observation(1))
@@ -511,34 +376,59 @@ def test_llm_call_budget_forces_give_up():
 
 
 def test_done_carries_hindsight_and_stops_the_trial():
-    client = _ScriptedClient(
+    policy = _policy(
         [_stop("done", summary="grasped", hindsight="the ball is the white sphere")]
     )
-    policy = _policy(client)
 
     chunk = policy.act(_observation())
 
     assert chunk.actions[0].meta["request_stop"] is True
     assert chunk.actions[0].meta["stop_reason"] == "done"
-    assert policy._hindsight == "the ball is the white sphere"
+    assert policy.hindsight == "the ball is the white sphere"
 
 
-def test_interpolation_matches_inspect_speed_limits():
-    space = ActionSpace(JOINT_CHANNELS)
-    toolset = build_toolset(space, control_hz=10.0, max_speed_frac=0.1)
-    from XPolicyLab.policy.Agent_P3.motion import ToolCall
+def test_audit_config_pins_the_exact_upstream_strategy_versions():
+    config = _policy([]).audit_config()
+    assert config["adapter"] == "inspect-robots-agent"
+    assert config["inspect_robots_version"] == "0.58.0"
+    assert config["inspect_robots_agent_version"] == "0.26.0"
+    assert config["embodiment"]["control_hz"] == 25.0
+    assert config["upstream_policy_config"]["images"] == "always"
+    assert config["upstream_policy_config"]["depth"] == "render"
 
-    result = toolset.execute(
-        ToolCall(
-            id="c",
-            name="move_joints",
-            arguments=json.dumps({"targets": {"left_j0": 0.2}, "note": "inch"}),
-        ),
-        _observation(),
+
+def test_azure_transport_changes_only_endpoint_auth_and_deployment_model():
+    seen = {}
+
+    def handler(request):
+        seen["request"] = request
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]})
+
+    transport = AzureChatTransport(
+        base_url="https://azure.test/gateway",
+        deployment="gpt-5",
+        api_version="2026-01-01",
+        inner=httpx.MockTransport(handler),
     )
-    assert result.error is None
-    # per-step limit = min(0.1/10, 0.05) * 2π ≈ 0.06283 rad; 0.2 needs 4 steps
-    assert len(result.chunk.actions) == 4
+    client = httpx.Client(
+        base_url="https://ignored.test/v1",
+        headers={"Authorization": "Bearer secret"},
+        transport=transport,
+    )
+
+    client.post(
+        "/chat/completions",
+        json={"model": "ignored", "messages": [{"role": "user", "content": "hi"}]},
+    )
+
+    request = seen["request"]
+    assert str(request.url) == (
+        "https://azure.test/gateway/openai/deployments/gpt-5/chat/completions"
+        "?api-version=2026-01-01"
+    )
+    assert request.headers["api-key"] == "secret"
+    assert "authorization" not in request.headers
+    assert json.loads(request.content)["model"] == "gpt-5"
 
 
 # --- harness integration ----------------------------------------------------
@@ -557,6 +447,7 @@ class _FakeEnv:
         self.ends_after = ends_after
         self.actions = []
         self.success = [True]
+        self.obs_manager = SimpleNamespace(collect_depth=False)
 
     def get_obs(self):
         return {
@@ -590,10 +481,14 @@ class _FakeEnv:
 
 def test_the_loop_plays_the_interpolated_chunk(monkeypatch):
     env = _FakeEnv(ends_after=2)
-    client = _ScriptedClient([_move() for _ in range(8)])
+    policy = _policy([_move() for _ in range(8)])
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Agent_P3.deploy._action_spec",
+        lambda task_env: _spec(),
+    )
     monkeypatch.setattr(
         "XPolicyLab.policy.Agent_P3.deploy.LlmPolicy",
-        lambda: _policy(client),
+        lambda **kwargs: policy,
     )
 
     eval_one_episode(env, model_client=None)
@@ -602,39 +497,16 @@ def test_the_loop_plays_the_interpolated_chunk(monkeypatch):
     assert env.actions[0]["left_arm_joint_state"][0] == pytest.approx(0.0)
 
 
-def test_the_observation_carries_the_remaining_step_budget(monkeypatch):
-    env = _FakeEnv(ends_after=1)
-    client = _ScriptedClient([_move() for _ in range(2)])
-    monkeypatch.setattr(
-        "XPolicyLab.policy.Agent_P3.deploy.LlmPolicy",
-        lambda: _policy(client),
-    )
-
-    eval_one_episode(env, model_client=None)
-
-    assert "20 steps remain" in client.requests[0]["messages"][0]["content"][0]["text"]
-
-
-def test_take_action_cnt_as_a_list_still_computes_remaining(monkeypatch):
-    env = _FakeEnv(ends_after=99)
-    env.take_action_cnt = [5]
-    client = _ScriptedClient([_stop("give_up", reason="blocked")])
-    monkeypatch.setattr(
-        "XPolicyLab.policy.Agent_P3.deploy.LlmPolicy",
-        lambda: _policy(client),
-    )
-
-    eval_one_episode(env, model_client=None)
-
-    assert "15 steps remain" in client.requests[0]["messages"][0]["content"][0]["text"]
-
-
 def test_give_up_marks_the_episode_failed(monkeypatch):
     env = _FakeEnv(ends_after=99)
-    client = _ScriptedClient([_stop("give_up", reason="blocked")])
+    policy = _policy([_stop("give_up", reason="blocked")])
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Agent_P3.deploy._action_spec",
+        lambda task_env: _spec(),
+    )
     monkeypatch.setattr(
         "XPolicyLab.policy.Agent_P3.deploy.LlmPolicy",
-        lambda: _policy(client),
+        lambda **kwargs: policy,
     )
 
     eval_one_episode(env, model_client=None)
@@ -657,17 +529,59 @@ def test_p3_has_no_vla_to_call():
         Model().get_action()
 
 
-def test_images_still_encode_where_pillow_is_missing():
-    """The eval environments do not all ship Pillow, so the fallback must work."""
-    from XPolicyLab.policy.Agent_P3.policy import _encode_png
+class _Tensor:
+    def __init__(self, array):
+        self.array = np.asarray(array)
 
-    pixels = np.arange(8 * 6 * 3, dtype=np.uint8).reshape(8, 6, 3)
+    def __getitem__(self, item):
+        normalized = tuple(
+            np.asarray(index) if isinstance(index, list) else index
+            for index in (item if isinstance(item, tuple) else (item,))
+        )
+        return _Tensor(self.array[normalized])
 
-    raw = _encode_png(pixels)
+    def detach(self):
+        return self
 
-    assert raw.startswith(b"\x89PNG\r\n\x1a\n")
-    pillow = pytest.importorskip("PIL.Image")
-    import io
+    def cpu(self):
+        return self
 
-    decoded = np.asarray(pillow.open(io.BytesIO(raw)).convert("RGB"))
-    assert np.array_equal(decoded, pixels)
+    def numpy(self):
+        return self.array
+
+
+def test_action_spec_comes_from_the_live_articulation_and_observation_rate():
+    left = SimpleNamespace(
+        type="target",
+        arm_name="left_arm",
+        arm_joint_indices=list(range(6)),
+        arm_joints_name=[f"joint{i}" for i in range(1, 7)],
+    )
+    right = SimpleNamespace(
+        type="target",
+        arm_name="right_arm",
+        arm_joint_indices=list(range(6)),
+        arm_joints_name=[f"joint{i}" for i in range(1, 7)],
+    )
+    limits = np.stack(
+        [np.array([-10.0, 10.0])] * 5 + [np.array([-3.14, 3.14])]
+    )
+    manager = SimpleNamespace(
+        robot_list=[left, right],
+        robot_key=[
+            SimpleNamespace(data=SimpleNamespace(soft_joint_pos_limits=_Tensor([limits]))),
+            SimpleNamespace(data=SimpleNamespace(soft_joint_pos_limits=_Tensor([limits]))),
+        ],
+    )
+    env = SimpleNamespace(
+        robot_manager=manager,
+        obs_manager=SimpleNamespace(collect_freq=25),
+    )
+
+    spec = _action_spec(env)
+
+    assert spec.labels[0] == "left_joint1"
+    assert spec.labels[-1] == "right_gripper"
+    assert spec.control_hz == 25.0
+    assert spec.low.tolist() == [-10.0] * 5 + [-3.14, 0.0] + [-10.0] * 5 + [-3.14, 0.0]
+    assert spec.high.tolist() == [10.0] * 5 + [3.14, 1.0] + [10.0] * 5 + [3.14, 1.0]

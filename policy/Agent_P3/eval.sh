@@ -20,7 +20,11 @@ CLIENT_SCRIPT="${SCRIPT_DIR}/setup_eval_env_client.sh"
 
 policy_server_port=$(bash "${UTILS_DIR}/get_free_port.sh")
 policy_server_ip=localhost
-additional_info="condition=L5-inspect-agent,model=${P3_MODEL:-},max_llm_calls=${P3_MAX_LLM_CALLS:-100},action_type=${action_type}"
+export P3_TASK_NAME="${task_name}"
+export P3_LAYOUT_ID="${P3_LAYOUT_ID:-${seed}}"
+export ROBODOJO_RUN_ID="${ROBODOJO_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)}"
+export P3_TRACE_DIR="${P3_TRACE_DIR:-${XPL_ROOT}/experiments/l5-inspect-agent/${task_name}/seed-${seed}/${ROBODOJO_RUN_ID}}"
+additional_info="condition=L5-inspect-agent-v0.26.0,model=${P3_MODEL:-},wire=${P3_WIRE:-auto},images=${P3_IMAGES:-always},depth=${P3_DEPTH:-render},image_horizon=${P3_IMAGE_HORIZON:-2},max_speed_frac=${P3_MAX_SPEED_FRAC:-0.1},max_llm_calls=${P3_MAX_LLM_CALLS:-100},action_type=${action_type}"
 
 cleanup() {
     if [[ -n "${SERVER_PID:-}" ]]; then

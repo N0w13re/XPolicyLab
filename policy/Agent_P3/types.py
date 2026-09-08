@@ -38,6 +38,7 @@ class Observation:
     instruction: str | None = None
     step: int = 0
     remaining_steps: int | None = None
+    extra: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -60,7 +61,9 @@ class ActionChunk:
     actions: Sequence[Action]
     reasoning: str | None = None
     latency_s: float | None = None
+    control_hz: float | None = None
     usage: Mapping[str, int] = field(default_factory=dict)
+    meta: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.actions:

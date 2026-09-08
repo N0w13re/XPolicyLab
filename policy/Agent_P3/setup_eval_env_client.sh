@@ -20,12 +20,24 @@ EVAL_ROOT="${ROBODOJO_ROOT:-${BENCH_ROOT}}"
 UTILS_DIR="${XPL_ROOT}/utils"
 policy_name="$(basename "${SCRIPT_DIR}")"
 
+require_inspect_agent() {
+    local python_bin=$1
+    if ! "${python_bin}" -c \
+        'import inspect_robots, inspect_robots_agent; assert inspect_robots.__version__ == "0.58.0"; assert inspect_robots_agent.__version__ == "0.26.0"' \
+        >/dev/null 2>&1; then
+        echo "[CLIENT][ERROR] Required inspect-robots==0.58.0 and inspect-robots-agent==0.26.0 are missing." >&2
+        echo "[CLIENT][ERROR] Run: bash ${SCRIPT_DIR}/install.sh ${python_bin}" >&2
+        exit 1
+    fi
+}
+
 if [[ "${EVAL_ENV_TYPE:-sim}" == "debug" ]] && ! command -v conda >/dev/null 2>&1; then
     debug_python="${SCRIPT_DIR}/../Pi_05/openpi/.venv/bin/python"
     if [[ ! -x "${debug_python}" ]]; then
         echo "[CLIENT][ERROR] Debug Python not found: ${debug_python}" >&2
         exit 1
     fi
+    require_inspect_agent "${debug_python}"
     export PYTHONPATH="${BENCH_ROOT}:${PYTHONPATH:-}"
     exec "${debug_python}" "${XPL_ROOT}/debug_env_client.py" \
         --bench_name "${bench_name}" \
@@ -46,6 +58,7 @@ if [[ "${EVAL_ENV_TYPE:-sim}" != "debug" ]]; then
     fi
     if [[ -x "${eval_env_path}/bin/python" ]]; then
         source "${eval_env_path}/bin/activate"
+        require_inspect_agent "${eval_env_path}/bin/python"
         native_cuda="${EVAL_ROOT}/.cuda-native"
         if [[ -e "${native_cuda}/libcuda.so.1" ]]; then
             export LD_LIBRARY_PATH="${native_cuda}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
