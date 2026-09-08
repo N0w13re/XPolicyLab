@@ -72,6 +72,7 @@ prompt or interpolation implementation to drift.
 | operator messages / approval records | `Observation.extra` | Forwarded when supplied; default RoboDojo has no operator channel |
 | generic clamp/delta approvers | upstream motion already emits in-box, step-limited absolute targets | Box/step invariants are checked before conversion; RoboDojo applies final embodiment control |
 | reporting | RoboDojo `_result.json`: `success_rate`, `eval_time`, percentage `score`, per-episode `layout_id/success/score`; videos tagged success/fail; unstable samples excluded | archived beside `p3_config.json`, transcript and wire JSONL; no Inspect scorer replaces these values |
+| multi-env batch | Inspect eval can run many scenes; RoboDojo `eval_batch=false` already forces `num_envs=1` | `eval_one_episode_batch` refuses `num_envs>1` rather than silently driving only env 0 | Equivalent harness constraint |
 
 ### RoboDojo non-regression invariants
 

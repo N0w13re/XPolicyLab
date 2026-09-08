@@ -11,6 +11,7 @@ from XPolicyLab.policy.Agent_P3.deploy import (
     _mark_incomplete_episode_failed,
     _observation as robodojo_observation,
     eval_one_episode,
+    eval_one_episode_batch,
 )
 from XPolicyLab.policy.Agent_P3.policy import (
     LlmPolicy,
@@ -757,6 +758,14 @@ def test_p3_has_no_vla_to_call():
 
     with pytest.raises(RuntimeError, match="no VLA"):
         Model({}).get_action()
+
+
+def test_batched_eval_refuses_more_than_one_environment():
+    env = _FakeEnv()
+    env.num_envs = 2
+
+    with pytest.raises(RuntimeError, match="one conversation per environment"):
+        eval_one_episode_batch(env, model_client=None)
 
 
 class _Tensor:

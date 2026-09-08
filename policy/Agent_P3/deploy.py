@@ -244,6 +244,12 @@ def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
     inspect_metadata: dict[str, Any] = {}
     trace_dir = os.environ.get("P3_TRACE_DIR")
     run_id = os.environ.get("ROBODOJO_RUN_ID", "agent-p3")
+    if not trace_dir:
+        print(
+            "[P3] P3_TRACE_DIR is unset; inspect wire capture and transcript "
+            "are not archived for this episode",
+            flush=True,
+        )
     try:
         first = _observation(TASK_ENV, policy_step)
         policy.prepare(first)
@@ -303,5 +309,11 @@ def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
 
 
 def eval_one_episode_batch(TASK_ENV: Any, model_client: Any) -> None:
-    """P3 is one conversation per environment, so batching runs a single env."""
+    """P3 is one conversation per environment; RoboDojo already forces num_envs=1."""
+    num_envs = int(getattr(TASK_ENV, "num_envs", 1) or 1)
+    if num_envs > 1:
+        raise RuntimeError(
+            "Agent_P3 is one conversation per environment; "
+            "keep eval_batch=false so RoboDojo runs a single env"
+        )
     eval_one_episode(TASK_ENV, model_client)
