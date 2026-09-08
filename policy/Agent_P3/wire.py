@@ -52,6 +52,14 @@ class Provider:
     base_url: str
     api_key: str
     wire: str
+    api_version: str | None = None
+
+
+@dataclass(frozen=True)
+class ToolCall:
+    id: str
+    name: str
+    arguments: str
 
 
 @dataclass
@@ -61,6 +69,8 @@ class Reply:
     text: str | None = None
     tool_name: str | None = None
     tool_arguments: str | None = None
+    tool_calls: list[ToolCall] = field(default_factory=list)
+    assistant_message: dict[str, Any] = field(default_factory=dict)
     usage: dict[str, int] = field(default_factory=dict)
 
 
@@ -89,6 +99,7 @@ def resolve_provider(
             base_url=resolved_url.rstrip("/"),
             api_key=env.get(key_env, ""),
             wire=wire or env.get("P3_WIRE") or "chat",
+            api_version=env.get("P3_API_VERSION"),
         )
 
     prefix, _, tail = model.partition("/")
@@ -238,13 +249,31 @@ class ChatClient(_Client):
             "output_tokens": int(usage_in.get("completion_tokens", 0)),
             "cache_read_input_tokens": int(cached),
         }
-        if not calls:
-            return Reply(text=message.get("content"), usage=usage)
-        call = calls[0]["function"]
+        parsed = [
+            ToolCall(
+                id=str(call.get("id") or f"call_{index}"),
+                name=str(call["function"]["name"]),
+                arguments=str(call["function"]["arguments"]),
+            )
+            for index, call in enumerate(calls)
+        ]
+        assistant = {
+            "role": "assistant",
+            "content": message.get("content"),
+            "tool_calls": calls,
+        }
+        if not parsed:
+            return Reply(
+                text=message.get("content"),
+                assistant_message={"role": "assistant", "content": message.get("content")},
+                usage=usage,
+            )
         return Reply(
             text=message.get("content"),
-            tool_name=str(call["name"]),
-            tool_arguments=str(call["arguments"]),
+            tool_name=parsed[0].name,
+            tool_arguments=parsed[0].arguments,
+            tool_calls=parsed,
+            assistant_message=assistant,
             usage=usage,
         )
 
@@ -280,7 +309,7 @@ class MessagesClient(_Client):
         body: dict[str, Any] = {
             "model": self.provider.model,
             "max_tokens": self.max_output_tokens,
-            "messages": [_to_anthropic_turn(turn) for turn in messages],
+            "messages": _to_anthropic_messages(messages),
         }
         if system is not None:
             body["system"] = [
@@ -308,15 +337,35 @@ class MessagesClient(_Client):
             ),
         }
         text: str | None = None
-        name: str | None = None
-        arguments: str | None = None
+        parsed: list[ToolCall] = []
+        openai_calls: list[dict[str, Any]] = []
         for block in payload.get("content") or []:
             if block.get("type") == "text" and text is None:
                 text = block.get("text")
-            elif block.get("type") == "tool_use" and name is None:
+            elif block.get("type") == "tool_use":
+                call_id = str(block.get("id") or f"call_{len(parsed)}")
                 name = str(block.get("name"))
                 arguments = json.dumps(block.get("input") or {})
-        return Reply(text=text, tool_name=name, tool_arguments=arguments, usage=usage)
+                parsed.append(ToolCall(id=call_id, name=name, arguments=arguments))
+                openai_calls.append(
+                    {
+                        "id": call_id,
+                        "type": "function",
+                        "function": {"name": name, "arguments": arguments},
+                    }
+                )
+        assistant = {"role": "assistant", "content": text}
+        if openai_calls:
+            assistant["tool_calls"] = openai_calls
+        first = parsed[0] if parsed else None
+        return Reply(
+            text=text,
+            tool_name=None if first is None else first.name,
+            tool_arguments=None if first is None else first.arguments,
+            tool_calls=parsed,
+            assistant_message=assistant,
+            usage=usage,
+        )
 
 
 def _to_anthropic_tool(tool: Mapping[str, Any]) -> dict[str, Any]:
@@ -330,12 +379,34 @@ def _to_anthropic_tool(tool: Mapping[str, Any]) -> dict[str, Any]:
 
 def _to_anthropic_turn(turn: Mapping[str, Any]) -> dict[str, Any]:
     """Translate one OpenAI-format turn into Messages content blocks."""
+    role = turn.get("role")
+    if role == "assistant" and turn.get("tool_calls"):
+        blocks: list[dict[str, Any]] = []
+        if isinstance(turn.get("content"), str) and turn["content"]:
+            blocks.append({"type": "text", "text": turn["content"]})
+        for call in turn["tool_calls"]:
+            function = call.get("function") or call
+            try:
+                parsed = json.loads(function.get("arguments") or "{}")
+            except json.JSONDecodeError:
+                parsed = {}
+            blocks.append(
+                {
+                    "type": "tool_use",
+                    "id": call.get("id") or "call_0",
+                    "name": function["name"],
+                    "input": parsed if isinstance(parsed, dict) else {},
+                }
+            )
+        return {"role": "assistant", "content": blocks}
     content = turn.get("content")
     if isinstance(content, str):
         return {"role": turn["role"], "content": content}
-    blocks: list[dict[str, Any]] = []
+    blocks = []
     for part in content or []:
-        if part.get("type") == "text":
+        if part.get("type") == "tool_result":
+            blocks.append(dict(part))
+        elif part.get("type") == "text":
             blocks.append({"type": "text", "text": part["text"]})
         elif part.get("type") == "image_url":
             url = part["image_url"]["url"]
@@ -354,11 +425,67 @@ def _to_anthropic_turn(turn: Mapping[str, Any]) -> dict[str, Any]:
     return {"role": turn["role"], "content": blocks}
 
 
+def _to_anthropic_messages(
+    messages: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Translate chat history; consecutive tool turns merge into one user message."""
+    translated: list[dict[str, Any]] = []
+    pending: list[dict[str, Any]] = []
+
+    def flush() -> None:
+        if pending:
+            translated.append({"role": "user", "content": list(pending)})
+            pending.clear()
+
+    for turn in messages:
+        if turn.get("role") == "tool":
+            pending.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": turn["tool_call_id"],
+                    "content": turn.get("content") or "",
+                }
+            )
+            continue
+        flush()
+        translated.append(_to_anthropic_turn(turn))
+    flush()
+    return translated
+
+
+class AzureChatClient(ChatClient):
+    """Azure's native deployment URL and api-key authentication."""
+
+    def _endpoint(self) -> str:
+        import urllib.parse
+
+        if not self.provider.api_version:
+            raise ConfigError(
+                "Azure chat requires P3_API_VERSION, e.g. 2024-10-21-preview."
+            )
+        model = urllib.parse.quote(self.provider.model, safe="")
+        version = urllib.parse.quote(self.provider.api_version, safe="")
+        return (
+            f"/openai/deployments/{model}/chat/completions"
+            f"?api-version={version}"
+        )
+
+    def _headers(self) -> dict[str, str]:
+        return {
+            "Content-Type": "application/json",
+            "api-key": self.provider.api_key,
+        }
+
+
 def create_client(provider: Provider, **kwargs: Any) -> _Client:
     if provider.wire == "messages":
         return MessagesClient(provider, **kwargs)
+    if provider.wire == "azure-chat":
+        return AzureChatClient(provider, **kwargs)
     if provider.wire == "chat":
         return ChatClient(provider, **kwargs)
     raise ConfigError(
-        f"Unknown wire {provider.wire!r}. fix: set P3_WIRE to 'chat' or 'messages'."
+        f"Unknown wire {provider.wire!r}. fix: set P3_WIRE to 'chat', "
+        "'messages', or 'azure-chat'."
     )
+

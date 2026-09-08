@@ -6,7 +6,8 @@ from XPolicyLab.policy.Agent_P3.deploy import (
     _mark_incomplete_episode_failed,
     eval_one_episode,
 )
-from XPolicyLab.policy.Agent_P3.policy import ActionDecodeError, LlmPolicy
+from XPolicyLab.policy.Agent_P3.motion import JOINT_LABELS, build_toolset
+from XPolicyLab.policy.Agent_P3.policy import LlmPolicy
 from XPolicyLab.policy.Agent_P3.types import (
     EE_CHANNELS,
     JOINT_CHANNELS,
@@ -50,14 +51,37 @@ class _ScriptedClient:
         return self.replies.pop(0)
 
 
-def _reply(actions=None, *, text=None, name="act", usage=None):
+def _policy(client, **kwargs):
+    kwargs.setdefault("env", {})
+    return LlmPolicy(client=client, **kwargs)
+
+
+def _move(targets=None, *, note="the arm is at rest; inch the named joint", text=None, usage=None):
     from XPolicyLab.policy.Agent_P3.wire import Reply
 
-    arguments = None if actions is None else json.dumps({"actions": actions})
+    if targets is None:
+        targets = {"left_j0": 0.0}
+    arguments = json.dumps({"targets": targets, "note": note})
     return Reply(
         text=text,
-        tool_name=None if actions is None and name == "act" else name,
+        tool_name="move_joints",
         tool_arguments=arguments,
+        usage=usage or {},
+    )
+
+
+def _stop(name, *, summary="", reason="", hindsight="none", text=None, usage=None):
+    from XPolicyLab.policy.Agent_P3.wire import Reply
+
+    payload = {"hindsight": hindsight}
+    if name == "done":
+        payload["summary"] = summary or "finished"
+    else:
+        payload["reason"] = reason or "stuck"
+    return Reply(
+        text=text,
+        tool_name=name,
+        tool_arguments=json.dumps(payload),
         usage=usage or {},
     )
 
@@ -312,113 +336,146 @@ def test_a_bad_request_fails_immediately_rather_than_retrying():
     assert len(attempts) == 1
 
 
-# --- policy -----------------------------------------------------------------
+# --- inspect-robots-agent protocol ------------------------------------------
 
 
 def test_the_llm_policy_satisfies_the_same_contract_a_vla_fills():
-    assert isinstance(LlmPolicy(client=_ScriptedClient([])), Policy)
+    assert isinstance(_policy(_ScriptedClient([])), Policy)
 
 
-def test_a_tool_call_becomes_the_action_chunk_the_harness_runs():
-    client = _ScriptedClient(
-        [_reply([[0.1] * 14], text="approaching", usage={"input_tokens": 5})]
-    )
-    policy = LlmPolicy(client=client, action_space=ActionSpace(max_chunk=4))
+def test_the_default_tools_are_move_joints_done_and_give_up():
+    client = _ScriptedClient([_move()])
+    policy = _policy(client)
+    policy.act(_observation())
+    names = [tool["function"]["name"] for tool in client.requests[0]["tools"]]
+    assert names == ["move_joints", "done", "give_up"]
+    assert "note" in client.requests[0]["tools"][0]["function"]["parameters"]["required"]
+    assert "controlling a real robot embodiment named 'arx_x5'" in client.requests[0]["system"]
+    assert "Embodiment notes:" in client.requests[0]["system"]
+    assert "budget of 100 LLM calls" in client.requests[0]["system"]
+
+
+def test_prior_learnings_are_appended_to_the_system_prompt(tmp_path):
+    notes = tmp_path / "hindsight.md"
+    notes.write_text("the white sphere is the ball\n", encoding="utf-8")
+    client = _ScriptedClient([_move()])
+    _policy(client, env={"P3_PRIOR_LEARNINGS": str(notes)}).act(_observation())
+    assert "Prior learnings:" in client.requests[0]["system"]
+    assert "white sphere is the ball" in client.requests[0]["system"]
+
+
+def test_named_targets_are_interpolated_from_the_current_state():
+    client = _ScriptedClient([_move({"left_j0": 0.2}, text="inching")])
+    policy = _policy(client)
 
     chunk = policy.act(_observation())
 
-    assert len(chunk) == 1
-    assert chunk.actions[0].data["left_arm_joint_state"].tolist() == pytest.approx(
-        [0.1] * 6
-    )
-    assert chunk.reasoning == "approaching"
-    assert chunk.usage["input_tokens"] == 5
+    assert len(chunk) > 1
+    last = chunk.actions[-1].data["left_arm_joint_state"]
+    assert last[0] == pytest.approx(0.2)
+    assert last[1:].tolist() == pytest.approx([0, 0, 0, 0, 0])
+    assert chunk.actions[-1].meta.get("chunk_final") is True
+    assert chunk.reasoning == "inching"
     assert policy.calls == 1
 
 
-def test_the_request_shows_the_state_in_the_order_the_answer_uses():
-    client = _ScriptedClient([_reply([[0.0] * 14])])
-    policy = LlmPolicy(client=client)
-
-    policy.act(_observation())
+def test_the_request_labels_state_with_inspect_dimension_names():
+    client = _ScriptedClient([_move()])
+    _policy(client).act(_observation())
 
     text = client.requests[0]["messages"][0]["content"][0]["text"]
-    assert "left_arm_joint_state[0]" in text
-    assert "right_ee_joint_state" in text
-    assert "pick up the block" in text
-    labels = ActionSpace().flat_labels()
-    assert text.index("left_arm_joint_state[0]") < text.index("right_ee_joint_state")
-    assert len(labels) == 14
+    assert "Instruction: pick up the block" in text
+    assert "left_j0=" in text
+    assert "right_gripper=" in text
+    assert text.index("left_j0=") < text.index("right_gripper=")
+    assert JOINT_LABELS[0] == "left_j0"
+    assert len(JOINT_LABELS) == 14
 
 
 def test_every_request_carries_the_current_camera_images():
-    client = _ScriptedClient([_reply([[0.0] * 14])])
-    policy = LlmPolicy(client=client)
-
-    policy.act(_observation())
+    client = _ScriptedClient([_move()])
+    _policy(client).act(_observation())
 
     parts = client.requests[0]["messages"][0]["content"]
     images = [part for part in parts if part.get("type") == "image_url"]
     assert len(images) == 1
     assert images[0]["image_url"]["url"].startswith("data:image/png;base64,")
+    assert any(part.get("text") == "camera 'head':" for part in parts)
 
 
-def test_a_malformed_action_is_sent_back_for_repair_with_the_reason():
-    client = _ScriptedClient([_reply([[0.0] * 3]), _reply([[0.0] * 14])])
-    policy = LlmPolicy(client=client)
+def test_a_malformed_call_comes_back_as_a_tool_result_for_repair():
+    bad = _move({"not_a_joint": 0.1})
+    client = _ScriptedClient([bad, _move({"left_j0": 0.0})])
+    policy = _policy(client)
 
     chunk = policy.act(_observation())
 
     assert len(chunk) == 1
     assert policy.calls == 2
-    repair = client.requests[1]["messages"][-1]["content"]
-    assert "not executable" in repair
-    assert "expected 14" in repair
+    repair = next(
+        message for message in client.requests[1]["messages"] if message.get("role") == "tool"
+    )
+    assert "unknown dimension" in repair["content"]
 
 
-def test_repairs_are_bounded_and_the_failure_names_the_last_reason():
-    client = _ScriptedClient([_reply([[0.0] * 3]) for _ in range(3)])
-    policy = LlmPolicy(client=client, max_repairs=2)
+def test_three_consecutive_tool_failures_end_the_turn():
+    client = _ScriptedClient([_move({"not_a_joint": 0.1}) for _ in range(3)])
+    policy = _policy(client)
 
-    with pytest.raises(ActionDecodeError, match="3 attempts"):
+    with pytest.raises(RuntimeError, match="kept failing"):
         policy.act(_observation())
     assert policy.calls == 3
 
 
-def test_prose_without_a_tool_call_is_rejected():
-    client = _ScriptedClient([_reply(None, text="I will move the arm")] * 2)
-    policy = LlmPolicy(client=client, max_repairs=1)
+def test_prose_without_a_tool_call_is_nudged_then_rejected():
+    from XPolicyLab.policy.Agent_P3.wire import Reply
 
-    with pytest.raises(ActionDecodeError, match="No `act` call"):
+    client = _ScriptedClient(
+        [Reply(text="I will move the arm", usage={}) for _ in range(3)]
+    )
+    policy = _policy(client)
+
+    with pytest.raises(RuntimeError, match="no tool call"):
         policy.act(_observation())
+    assert "exactly one tool call" in client.requests[1]["messages"][-1]["content"]
 
 
-def test_a_chunk_longer_than_the_condition_allows_is_rejected():
-    client = _ScriptedClient([_reply([[0.0] * 14] * 5), _reply([[0.0] * 14])])
-    policy = LlmPolicy(client=client, action_space=ActionSpace(max_chunk=2))
+def test_a_move_past_the_playout_cap_is_a_structured_error():
+    client = _ScriptedClient(
+        [_move({"left_j0": 3.0}), _move({"left_j0": 0.0})]
+    )
+    policy = _policy(client, max_speed_frac=0.01, control_hz=10.0)
 
     policy.act(_observation())
 
-    assert "exceeds the limit of 2" in client.requests[1]["messages"][-1]["content"]
+    tool_messages = [
+        message["content"]
+        for message in client.requests[1]["messages"]
+        if message.get("role") == "tool"
+    ]
+    assert any("playout cap" in (text or "") for text in tool_messages)
 
 
-def test_history_keeps_intent_but_never_replays_stale_images():
-    client = _ScriptedClient([_reply([[0.0] * 14], text=f"turn {i}") for i in range(3)])
-    policy = LlmPolicy(client=client, history_turns=1)
+def test_image_horizon_elides_older_camera_frames():
+    client = _ScriptedClient([_move() for _ in range(3)])
+    policy = _policy(client, image_horizon=1)
 
     for step in range(3):
         policy.act(_observation(step))
 
-    carried = client.requests[2]["messages"][:-1]
-    assert carried, "the window should carry the previous turn"
-    for turn in carried:
-        assert isinstance(turn["content"], str)
-    assert len(carried) == 2
+    outgoing = client.requests[2]["messages"]
+    first_user = outgoing[0]
+    assert any(
+        "[1 camera frame(s) elided]" in (part.get("text") or "")
+        for part in first_user["content"]
+    )
+    last_user = outgoing[-1]
+    assert any(part.get("type") == "image_url" for part in last_user["content"])
 
 
 def test_reset_clears_the_window_between_episodes():
-    client = _ScriptedClient([_reply([[0.0] * 14]) for _ in range(2)])
-    policy = LlmPolicy(client=client, history_turns=2)
+    client = _ScriptedClient([_move() for _ in range(2)])
+    policy = _policy(client)
 
     policy.act(_observation(0))
     policy.reset()
@@ -430,16 +487,58 @@ def test_reset_clears_the_window_between_episodes():
 def test_usage_accumulates_across_the_episode():
     client = _ScriptedClient(
         [
-            _reply([[0.0] * 14], usage={"input_tokens": 10, "output_tokens": 2}),
-            _reply([[0.0] * 14], usage={"input_tokens": 7, "output_tokens": 3}),
+            _move(usage={"input_tokens": 10, "output_tokens": 2}),
+            _move(usage={"input_tokens": 7, "output_tokens": 3}),
         ]
     )
-    policy = LlmPolicy(client=client)
+    policy = _policy(client)
 
     policy.act(_observation(0))
     policy.act(_observation(1))
 
     assert policy.usage_totals == {"input_tokens": 17, "output_tokens": 5}
+
+
+def test_llm_call_budget_forces_give_up():
+    client = _ScriptedClient([_move()])
+    policy = _policy(client, max_llm_calls=1)
+
+    policy.act(_observation(0))
+    chunk = policy.act(_observation(1))
+
+    assert chunk.actions[0].meta.get("stop_reason") == "give_up"
+    assert policy.calls == 1
+
+
+def test_done_carries_hindsight_and_stops_the_trial():
+    client = _ScriptedClient(
+        [_stop("done", summary="grasped", hindsight="the ball is the white sphere")]
+    )
+    policy = _policy(client)
+
+    chunk = policy.act(_observation())
+
+    assert chunk.actions[0].meta["request_stop"] is True
+    assert chunk.actions[0].meta["stop_reason"] == "done"
+    assert policy._hindsight == "the ball is the white sphere"
+
+
+def test_interpolation_matches_inspect_speed_limits():
+    space = ActionSpace(JOINT_CHANNELS)
+    toolset = build_toolset(space, control_hz=10.0, max_speed_frac=0.1)
+    from XPolicyLab.policy.Agent_P3.motion import ToolCall
+
+    result = toolset.execute(
+        ToolCall(
+            id="c",
+            name="move_joints",
+            arguments=json.dumps({"targets": {"left_j0": 0.2}, "note": "inch"}),
+        ),
+        _observation(),
+    )
+    assert result.error is None
+    # per-step limit = min(0.1/10, 0.05) * 2π ≈ 0.06283 rad; 0.2 needs 4 steps
+    assert len(result.chunk.actions) == 4
 
 
 # --- harness integration ----------------------------------------------------
@@ -472,40 +571,75 @@ class _FakeEnv:
 
     def take_action(self, action):
         self.actions.append(action)
-        self.take_action_cnt += 1
+        if isinstance(self.take_action_cnt, list):
+            self.take_action_cnt[0] += 1
+        else:
+            self.take_action_cnt += 1
 
     def is_episode_end(self):
-        return self.take_action_cnt >= self.ends_after
+        used = (
+            self.take_action_cnt[0]
+            if isinstance(self.take_action_cnt, list)
+            else self.take_action_cnt
+        )
+        return used >= self.ends_after
 
     def get_running_env_idx_list(self):
         return [0]
 
 
-def test_the_loop_sends_the_models_numbers_to_the_environment_unchanged(monkeypatch):
+def test_the_loop_plays_the_interpolated_chunk(monkeypatch):
     env = _FakeEnv(ends_after=2)
-    client = _ScriptedClient([_reply([[0.25] * 14]) for _ in range(4)])
+    client = _ScriptedClient([_move() for _ in range(8)])
     monkeypatch.setattr(
         "XPolicyLab.policy.Agent_P3.deploy.LlmPolicy",
-        lambda: LlmPolicy(client=client),
+        lambda: _policy(client),
     )
 
     eval_one_episode(env, model_client=None)
 
     assert len(env.actions) == 2
-    assert env.actions[0]["left_arm_joint_state"].tolist() == pytest.approx([0.25] * 6)
+    assert env.actions[0]["left_arm_joint_state"][0] == pytest.approx(0.0)
 
 
 def test_the_observation_carries_the_remaining_step_budget(monkeypatch):
     env = _FakeEnv(ends_after=1)
-    client = _ScriptedClient([_reply([[0.0] * 14]) for _ in range(2)])
+    client = _ScriptedClient([_move() for _ in range(2)])
     monkeypatch.setattr(
         "XPolicyLab.policy.Agent_P3.deploy.LlmPolicy",
-        lambda: LlmPolicy(client=client),
+        lambda: _policy(client),
     )
 
     eval_one_episode(env, model_client=None)
 
     assert "20 steps remain" in client.requests[0]["messages"][0]["content"][0]["text"]
+
+
+def test_take_action_cnt_as_a_list_still_computes_remaining(monkeypatch):
+    env = _FakeEnv(ends_after=99)
+    env.take_action_cnt = [5]
+    client = _ScriptedClient([_stop("give_up", reason="blocked")])
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Agent_P3.deploy.LlmPolicy",
+        lambda: _policy(client),
+    )
+
+    eval_one_episode(env, model_client=None)
+
+    assert "15 steps remain" in client.requests[0]["messages"][0]["content"][0]["text"]
+
+
+def test_give_up_marks_the_episode_failed(monkeypatch):
+    env = _FakeEnv(ends_after=99)
+    client = _ScriptedClient([_stop("give_up", reason="blocked")])
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Agent_P3.deploy.LlmPolicy",
+        lambda: _policy(client),
+    )
+
+    eval_one_episode(env, model_client=None)
+
+    assert env.success == [False]
 
 
 def test_stopping_before_the_official_end_is_recorded_as_a_failure():

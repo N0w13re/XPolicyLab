@@ -45,16 +45,16 @@ class Action:
     """One environment action, already in websocket channel form."""
 
     data: Mapping[str, np.ndarray]
+    meta: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
 class ActionChunk:
     """Actions executed open-loop before the policy is consulted again.
 
-    Chunk length is the P3 handoff granularity and a reported condition: one
-    action is closed-loop control at the simulator's rate, fifty matches a
-    Pi_05 chunk. `reasoning` carries whatever the model said alongside the
-    call, for the transcript only.
+    For the inspect-robots-agent protocol a chunk is one speed-limited
+    interpolant (or a stop hold), not a raw per-control-step dump. `reasoning`
+    carries whatever the model said alongside the call, for the transcript only.
     """
 
     actions: Sequence[Action]

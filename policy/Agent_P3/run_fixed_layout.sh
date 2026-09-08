@@ -24,10 +24,9 @@ export ROBODOJO_NUM_ENVS=1
 export ROBODOJO_ACTION_TYPE="${P3_ACTION_TYPE:-joint}"
 export ROBODOJO_SIM_ENV="${ROBODOJO_ROOT:-${XPL_ROOT}/../RoboDojo-eval}/.venv"
 export P3_TRACE_DIR="${P3_TRACE_DIR:-/tmp/xpolicylab-p3/${run_id}}"
-export P3_MAX_CHUNK="${P3_MAX_CHUNK:-1}"
 mkdir -p "${P3_TRACE_DIR}"
 
-echo "[P3] model=${P3_MODEL} chunk=${P3_MAX_CHUNK} trace=${P3_TRACE_DIR}"
+echo "[P3] model=${P3_MODEL} max_llm_calls=${P3_MAX_LLM_CALLS:-100} trace=${P3_TRACE_DIR}"
 
 bash "${XPL_ROOT}/scripts/run_robodojo_layout_range.sh" \
     Agent_P3 "${task_name}" "${layout}" \

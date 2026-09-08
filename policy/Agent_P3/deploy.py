@@ -1,4 +1,4 @@
-"""RoboDojo loop for P3: the LLM emits actions, the harness runs them.
+"""RoboDojo loop for P3: the LLM names targets, the motion layer interpolates them.
 
 There is no `model_client` call here because P3 serves no VLA. The harness
 still passes one so every adapter has the same signature; it stays unused.
@@ -13,8 +13,17 @@ from typing import Any
 
 import numpy as np
 
-from .policy import ActionDecodeError, LlmPolicy
+from .policy import LlmPolicy
 from .types import Observation
+
+
+def _remaining_steps(task_env: Any) -> int | None:
+    limit = getattr(task_env, "step_lim", None)
+    if limit is None:
+        return None
+    counts = np.asarray(getattr(task_env, "take_action_cnt", 0)).reshape(-1)
+    used = int(counts[0]) if counts.size else 0
+    return max(0, int(limit) - used)
 
 
 def _observation(task_env: Any, policy_step: int) -> Observation:
@@ -24,16 +33,12 @@ def _observation(task_env: Any, policy_step: int) -> Observation:
         for name, view in (raw.get("observation") or {}).items()
         if isinstance(view, dict) and "rgb" in view
     }
-    remaining = None
-    limit = getattr(task_env, "step_lim", None)
-    if limit is not None:
-        remaining = max(0, int(limit) - int(getattr(task_env, "take_action_cnt", 0)))
     return Observation(
         images=images,
         state=raw.get("state") or {},
         instruction=getattr(task_env, "instruction", None),
         step=policy_step,
-        remaining_steps=remaining,
+        remaining_steps=_remaining_steps(task_env),
     )
 
 
@@ -71,6 +76,7 @@ def _write_transcript(policy: LlmPolicy, task_env: Any) -> None:
                 "layout_id": getattr(task_env, "seed", None),
                 "llm_calls": policy.calls,
                 "usage": policy.usage_totals,
+                "hindsight": policy._hindsight,
                 "turns": policy.transcript,
             },
             indent=2,
@@ -84,23 +90,33 @@ def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
     policy = LlmPolicy()
     policy.reset()
     policy_step = 0
+    stopped = False
     try:
         while not TASK_ENV.is_episode_end():
             chunk = policy.act(_observation(TASK_ENV, policy_step))
             policy_step += 1
             for action in chunk.actions:
                 TASK_ENV.take_action(dict(action.data))
+                if action.meta.get("request_stop"):
+                    stopped = True
+                    reason = action.meta.get("stop_reason")
+                    print(f"[P3] policy {reason}: {action.meta.get('stop_detail')}", flush=True)
+                    break
                 if TASK_ENV.is_episode_end():
                     break
-    except ActionDecodeError as error:
+            if stopped:
+                break
+    except RuntimeError as error:
         print(f"[P3] {error}", flush=True)
+        stopped = True
     finally:
         print(
             f"[P3] {policy.calls} llm calls, usage={policy.usage_totals}",
             flush=True,
         )
         _write_transcript(policy, TASK_ENV)
-    _mark_incomplete_episode_failed(TASK_ENV)
+    if stopped or not TASK_ENV.is_episode_end():
+        _mark_incomplete_episode_failed(TASK_ENV)
 
 
 def eval_one_episode_batch(TASK_ENV: Any, model_client: Any) -> None:

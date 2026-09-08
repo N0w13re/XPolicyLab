@@ -11,8 +11,11 @@ seed: null
 gpu_id: null
 eval_batch: false
 
-# P3 holds no VLA: no checkpoint, no policy environment, no GPU for inference.
-# The condition is defined by the model behind P3_MODEL and by P3_MAX_CHUNK.
+# L5 holds no VLA: no checkpoint, no policy environment, no GPU for inference.
+# The condition is defined by P3_MODEL and the inspect-robots-agent protocol.
+# The no-action websocket endpoint still needs the shared harness dependencies;
+# this path supplies those packages only and never loads Pi_05 weights.
+policy_uv_env_path: ../Pi_05/openpi
 result_dir: "./results/agent_p3/"
 obs_transform_pipeline: "xspark-v1.0"
 action_type: joint

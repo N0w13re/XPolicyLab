@@ -15,7 +15,7 @@ one more non-learned or pretrained layer between it and the robot:
 | P0 | Frozen VLA | Everything; there is no LLM |
 | P1 | Frozen VLA | The LLM aims the arm, then hands off; it never emits an action |
 | P2 | Our primitives | A hand-written primitive vocabulary (`move_to`, `set_gripper`; no grasp macro) |
-| P3 | The LLM | Nothing but action decoding |
+| P3 | The LLM | inspect-robots-agent tools and interpolation; no pick/place skills |
 
 P3 is the endpoint of that axis, not an extra-data appendix. Retraining a VLA
 on subgoal text used to be called P3; it is a different question and now lives
@@ -222,35 +222,32 @@ reset(scene) -> None
 act(observation) -> ActionChunk        # a VLA fills this; at P3 the LLM does
 ```
 
-The only thing between the model and the simulator is decoding its tool-call
-arguments into the action dict the websocket already accepts
-(`left_arm_joint_state` 6, `right_arm_joint_state` 6, `left_ee_joint_state` 1,
-`right_ee_joint_state` 1, or the `ee_pose` variant). No IK, no interpolation,
-no `pick`/`place`. If a condition needs one of those to work, it is P2.
+The only thing between the model and the simulator is the
+inspect-robots-agent motion layer: named partial targets (`move_joints` /
+`move_to`) interpolated at a declared safe speed, then decoded into the
+websocket action dict. No IK and no `pick`/`place`. A condition that adds those
+skills is P2.
 
 **Native control surface.** P3 uses each provider's own API rather than a
 lowest-common-denominator one, because the point is to measure the model as its
 vendor exposes it: Anthropic's `/messages` with thinking blocks and
-`cache_control`, OpenAI's `/responses` with reasoning items, and
-`/chat/completions` for everything else. The action space is a tool schema, so
-emitting an action and calling a tool are the same act for the model.
+`cache_control`, Azure/OpenAI chat completions, and `/chat/completions` for
+everything else. The tools are `move_joints` (or `move_to`), `done`, and
+`give_up`, matching inspect-robots-agent.
 
-**Action chunking.** The model returns a sequence of actions executed open-loop,
-the same handoff granularity a VLA chunk has. Chunk length is a reported
-condition, not a fixed constant: a one-action chunk is closed-loop LLM control
-at the simulator's rate, and a 50-action chunk matches Pi_05. Report which was
-used; they are different conditions.
+**Action chunking.** One LLM call produces one interpolant, whose length is
+set by distance and `max_speed_frac` (inspect defaults: 0.1 of range per
+second, 5% per-step ceiling, 10 s cap). That is a different condition from
+dumping a raw 14-D vector every simulator step. See
+[l5_inspect_robots_alignment.md](l5_inspect_robots_alignment.md).
 
 **What P3 does not get.** No GT object names, no layout JSON, no reward-script
 answers — the same observation contract as P0/P1. Privileged-pose variants are
 an upper bound, never the main table.
 
-**Executable boundary.** Every action field sent to the environment must come
-from the model's tool call or from the previous observation's state for the
-channels the call left unspecified. A condition that clamps, retargets, or
-interpolates the model's numbers is P2 wearing a P3 name. Approval that only
-*rejects* an action (safety clamp that aborts rather than edits) stays P3, and
-the rejection must be recorded.
+**Executable boundary.** Unnamed dimensions keep the current observation.
+The interpolant is the inspect-robots-agent default, not a hidden P2 skill.
+A `pick`/`place` vocabulary, an IK solver, or GT layout JSON still leave P3.
 
 ## 4. First-cut tasks
 
