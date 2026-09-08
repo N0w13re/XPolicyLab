@@ -188,12 +188,13 @@ class LlmPolicy:
         transport: Any = None,
         pre_check: Any = None,
     ) -> None:
-        if env is None:
-            if dropped := drop_unparsable_no_proxy(os.environ):  # type: ignore[arg-type]
-                print(
-                    f"[P3] dropped no_proxy entries httpx cannot parse: {dropped}",
-                    flush=True,
-                )
+        if env is None and (
+            dropped := drop_unparsable_no_proxy(os.environ)  # type: ignore[arg-type]
+        ):
+            print(
+                f"[P3] dropped no_proxy entries httpx cannot parse: {dropped}",
+                flush=True,
+            )
         self._env = dict(os.environ if env is None else env)
         drop_unparsable_no_proxy(self._env)
         kwargs, self.requested_wire = _agent_kwargs(
