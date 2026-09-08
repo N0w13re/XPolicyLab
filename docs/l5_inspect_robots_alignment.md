@@ -23,6 +23,7 @@ strategy implementation.
 | Structured repair, no-tool nudge, multiple-call closure, 3 strikes | upstream policy | malformed/no-tool tests |
 | Trial-wide `max_llm_calls=100`, forced `give_up` | upstream policy | budget test |
 | `prior_learnings`, size/hash validation | upstream policy | path forwarded; prompt and config contain hash |
+| Programmatic `pre_check` | upstream toolset; default `None` | bridge constructor forwards a callable unchanged |
 | temperature, effort, Messages max tokens/speed | upstream clients | `P3_*` values forwarded directly |
 | chat, Messages, Responses, Gemini Live, Interactions | upstream clients | `P3_WIRE` forwarded directly |
 | retries, usage normalization, transcript, replay wire capture | upstream clients / `_capture` | `on_trial_start/end`; trace metadata and versioned config |
@@ -45,7 +46,7 @@ prompt or interpolation implementation to drift.
 | task scenes / epochs | RoboDojo official task/layout/episode set | Dataset remains RoboDojo by requirement |
 | scorer | RoboDojo official `success` | `done` requests termination; environment success remains authoritative |
 | horizon | RoboDojo `step_lim` | Harness cutoff remains authoritative |
-| operator messages / approval records | no RoboDojo channel | Empty because the harness produces none, not silently discarded |
+| operator messages / approval records | `Observation.extra` | Forwarded when supplied; default RoboDojo has no operator channel |
 | generic clamp/delta approvers | upstream motion already emits in-box, step-limited absolute targets | Box/step invariants are checked before conversion; RoboDojo applies final embodiment control |
 | EvalLog/Rerun | official RoboDojo result + mp4 + `p3_config.json`, transcript, wire JSONL | Different report container, same policy audit evidence |
 

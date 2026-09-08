@@ -6,8 +6,10 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+from xml.etree import ElementTree
 
 import numpy as np
+import yaml
 
 from .policy import LlmPolicy, RoboDojoActionSpec
 from .types import Observation
@@ -15,23 +17,32 @@ from .types import Observation
 
 def _observation(task_env: Any, policy_step: int) -> Observation:
     raw = task_env.get_obs()
-    camera_views = raw.get("observation") or {}
+    camera_views = raw.get("vision") or {}
     images = {
-        name: np.asarray(view["rgb"])
+        name: np.asarray(view["color"])
         for name, view in camera_views.items()
-        if isinstance(view, dict) and "rgb" in view
+        if isinstance(view, dict) and "color" in view
     }
     depth = {
         f"{name}_depth": np.asarray(view["depth"])
         for name, view in camera_views.items()
         if isinstance(view, dict) and "depth" in view
     }
+    extra = dict(raw.get("extra") or {})
+    extra.update(depth)
+    for key in ("additional_info", "data_format_version", "env_idx"):
+        if key in raw:
+            extra[key] = raw[key]
     return Observation(
         images=images,
         state=raw.get("state") or {},
-        instruction=getattr(task_env, "instruction", None),
+        instruction=(
+            raw.get("instruction")
+            or raw.get("instructions")
+            or getattr(task_env, "instruction", None)
+        ),
         step=policy_step,
-        extra=depth,
+        extra=extra,
     )
 
 
@@ -50,7 +61,9 @@ def _action_spec(task_env: Any) -> RoboDojoActionSpec:
         )
     manager = getattr(task_env, "robot_manager", None)
     if manager is None:
-        raise RuntimeError("RoboDojo robot_manager is required to derive action bounds")
+        if os.environ.get("EVAL_ENV_TYPE") != "debug":
+            raise RuntimeError("RoboDojo robot_manager is required to derive action bounds")
+        return _debug_action_spec()
 
     labels: list[str] = []
     low: list[float] = []
@@ -101,6 +114,54 @@ def _action_spec(task_env: Any) -> RoboDojoActionSpec:
             f"dimensions={len(spec.labels)}"
         )
     return spec
+
+
+def _debug_action_spec() -> RoboDojoActionSpec:
+    """Build the debug-only spec from RoboDojo's URDF and env configuration."""
+    root_value = os.environ.get("ROBODOJO_ROOT")
+    if not root_value:
+        raise RuntimeError("ROBODOJO_ROOT is required for Agent_P3 debug evaluation")
+    root = Path(root_value)
+    urdf = ElementTree.parse(root / "Assets/Robots/x5/X5A.urdf")
+    arm_joints = []
+    for joint in urdf.getroot().findall("joint"):
+        name = joint.get("name", "")
+        if name not in {f"joint{i}" for i in range(1, 7)}:
+            continue
+        limit = joint.find("limit")
+        if limit is None:
+            raise RuntimeError(f"URDF joint {name} has no limit")
+        arm_joints.append(
+            (name, float(limit.get("lower", "")), float(limit.get("upper", "")))
+        )
+    arm_joints.sort(key=lambda item: int(item[0].removeprefix("joint")))
+    if len(arm_joints) != 6:
+        raise RuntimeError(f"expected six X5 arm joints in URDF, got {arm_joints}")
+    env_config = yaml.safe_load(
+        (root / "env_cfg/arx_x5.yml").read_text(encoding="utf-8")
+    )
+    control_hz = float(env_config["observation"]["collect_freq"])
+    labels: list[str] = []
+    low: list[float] = []
+    high: list[float] = []
+    for side in ("left", "right"):
+        labels.extend(f"{side}_{name}" for name, _, _ in arm_joints)
+        low.extend(lower for _, lower, _ in arm_joints)
+        high.extend(upper for _, _, upper in arm_joints)
+        labels.append(f"{side}_gripper")
+        low.append(0.0)
+        high.append(1.0)
+    return RoboDojoActionSpec(
+        labels=tuple(labels),
+        low=np.asarray(low, dtype=np.float64),
+        high=np.asarray(high, dtype=np.float64),
+        control_hz=control_hz,
+        docs=(
+            "RoboDojo debug dual ARX X5 joint-position control. Bounds and "
+            "control rate were loaded from Assets/Robots/x5/X5A.urdf and "
+            "env_cfg/arx_x5.yml. Grippers are normalized 0 closed to 1 open."
+        ),
+    )
 
 
 def _mark_incomplete_episode_failed(task_env: Any) -> None:
@@ -194,11 +255,13 @@ def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
                     break
             if stopped:
                 break
-    except RuntimeError as error:
+    except Exception as error:
         print(f"[P3] {error}", flush=True)
         stopped = True
         termination_reason = "policy_error"
     finally:
+        if stopped or not TASK_ENV.is_episode_end():
+            _mark_incomplete_episode_failed(TASK_ENV)
         ended = TASK_ENV.is_episode_end()
         truncated = bool(
             ended
@@ -223,8 +286,6 @@ def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
             inspect_metadata=inspect_metadata,
             termination_reason=termination_reason,
         )
-    if stopped or not TASK_ENV.is_episode_end():
-        _mark_incomplete_episode_failed(TASK_ENV)
 
 
 def eval_one_episode_batch(TASK_ENV: Any, model_client: Any) -> None:

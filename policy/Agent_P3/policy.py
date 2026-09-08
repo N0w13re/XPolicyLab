@@ -16,6 +16,7 @@ from importlib.metadata import version
 from typing import Any
 
 import numpy as np
+from inspect_robots.approver import ClampApprover, DeltaLimitApprover
 from inspect_robots.embodiment import EmbodimentInfo
 from inspect_robots.scene import Scene
 from inspect_robots.rollout import TrialRecord
@@ -80,6 +81,7 @@ def _agent_kwargs(
     env: Mapping[str, str],
     *,
     transport: Any = None,
+    pre_check: Any = None,
 ) -> tuple[dict[str, Any], str]:
     model = env.get("P3_MODEL", "")
     if not model:
@@ -96,6 +98,7 @@ def _agent_kwargs(
         "depth": env.get("P3_DEPTH", "render"),
         "wire_capture": _bool(env, "P3_WIRE_CAPTURE", True),
         "env": dict(env),
+        "pre_check": pre_check,
     }
     aliases = {
         "P3_BASE_URL": "base_url",
@@ -114,7 +117,13 @@ def _agent_kwargs(
             kwargs[destination] = value
     if "P3_EFFORT" in env:
         effort = env["P3_EFFORT"].strip()
-        kwargs["effort"] = None if effort == "" else effort
+        if effort == "":
+            kwargs["effort"] = None
+        else:
+            try:
+                kwargs["effort"] = float(effort)
+            except ValueError:
+                kwargs["effort"] = effort
     if "P3_IMAGE_HORIZON" in env:
         horizon = env["P3_IMAGE_HORIZON"].strip()
         kwargs["image_horizon"] = None if horizon.lower() == "none" else int(horizon)
@@ -156,9 +165,12 @@ class LlmPolicy:
         action_spec: RoboDojoActionSpec,
         env: Mapping[str, str] | None = None,
         transport: Any = None,
+        pre_check: Any = None,
     ) -> None:
         self._env = dict(os.environ if env is None else env)
-        kwargs, self.requested_wire = _agent_kwargs(self._env, transport=transport)
+        kwargs, self.requested_wire = _agent_kwargs(
+            self._env, transport=transport, pre_check=pre_check
+        )
         self.inner = LLMAgentPolicy(**kwargs)
         self.action_spec = action_spec
         self.action_space = ActionSpace(JOINT_CHANNELS)
@@ -169,6 +181,10 @@ class LlmPolicy:
             )
         self._bound = False
         self._scene: Scene | None = None
+        self._approvers: tuple[Any, ...] = ()
+        self._approver_store: dict[str, Any] = {}
+        self._pending_approvals: list[dict[str, Any]] = []
+        self._env_action_step = 0
 
     def _bind(self, observation: Observation) -> None:
         cameras = tuple(
@@ -212,6 +228,10 @@ class LlmPolicy:
             docs=self.action_spec.docs,
         )
         self.inner.bind(info)
+        self._approvers = (ClampApprover(box), DeltaLimitApprover(box))
+        self._approver_store.clear()
+        self._pending_approvals.clear()
+        self._env_action_step = 0
         scene = Scene(
             id=f"{self._env.get('P3_TASK_NAME', 'robodojo')}-layout-"
             f"{self._env.get('P3_LAYOUT_ID', 'unknown')}",
@@ -268,17 +288,40 @@ class LlmPolicy:
             },
             state={"joint_pos": vector},
             instruction=observation.instruction,
-            extra={"env_step": observation.step, **dict(observation.extra)},
+            extra={
+                "env_step": self._env_action_step,
+                "approvals": list(self._pending_approvals),
+                **dict(observation.extra),
+            },
         )
+        self._pending_approvals.clear()
         chunk = self.inner.act(inspect_observation)
         actions = []
         for upstream_action in chunk.actions:
+            reviewed = upstream_action
+            modifications: list[str] = []
+            for approver in self._approvers:
+                candidate = approver.review(reviewed, self._approver_store)
+                if candidate is not reviewed:
+                    if candidate.meta.get("clamped"):
+                        modifications.append("clamped")
+                    if candidate.meta.get("delta_clamped"):
+                        modifications.append("delta_clamped")
+                reviewed = candidate
+            if modifications:
+                self._pending_approvals.append(
+                    {
+                        "t": self._env_action_step,
+                        "detail": ", ".join(modifications),
+                    }
+                )
             decoded = self.action_space.decode(
-                np.asarray(upstream_action.data, dtype=np.float64).tolist()
+                np.asarray(reviewed.data, dtype=np.float64).tolist()
             )
             actions.append(
-                Action(data=decoded.data, meta=dict(upstream_action.meta))
+                Action(data=decoded.data, meta=dict(reviewed.meta))
             )
+            self._env_action_step += 1
         return ActionChunk(
             actions=actions,
             latency_s=chunk.inference_latency_s,
@@ -307,6 +350,7 @@ class LlmPolicy:
             "inspect_robots_version": version("inspect-robots"),
             "inspect_robots_agent_version": version("inspect-robots-agent"),
             "requested_wire": self.requested_wire,
+            "azure_api_version": self._env.get("P3_API_VERSION"),
             "upstream_policy_config": asdict(self.inner.config),
             "embodiment": {
                 "labels": list(self.action_spec.labels),

@@ -4,9 +4,15 @@
 set -euo pipefail
 
 python_bin=${1:-python}
-"${python_bin}" -m pip install \
-  "inspect-robots==0.58.0" \
-  "inspect-robots-agent==0.26.0"
+if command -v uv >/dev/null 2>&1; then
+  uv pip install --python "${python_bin}" \
+    "inspect-robots==0.58.0" \
+    "inspect-robots-agent==0.26.0"
+else
+  "${python_bin}" -m pip install \
+    "inspect-robots==0.58.0" \
+    "inspect-robots-agent==0.26.0"
+fi
 
 echo "[INSTALL] Agent_P3 uses inspect-robots-agent 0.26.0 / core 0.58.0."
 echo "[INSTALL] Set P3_MODEL and the matching provider key before running."

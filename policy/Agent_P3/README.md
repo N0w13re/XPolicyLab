@@ -1,5 +1,8 @@
 # Agent_P3 — L5, aligned with inspect-robots-agent
 
+**Contributor:** XPolicyLab | **Paper:** N/A | **arXiv:** N/A |
+**Original code:** [robocurve/inspect-robots](https://github.com/robocurve/inspect-robots)
+
 This directory is the **L5** condition (`policy_name` stays `Agent_P3`). It
 uses the published, pinned
 [`inspect-robots-agent`](https://github.com/robocurve/inspect-robots/tree/main/plugins/inspect-robots-agent):
@@ -10,6 +13,9 @@ package rather than in an XPolicyLab fork.
 
 The source-level comparison and harness mapping live in
 [`docs/l5_inspect_robots_alignment.md`](../../docs/l5_inspect_robots_alignment.md).
+Shared XPolicyLab conventions are in the [root README](../../README.md);
+official results are published on the
+[RoboDojo LeaderBoard](https://robodojo-benchmark.com/LeaderBoard).
 
 | Level | System | What stands between the model and the robot |
 | --- | --- | --- |
@@ -61,7 +67,24 @@ not be an aligned condition.
 | `P3_WIRE_CAPTURE` | `true` | Replay-grade request/response JSONL + deduplicated PNGs |
 | `P3_TRACE_DIR` | unset | Transcript, full config, usage, hindsight, capture |
 
-## Running
+## Installation
+
+Install the exact upstream policy into the Python environment that runs the
+RoboDojo client:
+
+```bash
+bash policy/Agent_P3/install.sh /path/to/robodojo/.venv/bin/python
+```
+
+## Data Processing
+
+Unsupported: this is an eval-only API policy and has no training dataset.
+
+## Training
+
+Unsupported: there is no checkpoint or trainable VLA in this condition.
+
+## Evaluation
 
 ```bash
 export P3_MODEL=anthropic/claude-sonnet-4-20250514

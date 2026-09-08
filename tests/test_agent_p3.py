@@ -7,7 +7,9 @@ import numpy as np
 import pytest
 from XPolicyLab.policy.Agent_P3.deploy import (
     _action_spec,
+    _debug_action_spec,
     _mark_incomplete_episode_failed,
+    _observation as robodojo_observation,
     eval_one_episode,
 )
 from XPolicyLab.policy.Agent_P3.policy import LlmPolicy, RoboDojoActionSpec
@@ -428,6 +430,7 @@ def test_azure_transport_changes_only_endpoint_auth_and_deployment_model():
     )
     assert request.headers["api-key"] == "secret"
     assert "authorization" not in request.headers
+    assert int(request.headers["content-length"]) == len(request.content)
     assert json.loads(request.content)["model"] == "gpt-5"
 
 
@@ -451,13 +454,22 @@ class _FakeEnv:
 
     def get_obs(self):
         return {
-            "observation": {"head": {"rgb": np.zeros((4, 4, 3), dtype=np.uint8)}},
+            "vision": {
+                "head": {
+                    "color": np.zeros((4, 4, 3), dtype=np.uint8),
+                    "depth": np.full((4, 4), 0.7, dtype=np.float32),
+                }
+            },
             "state": {
                 "left_arm_joint_state": np.zeros(6, dtype=np.float32),
                 "left_ee_joint_state": np.ones(1, dtype=np.float32),
                 "right_arm_joint_state": np.zeros(6, dtype=np.float32),
                 "right_ee_joint_state": np.ones(1, dtype=np.float32),
             },
+            "instruction": self.instruction,
+            "additional_info": {"frequency": 25},
+            "data_format_version": "v1.0",
+            "env_idx": 0,
         }
 
     def take_action(self, action):
@@ -479,6 +491,35 @@ class _FakeEnv:
         return [0]
 
 
+def test_observation_maps_the_robodojo_runtime_contract_without_mutating_it():
+    env = _FakeEnv()
+    raw = env.get_obs()
+
+    observation = robodojo_observation(env, policy_step=3)
+
+    assert observation.instruction == "pick up the block"
+    np.testing.assert_array_equal(
+        observation.images["head"],
+        raw["vision"]["head"]["color"],
+    )
+    assert set(raw) == {
+        "vision",
+        "state",
+        "instruction",
+        "additional_info",
+        "data_format_version",
+        "env_idx",
+    }
+    np.testing.assert_array_equal(
+        observation.extra["head_depth"],
+        raw["vision"]["head"]["depth"],
+    )
+    assert observation.extra["additional_info"] == {"frequency": 25}
+    assert observation.extra["data_format_version"] == "v1.0"
+    assert observation.extra["env_idx"] == 0
+    assert observation.step == 3
+
+
 def test_the_loop_plays_the_interpolated_chunk(monkeypatch):
     env = _FakeEnv(ends_after=2)
     policy = _policy([_move() for _ in range(8)])
@@ -497,9 +538,13 @@ def test_the_loop_plays_the_interpolated_chunk(monkeypatch):
     assert env.actions[0]["left_arm_joint_state"][0] == pytest.approx(0.0)
 
 
-def test_give_up_marks_the_episode_failed(monkeypatch):
+def test_give_up_marks_the_episode_failed_before_the_audit_is_written(
+    monkeypatch, tmp_path
+):
     env = _FakeEnv(ends_after=99)
     policy = _policy([_stop("give_up", reason="blocked")])
+    monkeypatch.setenv("P3_TRACE_DIR", str(tmp_path))
+    monkeypatch.setenv("ROBODOJO_RUN_ID", "unit-give-up")
     monkeypatch.setattr(
         "XPolicyLab.policy.Agent_P3.deploy._action_spec",
         lambda task_env: _spec(),
@@ -512,6 +557,8 @@ def test_give_up_marks_the_episode_failed(monkeypatch):
     eval_one_episode(env, model_client=None)
 
     assert env.success == [False]
+    audit = json.loads((tmp_path / "p3_transcript.json").read_text())
+    assert audit["official_success"] == [False]
 
 
 def test_stopping_before_the_official_end_is_recorded_as_a_failure():
@@ -526,7 +573,7 @@ def test_p3_has_no_vla_to_call():
     from XPolicyLab.policy.Agent_P3.model import Model
 
     with pytest.raises(RuntimeError, match="no VLA"):
-        Model().get_action()
+        Model({}).get_action()
 
 
 class _Tensor:
@@ -585,3 +632,16 @@ def test_action_spec_comes_from_the_live_articulation_and_observation_rate():
     assert spec.control_hz == 25.0
     assert spec.low.tolist() == [-10.0] * 5 + [-3.14, 0.0] + [-10.0] * 5 + [-3.14, 0.0]
     assert spec.high.tolist() == [10.0] * 5 + [3.14, 1.0] + [10.0] * 5 + [3.14, 1.0]
+
+
+def test_debug_spec_reads_the_same_robodojo_sources(monkeypatch):
+    monkeypatch.setenv(
+        "ROBODOJO_ROOT", "/mnt/bn/robotics-data-mx/wenbo/RoboDojo-eval"
+    )
+
+    spec = _debug_action_spec()
+
+    assert spec.control_hz == 25.0
+    assert spec.labels[5] == "left_joint6"
+    assert spec.low[5] == pytest.approx(-3.14)
+    assert spec.high[5] == pytest.approx(3.14)

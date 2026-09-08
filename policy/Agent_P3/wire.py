@@ -43,6 +43,7 @@ class AzureChatTransport(httpx.BaseTransport):
         )
         headers = dict(request.headers)
         authorization = headers.pop("authorization", "")
+        headers.pop("content-length", None)
         if authorization.lower().startswith("bearer "):
             headers["api-key"] = authorization[7:]
         body = json.loads(request.content.decode("utf-8"))
