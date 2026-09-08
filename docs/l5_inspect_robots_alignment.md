@@ -120,9 +120,12 @@ L5 condition.
 - The trace records both exact package versions, every upstream policy config
   field, live labels/bounds/rate, transcript, usage, hindsight, and capture
   pointer.
-- The committed integration evidence is
-  `experiments/l5-inspect-agent/general_pickup/layout-0/l5-inspect-v026-final-depth-layout0/`:
-  final adapter revision, full wire capture, sanitized transcript/config and
-  copied authoritative RoboDojo `_result.json` are archived together. Its
-  capture contains all three RGB frames and all three rendered metric-depth
-  frames.
+- Two integration runs are committed under
+  `experiments/l5-inspect-agent/general_pickup/layout-0/`, each with wire
+  capture, sanitized transcript, full config and a copy of RoboDojo's
+  authoritative `_result.json`:
+  - `l5-inspect-v026-final-depth-layout0/` — frontier model over the Azure Chat
+    transport, three RGB and three metric-depth frames.
+  - `l5-inspect-v026-depthaudit-layout0/` — current revision against a local
+    model, no external credentials required. It records `depth_cameras` and an
+    upstream-shaped `status="error"` trial after the repair loop gave up.
