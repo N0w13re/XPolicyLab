@@ -59,7 +59,7 @@ not be an aligned condition.
 | control rate | live RoboDojo value | `obs_manager.collect_freq` (25 Hz for `arx_x5`) |
 | `P3_IMAGE_HORIZON` | upstream wire default | 2 for replayed HTTP wires; server-side history for Live/Interactions; `none` = full replayable history |
 | `P3_IMAGES` | `always` | `always` or upstream `on_demand` |
-| `P3_DEPTH` | `render` | `render` or `off`; renders only when depth exists |
+| `P3_DEPTH` | `render` | `render` or `off`. Depth exists only if the RoboDojo checkout enables the `distance_to_image_plane_capture` annotator; the run warns and records `depth_cameras` when it does not |
 | `P3_ACTION_TYPE` | `joint` | `ee` is rejected for unsafe quaternion semantics |
 | `P3_PRIOR_LEARNINGS` | unset | UTF-8 notes file appended to the system prompt |
 | `P3_WIRE` / `P3_BASE_URL` / `P3_API_KEY_ENV` | upstream resolution | Endpoint override |

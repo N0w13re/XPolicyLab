@@ -31,7 +31,7 @@ RoboDojo's benchmark with Inspect's scenes or scorer.
 | Observation | instruction, labeled state, approver/operator lines, then images | RoboDojo `instruction`, 14-D state, and reserved `extra` channels are mapped losslessly | Equivalent |
 | Camera PNG encoding and step labels | upstream `_png` / observation formatter | RoboDojo `vision.*.color` RGB arrays cross the bridge; camera test | Equivalent |
 | `images=always`; `on_demand` and `take_pic` | upstream policy/toolset | `P3_IMAGES` passed without reimplementation | Exact upstream |
-| Metric depth rendering / `depth=off` | `render`; per-camera `<name>_depth`, 2-D metres | eval scripts enable RoboDojo's official metric-depth annotator before env construction; `vision.*.depth` is forwarded under that exact key; depth test | Equivalent |
+| Metric depth rendering / `depth=off` | `render`; per-camera `<name>_depth`, 2-D metres | `vision.*.depth` is forwarded under that exact key and rendered by upstream; `off` resolves nothing; both depth tests | Equivalent, with the benchmark-side caveat below |
 | State labels and partial named targets | upstream `ActionSemantics.dim_labels` | labels come from the live articulation | Equivalent embodiment |
 | Tool schema | `move_joints(targets,note)`, `done(summary,hindsight)`, `give_up(reason,hindsight)`; `take_pic` only on demand | schemas are returned by imported `build_toolset`; schema/stop/image tests | Exact upstream |
 | Action semantics | finite 1-D `Box`, `joint_pos`, absolute named dimensions, continuous gripper | live dual-X5 bounds and ordered labels create `EmbodimentInfo` | Equivalent embodiment |
@@ -55,6 +55,22 @@ This means an upstream behavior change is adopted by changing the two pinned
 versions, then rerunning the differential bridge tests. There is no local
 prompt or interpolation implementation to drift.
 
+### The depth condition depends on the RoboDojo checkout
+
+`P3_DEPTH=render` only decides what the policy does with depth it receives. Whether
+depth exists at all is a RoboDojo camera setting: the `distance_to_image_plane_capture`
+annotator ships commented out in `env_cfg/camera/camera_config.yml`, annotators are
+built before the environment is created, and a policy `deploy.yml` cannot inject them.
+The runs archived here use a `ROBODOJO_ENABLE_METRIC_DEPTH=1` hook in the evaluation
+checkout that adds exactly that annotator for the three standard cameras; uncommenting
+the config entries is equivalent. This changes the observation the benchmark renders,
+not the policy strategy, so both conditions remain valid L5 runs.
+
+Because that switch lives outside this repo, the adapter never assumes it worked:
+`eval_one_episode` warns when `render` is requested and no depth arrives, and every
+transcript records `depth_cameras`, the cameras whose metric depth actually reached the
+model. An RGB-only run therefore cannot be filed as a depth run by accident.
+
 ## Embodiment and harness mapping
 
 | Inspect concept | RoboDojo equivalent | Comparability decision |
@@ -72,7 +88,7 @@ prompt or interpolation implementation to drift.
 | operator messages / approval records | `Observation.extra` | Forwarded when supplied; default RoboDojo has no operator channel |
 | generic clamp/delta approvers | upstream motion already emits in-box, step-limited absolute targets | Box/step invariants are checked before conversion; RoboDojo applies final embodiment control |
 | reporting | RoboDojo `_result.json`: `success_rate`, `eval_time`, percentage `score`, per-episode `layout_id/success/score`; videos tagged success/fail; unstable samples excluded | archived beside `p3_config.json`, transcript and wire JSONL; no Inspect scorer replaces these values |
-| multi-env batch | Inspect eval can run many scenes; RoboDojo `eval_batch=false` already forces `num_envs=1` | `eval_one_episode_batch` refuses `num_envs>1` rather than silently driving only env 0 | Equivalent harness constraint |
+| multi-env batch | Inspect eval can run many scenes; RoboDojo `eval_batch=false` already forces `num_envs=1` | `eval_one_episode_batch` refuses `num_envs>1` rather than silently driving only env 0 |
 
 ### RoboDojo non-regression invariants
 

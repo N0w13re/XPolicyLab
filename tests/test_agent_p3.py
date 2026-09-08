@@ -29,7 +29,7 @@ from XPolicyLab.policy.Agent_P3.types import (
 from XPolicyLab.policy.Agent_P3.wire import AzureChatTransport
 
 
-def _observation(step: int = 0) -> Observation:
+def _observation(step: int = 0, *, extra: dict | None = None) -> Observation:
     return Observation(
         images={"head": np.zeros((4, 4, 3), dtype=np.uint8)},
         state={
@@ -40,6 +40,7 @@ def _observation(step: int = 0) -> Observation:
         },
         instruction="pick up the block",
         step=step,
+        extra=dict(extra or {}),
     )
 
 
@@ -549,6 +550,88 @@ def test_all_provider_controls_are_forwarded_without_local_defaults():
     assert kwargs["pre_check"] is pre_check
 
 
+@pytest.mark.parametrize(
+    "wire", ["chat", "messages", "responses", "gemini-live", "interactions"]
+)
+def test_every_native_wire_is_forwarded_to_upstream_untouched(wire):
+    kwargs, requested_wire = _agent_kwargs({"P3_MODEL": "test-model", "P3_WIRE": wire})
+
+    assert requested_wire == wire
+    assert kwargs["wire"] == wire
+
+
+def test_an_unset_wire_leaves_the_choice_to_upstream_provider_defaults():
+    kwargs, requested_wire = _agent_kwargs({"P3_MODEL": "anthropic/test-model"})
+
+    assert requested_wire == "auto"
+    assert "wire" not in kwargs
+
+
+def test_azure_chat_is_the_chat_wire_with_the_deployment_as_the_model():
+    kwargs, requested_wire = _agent_kwargs(
+        {
+            "P3_MODEL": "azure/gpt-5",
+            "P3_WIRE": "azure-chat",
+            "P3_BASE_URL": "https://azure.test/gateway",
+            "P3_API_VERSION": "2026-01-01",
+        }
+    )
+
+    assert requested_wire == "azure-chat"
+    assert kwargs["wire"] == "chat"
+    assert kwargs["model"] == "gpt-5"
+    assert isinstance(kwargs["transport"], AzureChatTransport)
+
+
+def _depth_frame():
+    depth = np.full((4, 4), 0.7, dtype=np.float32)
+    depth[0, 0] = 1.4
+    return depth
+
+
+def _parts(payload):
+    return [
+        part
+        for message in payload["messages"]
+        if isinstance(message["content"], list)
+        for part in message["content"]
+    ]
+
+
+def test_metric_depth_is_rendered_beside_the_colour_frame():
+    seen = []
+    policy = _policy([_move()], env={"P3_DEPTH": "render"}, seen=seen)
+
+    policy.act(_observation(extra={"head_depth": _depth_frame()}))
+
+    parts = _parts(seen[0])
+    labels = [part.get("text", "") for part in parts if part["type"] == "text"]
+    assert any("depth 'head'" in text and " m " in text for text in labels)
+    assert sum(part["type"] == "image_url" for part in parts) == 2
+
+
+def test_depth_off_never_resolves_the_depth_entries():
+    seen = []
+
+    def boom():
+        raise AssertionError("depth must not be resolved when depth=off")
+
+    policy = _policy([_move()], env={"P3_DEPTH": "off"}, seen=seen)
+
+    policy.act(_observation(extra={"head_depth": boom}))
+
+    parts = _parts(seen[0])
+    assert not any("depth" in part.get("text", "") for part in parts)
+    assert sum(part["type"] == "image_url" for part in parts) == 1
+
+
+def test_quaternion_ee_control_is_refused_instead_of_silently_downgraded(monkeypatch):
+    monkeypatch.setenv("P3_ACTION_TYPE", "ee")
+
+    with pytest.raises(ValueError, match="quaternion"):
+        _action_spec(SimpleNamespace())
+
+
 def test_azure_transport_changes_only_endpoint_auth_and_deployment_model():
     seen = {}
 
@@ -743,6 +826,65 @@ def test_policy_stop_cannot_override_a_successful_robodojo_final_check(monkeypat
     eval_one_episode(env, model_client=None)
 
     assert env.success == [True]
+
+
+def _run_episode(env, policy, monkeypatch):
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Agent_P3.deploy._action_spec",
+        lambda task_env: _spec(),
+    )
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Agent_P3.deploy.LlmPolicy",
+        lambda **kwargs: policy,
+    )
+    eval_one_episode(env, model_client=None)
+
+
+def test_the_audit_records_which_cameras_delivered_metric_depth(
+    monkeypatch, tmp_path
+):
+    env = _FakeEnv(ends_after=2)
+    monkeypatch.setenv("P3_TRACE_DIR", str(tmp_path))
+
+    _run_episode(env, _policy([_move() for _ in range(4)]), monkeypatch)
+
+    assert env.obs_manager.collect_depth is True
+    audit = json.loads((tmp_path / "p3_transcript.json").read_text())
+    assert audit["depth_cameras"] == ["head"]
+
+
+def test_a_depth_condition_without_rendered_depth_is_reported_not_assumed(
+    monkeypatch, tmp_path, capsys
+):
+    class RgbOnlyEnv(_FakeEnv):
+        def get_obs(self):
+            raw = super().get_obs()
+            raw["vision"]["head"].pop("depth")
+            return raw
+
+    env = RgbOnlyEnv(ends_after=2)
+    monkeypatch.setenv("P3_TRACE_DIR", str(tmp_path))
+
+    _run_episode(env, _policy([_move() for _ in range(4)]), monkeypatch)
+
+    assert "the model sees RGB only" in capsys.readouterr().out
+    audit = json.loads((tmp_path / "p3_transcript.json").read_text())
+    assert audit["depth_cameras"] == []
+    assert audit["policy_config"]["upstream_policy_config"]["depth"] == "render"
+
+
+def test_depth_off_leaves_robodojo_depth_collection_alone(monkeypatch, tmp_path):
+    env = _FakeEnv(ends_after=2)
+    monkeypatch.setenv("P3_DEPTH", "off")
+    monkeypatch.setenv("P3_TRACE_DIR", str(tmp_path))
+
+    _run_episode(
+        env,
+        _policy([_move() for _ in range(4)], env={"P3_DEPTH": "off"}),
+        monkeypatch,
+    )
+
+    assert env.obs_manager.collect_depth is False
 
 
 def test_stopping_before_the_official_end_is_recorded_as_a_failure():

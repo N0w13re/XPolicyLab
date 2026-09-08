@@ -194,12 +194,22 @@ def _mark_incomplete_episode_failed(task_env: Any) -> None:
     print(f"[P3] policy stopped early; marked envs failed: {running}", flush=True)
 
 
+def _depth_cameras(observation: Observation) -> tuple[str, ...]:
+    """Name the cameras whose metric depth actually reached the model."""
+    return tuple(
+        str(key).removesuffix("_depth")
+        for key in observation.extra
+        if str(key).endswith("_depth")
+    )
+
+
 def _write_transcript(
     policy: LlmPolicy,
     task_env: Any,
     *,
     inspect_metadata: dict[str, Any],
     termination_reason: str | None,
+    depth_cameras: tuple[str, ...],
 ) -> None:
     directory = os.environ.get("P3_TRACE_DIR")
     if not directory:
@@ -214,6 +224,7 @@ def _write_transcript(
         "usage": policy.usage_totals,
         "hindsight": policy.hindsight,
         "termination_reason": termination_reason,
+        "depth_cameras": list(depth_cameras),
         "official_success": list(getattr(task_env, "success", [])),
         "policy_config": policy_config,
         "inspect_metadata": inspect_metadata,
@@ -234,10 +245,12 @@ def _write_transcript(
 
 def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
     del model_client  # P3 serves no VLA
-    if os.environ.get("P3_DEPTH", "render") == "render":
+    depth_mode = os.environ.get("P3_DEPTH", "render")
+    if depth_mode == "render":
         TASK_ENV.obs_manager.collect_depth = True
     policy = LlmPolicy(action_spec=_action_spec(TASK_ENV))
     policy.reset()
+    depth_cameras: tuple[str, ...] = ()
     policy_step = 0
     stopped = False
     termination_reason: str | None = None
@@ -252,6 +265,15 @@ def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
         )
     try:
         first = _observation(TASK_ENV, policy_step)
+        depth_cameras = _depth_cameras(first)
+        if depth_mode == "render" and not depth_cameras:
+            print(
+                "[P3] P3_DEPTH=render but RoboDojo produced no depth for this "
+                "episode; the model sees RGB only. Enable the "
+                "distance_to_image_plane_capture annotator in RoboDojo's "
+                "env_cfg/camera/*.yml to run the depth condition.",
+                flush=True,
+            )
         policy.prepare(first)
         if trace_dir:
             policy.start_capture(trace_dir, run_id)
@@ -305,6 +327,7 @@ def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
             TASK_ENV,
             inspect_metadata=inspect_metadata,
             termination_reason=termination_reason,
+            depth_cameras=depth_cameras,
         )
 
 
