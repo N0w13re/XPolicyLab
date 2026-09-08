@@ -103,6 +103,8 @@ L5 condition.
   field, live labels/bounds/rate, transcript, usage, hindsight, and capture
   pointer.
 - The committed integration evidence is
-  `experiments/l5-inspect-agent/general_pickup/layout-0/l5-inspect-v026-final-layout0/`:
+  `experiments/l5-inspect-agent/general_pickup/layout-0/l5-inspect-v026-final-depth-layout0/`:
   final adapter revision, full wire capture, sanitized transcript/config and
-  copied authoritative RoboDojo `_result.json` are archived together.
+  copied authoritative RoboDojo `_result.json` are archived together. Its
+  capture contains all three RGB frames and all three rendered metric-depth
+  frames.
