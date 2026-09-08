@@ -102,5 +102,7 @@ L5 condition.
 - The trace records both exact package versions, every upstream policy config
   field, live labels/bounds/rate, transcript, usage, hindsight, and capture
   pointer.
-- Integration completion additionally requires one official RoboDojo run whose
-  trace and official result are archived together.
+- The committed integration evidence is
+  `experiments/l5-inspect-agent/general_pickup/layout-0/l5-inspect-v026-final-layout0/`:
+  final adapter revision, full wire capture, sanitized transcript/config and
+  copied authoritative RoboDojo `_result.json` are archived together.
