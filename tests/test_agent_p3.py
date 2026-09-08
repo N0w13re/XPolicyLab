@@ -720,6 +720,30 @@ def test_give_up_marks_the_episode_failed_before_the_audit_is_written(
     }
 
 
+def test_policy_stop_cannot_override_a_successful_robodojo_final_check(monkeypatch):
+    class RewardCompleteEnv(_FakeEnv):
+        def is_episode_end(self):
+            if not self.success[0]:
+                self.success[0] = True
+                return True
+            return False
+
+    env = RewardCompleteEnv(ends_after=99)
+    policy = _policy([_stop("done", summary="complete")])
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Agent_P3.deploy._action_spec",
+        lambda task_env: _spec(),
+    )
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Agent_P3.deploy.LlmPolicy",
+        lambda **kwargs: policy,
+    )
+
+    eval_one_episode(env, model_client=None)
+
+    assert env.success == [True]
+
+
 def test_stopping_before_the_official_end_is_recorded_as_a_failure():
     env = _FakeEnv(ends_after=99)
 
