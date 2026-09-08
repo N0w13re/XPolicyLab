@@ -14,7 +14,7 @@ one more non-learned or pretrained layer between it and the robot:
 | --- | --- | --- |
 | P0 | Frozen VLA | Everything; there is no LLM |
 | P1 | Frozen VLA | The LLM aims the arm, then hands off; it never emits an action |
-| P2 | Our primitives | A hand-written primitive vocabulary (`pick`, `place`, `move_ee`) |
+| P2 | Our primitives | A hand-written primitive vocabulary (`move_to`, `set_gripper`; no grasp macro) |
 | P3 | The LLM | Nothing but action decoding |
 
 P3 is the endpoint of that axis, not an extra-data appendix. Retraining a VLA
@@ -114,11 +114,17 @@ over the standard websocket.
 
 Minimum primitives (implemented by us, not shipped in `RoboDojo-eval`):
 
-- `move_ee(arm, target_pose, speed)`
+- `move_to(arm, xyz, quat)` — one Cartesian pose, with an explicit orientation
 - `set_gripper(arm, width)`
-- `pick(arm, grasp_pose)` — approach / close / lift
-- `place(arm, release_pose)` — approach / open / retreat
 - `return_home(arm)`
+
+The built P2 (`policy/RoboDojo_Agent_P2_RPent/`) deliberately stops there and
+ships **no** `pick` / `place` / pregrasp macro, so the agent has to compose
+open, hover, descend, close, and lift itself. A macro would hide exactly the
+step where the interesting failures live: an RGB-D surface point is not an
+end-effector target, and the arx_x5 flange sits about 0.145 m above the
+fingertips. Every target is measured from the depth-backed world map; a replayed
+coordinate is not a P2 result.
 
 `RoboDojo-eval` has cuRobo in `env/planner_manager/curobo_planner.py`, but it
 lives in the **simulator process**. Exposing it is path C (better motion, worse
@@ -311,6 +317,6 @@ RoboDojo-wide subtask corpus.
 | P0 G05 / Xiaomi seed-0 | In progress / queued on the official sweep; do not steal GPUs |
 | Shared 2D→3D table map spec | Locked (this note, §3.1) |
 | P1 code | `policy/Pi_05_Agent_P1_RPent/` running on `arrange_largest_number` |
-| P2 code | Not started |
+| P2 code | Built (`policy/RoboDojo_Agent_P2_RPent/`); official success on `general_pickup` fixed layout 0, `arrange_largest_number` unsolved |
 | P3 framework | Built (`policy/Agent_P3/`); no eval numbers yet |
 | Retrain extension | Not started |

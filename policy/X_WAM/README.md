@@ -50,7 +50,7 @@ bash eval.sh RoboDojo stack_bowls RoboDojo-cotrain-arx_x5-ee-0 arx_x5 ee 0 0 0 <
 
 To evaluate an external experiment directory, link it in with `mkdir -p checkpoints && ln -sfn <experiment_dir> checkpoints/<ckpt_name>` and pass `<ckpt_name>` to the scripts.
 
-`EVAL_ENV_TYPE=debug` runs the offline wiring check (no simulator); leave it unset or set `EVAL_ENV_TYPE=sim` for RoboDojo simulation. For split-machine deployment via `setup_eval_policy_server.sh` / `setup_eval_env_client.sh`, follow the [Deployment Flow](../../README.md#-deployment-flow).
+`EVAL_ENV_TYPE=debug` runs the offline wiring check (no simulator); leave it unset or set `EVAL_ENV_TYPE=sim` for RoboDojo simulation. For split-machine deployment via `setup_eval_policy_server.sh` / `setup_eval_env_client.sh`, follow the [Deployment Flow](../../docs/harness.md#-deployment-flow).
 
 ## Configuration
 

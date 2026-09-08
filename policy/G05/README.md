@@ -174,7 +174,7 @@ bash eval.sh RoboDojo stack_bowls checkpoint arx_x5 joint 0 0 0 \
   "$G05_PYTHON" sim
 ```
 
-For split-machine deployment via `setup_eval_policy_server.sh` and `setup_eval_env_client.sh`, follow the [Deployment Flow](../../README.md#-deployment-flow).
+For split-machine deployment via `setup_eval_policy_server.sh` and `setup_eval_env_client.sh`, follow the [Deployment Flow](../../docs/harness.md#-deployment-flow).
 
 ## Notes
 

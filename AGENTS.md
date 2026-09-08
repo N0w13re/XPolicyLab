@@ -1,11 +1,16 @@
-# XPolicyLab Agent Guide
+# ManipLoop Agent Guide
+
+This checkout is **ManipLoop** — the P0–P3 agentic-manipulation conditions in [README.md](README.md)
+— built on the **XPolicyLab** harness, which it uses unchanged. Everything below is a harness rule
+and applies to every change here regardless of which project the change belongs to.
 
 XPolicyLab wraps each robot policy as a self-contained adapter under `policy/<POLICY>/`. The policy
 server imports it as `XPolicyLab.policy.<POLICY>.model`, so this checkout is always used as a
-package inside a parent workspace — never as the top-level project.
+package inside a parent workspace — never as the top-level project. The import name stays
+`XPolicyLab` because the harness is XPolicyLab; do not rename it to match the project name.
 
 - Submission standard: [CONTRIBUTING.md](CONTRIBUTING.md). Reference adapter: `policy/demo_policy/`.
-  Data formats: [README](README.md#-standard-data-formats).
+  Data formats: [harness reference](docs/harness.md#-standard-data-formats).
 - Two skills carry the end-to-end workflows — `xpolicylab-model-integration` (build an adapter) and
   `xpolicylab-adapter-check` (audit one before a PR). They live in `.agents/skills/`, which
   `.cursor/skills` and `.claude/skills` symlink to, so Cursor, Claude Code and Codex all load them.

@@ -64,7 +64,7 @@ bash eval.sh RoboDojo cover_blocks cover_blocks arx_x5 joint 0 0 0 mem0 XPolicyL
 
 The optional 11th argument `planning_gpu_ids` (comma-separated) auto-starts the vLLM planning server for Mn tasks; omit it for M1 or when `VLLM_URL` is already set.
 
-`EVAL_ENV_TYPE=debug` runs the offline wiring check (no simulator); leave it unset or set `EVAL_ENV_TYPE=sim` for RoboDojo simulation. For split-machine deployment via `setup_eval_policy_server.sh` / `setup_eval_env_client.sh`, follow the [Deployment Flow](../../README.md#-deployment-flow).
+`EVAL_ENV_TYPE=debug` runs the offline wiring check (no simulator); leave it unset or set `EVAL_ENV_TYPE=sim` for RoboDojo simulation. For split-machine deployment via `setup_eval_policy_server.sh` / `setup_eval_env_client.sh`, follow the [Deployment Flow](../../docs/harness.md#-deployment-flow).
 
 ## Configuration
 

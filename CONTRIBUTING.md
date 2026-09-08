@@ -1,6 +1,6 @@
 # Contributing a Policy to XPolicyLab
 
-This page is the submission standard for `policy/<POLICY>/` adapters: what a complete adapter contains, how to test it, and what a PR must include. For repo-wide concepts and workflows, see the [README](README.md).
+This page is the submission standard for `policy/<POLICY>/` adapters: what a complete adapter contains, how to test it, and what a PR must include. For repo-wide concepts and workflows, see the [harness reference](docs/harness.md).
 
 Two bundled Agent Skills automate most of this: `xpolicylab-model-integration` builds an adapter, `xpolicylab-adapter-check` audits one before a PR. They live in `.agents/skills/`, which `.cursor/skills` and `.claude/skills` symlink to, so Cursor, Claude Code and Codex all pick them up. [AGENTS.md](AGENTS.md) distills this page into the always-on rules every agent must follow; `CLAUDE.md` just imports it.
 
@@ -26,7 +26,7 @@ policy/<POLICY>/
 └── INSTALLATION.md              # optional: extra setup notes
 ```
 
-`process_data.sh` / `train.sh` may be omitted only for an agreed **eval-only** submission: state it in the PR, notify the maintainers ([Contact](README.md#-contact)), and give a timeline for open-sourcing training.
+`process_data.sh` / `train.sh` may be omitted only for an agreed **eval-only** submission: state it in the PR, notify the maintainers ([Contact](docs/harness.md#-contact)), and give a timeline for open-sourcing training.
 
 ### `model.py`
 
@@ -40,7 +40,7 @@ Define `class Model(ModelTemplate)` (`from XPolicyLab.model_template import Mode
 | `get_action_batch(env_idx_list=None)` | Batched chunks aligned with active env indices. |
 | `reset()` | Clear model state between episodes. |
 
-Action dictionaries use the standard keys (`left_arm_joint_state`, `right_ee_joint_state`, `ee_pose`, ...) with dimensions taken from `get_robot_action_dim_info(env_cfg_type)` in `XPolicyLab.utils.process_data` — never hard-coded, and never through a private re-implementation of the lookup. `env_cfg/` lives in the parent workspace, outside this checkout, so an adapter that assembles that path itself gets it wrong. Observation and trajectory formats: README, [Standard Data Formats](README.md#-standard-data-formats).
+Action dictionaries use the standard keys (`left_arm_joint_state`, `right_ee_joint_state`, `ee_pose`, ...) with dimensions taken from `get_robot_action_dim_info(env_cfg_type)` in `XPolicyLab.utils.process_data` — never hard-coded, and never through a private re-implementation of the lookup. `env_cfg/` lives in the parent workspace, outside this checkout, so an adapter that assembles that path itself gets it wrong. Observation and trajectory formats: [Standard Data Formats](docs/harness.md#-standard-data-formats).
 
 A new robot must be registered in **both** robot-info files, or training and evaluation will disagree about action dimensions:
 
@@ -82,7 +82,7 @@ All of these are required except `ckpt_name` and `gpu_id`, which the setup scrip
 
 ### Scripts
 
-All adapters share the same entry-point conventions (argument meanings: README, [Common Workflow](README.md#-common-workflow)):
+All adapters share the same entry-point conventions (argument meanings: [Common Workflow](docs/harness.md#-common-workflow)):
 
 ```bash
 bash eval.sh <bench_name> <task_name> <ckpt_name> <env_cfg_type> <action_type> <seed> \
