@@ -222,17 +222,22 @@ def test_the_default_tools_are_move_joints_done_and_give_up():
 
 
 def test_prior_learnings_are_appended_to_the_system_prompt(tmp_path):
+    import hashlib
+
     notes = tmp_path / "hindsight.md"
     notes.write_text("the white sphere is the ball\n", encoding="utf-8")
     seen = []
-    _policy(
-        [_move()],
-        env={"P3_PRIOR_LEARNINGS": str(notes)},
-        seen=seen,
-    ).act(_observation())
+    policy = _policy([_move()], env={"P3_PRIOR_LEARNINGS": str(notes)}, seen=seen)
+
+    policy.act(_observation())
+
     system = seen[0]["messages"][0]["content"]
     assert "Notes from a previous attempt" in system
     assert "white sphere is the ball" in system
+    upstream = policy.audit_config()["upstream_policy_config"]
+    assert upstream["prior_learnings_sha256"] == hashlib.sha256(
+        notes.read_bytes()
+    ).hexdigest()
 
 
 def test_named_targets_use_upstream_speed_limited_interpolation():
@@ -548,6 +553,12 @@ def test_all_provider_controls_are_forwarded_without_local_defaults():
     assert kwargs["speed"] == "fast"
     assert kwargs["image_horizon"] is None
     assert kwargs["pre_check"] is pre_check
+
+
+def test_unset_variables_leave_every_strategy_default_upstream():
+    kwargs, _ = _agent_kwargs({"P3_MODEL": "test-model"})
+
+    assert set(kwargs) == {"model", "env", "pre_check"}
 
 
 @pytest.mark.parametrize(

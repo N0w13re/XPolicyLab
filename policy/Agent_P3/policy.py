@@ -34,9 +34,6 @@ from inspect_robots_agent import LLMAgentPolicy
 from .types import Action, ActionChunk, ActionSpace, JOINT_CHANNELS, Observation
 from .wire import AzureChatTransport
 
-_DEFAULT_MAX_LLM_CALLS = 100
-_DEFAULT_MAX_SPEED_FRAC = 0.1
-
 
 @dataclass(frozen=True)
 class RoboDojoActionSpec:
@@ -65,10 +62,8 @@ def _optional_number(env: Mapping[str, str], key: str, kind: type[int] | type[fl
     return None if raw is None or raw == "" else kind(raw)
 
 
-def _bool(env: Mapping[str, str], key: str, default: bool) -> bool:
-    raw = env.get(key)
-    if raw is None:
-        return default
+def _bool(env: Mapping[str, str], key: str) -> bool:
+    raw = env[key]
     normalized = raw.strip().lower()
     if normalized in {"1", "true", "yes", "on"}:
         return True
@@ -89,14 +84,6 @@ def _agent_kwargs(
     requested_wire = env.get("P3_WIRE", "")
     kwargs: dict[str, Any] = {
         "model": model,
-        "max_llm_calls": int(env.get("P3_MAX_LLM_CALLS", _DEFAULT_MAX_LLM_CALLS)),
-        "max_speed_frac": float(
-            env.get("P3_MAX_SPEED_FRAC", _DEFAULT_MAX_SPEED_FRAC)
-        ),
-        "transcript_echo": _bool(env, "P3_TRANSCRIPT_ECHO", False),
-        "images": env.get("P3_IMAGES", "always"),
-        "depth": env.get("P3_DEPTH", "render"),
-        "wire_capture": _bool(env, "P3_WIRE_CAPTURE", True),
         "env": dict(env),
         "pre_check": pre_check,
     }
@@ -105,16 +92,28 @@ def _agent_kwargs(
         "P3_API_KEY_ENV": "api_key_env",
         "P3_SPEED": "speed",
         "P3_PRIOR_LEARNINGS": "prior_learnings",
+        "P3_IMAGES": "images",
+        "P3_DEPTH": "depth",
     }
     for source, destination in aliases.items():
         if value := env.get(source):
             kwargs[destination] = value
+    # Every strategy default stays upstream: an unset variable is not forwarded,
+    # so a default change in a new pinned release is adopted, not shadowed.
     for source, destination, kind in (
         ("P3_MAX_OUTPUT_TOKENS", "max_output_tokens", int),
         ("P3_TEMPERATURE", "temperature", float),
+        ("P3_MAX_LLM_CALLS", "max_llm_calls", int),
+        ("P3_MAX_SPEED_FRAC", "max_speed_frac", float),
     ):
         if (value := _optional_number(env, source, kind)) is not None:
             kwargs[destination] = value
+    for source, destination in (
+        ("P3_TRANSCRIPT_ECHO", "transcript_echo"),
+        ("P3_WIRE_CAPTURE", "wire_capture"),
+    ):
+        if env.get(source):
+            kwargs[destination] = _bool(env, source)
     if "P3_EFFORT" in env:
         effort = env["P3_EFFORT"].strip()
         if effort == "":
