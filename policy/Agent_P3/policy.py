@@ -72,6 +72,28 @@ def _bool(env: Mapping[str, str], key: str) -> bool:
     raise ValueError(f"{key} must be true or false, got {raw!r}")
 
 
+def drop_unparsable_no_proxy(environ: dict[str, str]) -> tuple[str, ...]:
+    """Remove IPv6 ``no_proxy`` entries that make httpx refuse to build a client.
+
+    Upstream builds its own ``httpx.Client``, which turns every ``no_proxy``
+    entry into a URL pattern and raises ``InvalidURL`` on IPv6 hosts such as
+    ``::1``. Corporate proxy configuration routinely contains them, so the
+    entries httpx cannot express are dropped; hostname and IPv4 bypasses, the
+    ones that can actually match an LLM endpoint, are kept.
+    """
+    dropped: list[str] = []
+    for key in ("no_proxy", "NO_PROXY"):
+        raw = environ.get(key)
+        if not raw:
+            continue
+        entries = [entry.strip() for entry in raw.split(",")]
+        kept = [entry for entry in entries if entry and "::" not in entry]
+        if len(kept) != len([entry for entry in entries if entry]):
+            dropped.extend(entry for entry in entries if entry and "::" in entry)
+            environ[key] = ",".join(kept)
+    return tuple(dropped)
+
+
 def _agent_kwargs(
     env: Mapping[str, str],
     *,
@@ -166,7 +188,14 @@ class LlmPolicy:
         transport: Any = None,
         pre_check: Any = None,
     ) -> None:
+        if env is None:
+            if dropped := drop_unparsable_no_proxy(os.environ):  # type: ignore[arg-type]
+                print(
+                    f"[P3] dropped no_proxy entries httpx cannot parse: {dropped}",
+                    flush=True,
+                )
         self._env = dict(os.environ if env is None else env)
+        drop_unparsable_no_proxy(self._env)
         kwargs, self.requested_wire = _agent_kwargs(
             self._env, transport=transport, pre_check=pre_check
         )

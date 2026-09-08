@@ -555,6 +555,26 @@ def test_all_provider_controls_are_forwarded_without_local_defaults():
     assert kwargs["pre_check"] is pre_check
 
 
+def test_an_ipv6_no_proxy_does_not_stop_the_client_from_being_built(monkeypatch):
+    monkeypatch.setenv("no_proxy", "localhost,10.0.0.0/8,::1,fe80::/10")
+    monkeypatch.setenv("https_proxy", "http://proxy.test:8118")
+    monkeypatch.setenv("P3_MODEL", "test-model")
+    monkeypatch.setenv("P3_BASE_URL", "https://example.test/v1")
+    monkeypatch.setenv("P3_API_KEY_ENV", "TEST_KEY")
+    monkeypatch.setenv("TEST_KEY", "secret")
+    monkeypatch.setenv("P3_WIRE_CAPTURE", "false")
+
+    policy = LlmPolicy(
+        action_spec=_spec(),
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, json=_move())),
+    )
+
+    assert policy.act(_observation()).actions
+    import os
+
+    assert os.environ["no_proxy"] == "localhost,10.0.0.0/8"
+
+
 def test_unset_variables_leave_every_strategy_default_upstream():
     kwargs, _ = _agent_kwargs({"P3_MODEL": "test-model"})
 

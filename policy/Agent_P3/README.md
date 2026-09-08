@@ -49,6 +49,10 @@ not be an aligned condition.
 | `messages`, `responses`, `gemini-live`, `interactions`, `chat` | Upstream implementation |
 | `azure-chat` | Azure `.../openai/deployments/<model>/chat/completions` |
 
+Upstream builds the HTTP client itself, and httpx rejects IPv6 `no_proxy` entries
+such as `::1` with `InvalidURL`. Those entries are dropped at startup, with a log
+line naming them; hostname and IPv4 bypasses are kept.
+
 ## Configuration
 
 | Variable | Default | Meaning |
