@@ -712,6 +712,12 @@ def test_give_up_marks_the_episode_failed_before_the_audit_is_written(
     assert audit["official_success"] == [False]
     assert audit["layout_id"] == 7
     assert audit["policy_config"]["scene"]["init_seed"] == 7
+    assert audit["inspect_metadata"]["trial_record"] == {
+        "terminated": False,
+        "truncated": True,
+        "termination_reason": "give_up",
+        "seed": 7,
+    }
 
 
 def test_stopping_before_the_official_end_is_recorded_as_a_failure():

@@ -31,13 +31,13 @@ RoboDojo's benchmark with Inspect's scenes or scorer.
 | Observation | instruction, labeled state, approver/operator lines, then images | RoboDojo `instruction`, 14-D state, and reserved `extra` channels are mapped losslessly | Equivalent |
 | Camera PNG encoding and step labels | upstream `_png` / observation formatter | RoboDojo `vision.*.color` RGB arrays cross the bridge; camera test | Equivalent |
 | `images=always`; `on_demand` and `take_pic` | upstream policy/toolset | `P3_IMAGES` passed without reimplementation | Exact upstream |
-| Metric depth rendering / `depth=off` | `render`; per-camera `<name>_depth`, 2-D metres | RoboDojo `vision.*.depth` is forwarded under that exact key; depth test | Equivalent |
+| Metric depth rendering / `depth=off` | `render`; per-camera `<name>_depth`, 2-D metres | eval scripts enable RoboDojo's official metric-depth annotator before env construction; `vision.*.depth` is forwarded under that exact key; depth test | Equivalent |
 | State labels and partial named targets | upstream `ActionSemantics.dim_labels` | labels come from the live articulation | Equivalent embodiment |
 | Tool schema | `move_joints(targets,note)`, `done(summary,hindsight)`, `give_up(reason,hindsight)`; `take_pic` only on demand | schemas are returned by imported `build_toolset`; schema/stop/image tests | Exact upstream |
 | Action semantics | finite 1-D `Box`, `joint_pos`, absolute named dimensions, continuous gripper | live dual-X5 bounds and ordered labels create `EmbodimentInfo` | Equivalent embodiment |
 | Bounds and numeric validation | unknown/non-finite/out-of-box/fixed dimensions return structured tool errors | no local parser; upstream receives live `Box` | Exact upstream |
 | Chunk/interpolation | `max_speed_frac=.1`; per-step `min(.1/hz, 5%) * range`; 10 s cap; partial targets hold current state | upstream chunk is converted action-for-action and fully played unless RoboDojo ends | Equivalent |
-| Safety approvers | Inspect rollout normally applies clamp then delta limit after policy output | bridge applies the same `ClampApprover` and `DeltaLimitApprover` before `take_action` | Equivalent harness placement |
+| Safety approvers | Inspect CLI `_build_approver` applies clamp then delta limit after policy output (the lower-level Python `eval()` fallback alone is permissive) | bridge applies the same `ClampApprover` and `DeltaLimitApprover` before `take_action` | Equivalent to standard CLI evaluation |
 | History | canonical full chat history; `image_horizon=2` except Live/Interactions server-side history; old image parts are stubbed | constructor default is left to upstream; explicit `P3_IMAGE_HORIZON` is forwarded | Exact upstream |
 | Tool repair | errors become tool results; no-tool response gets a nudge; three consecutive failures raise | no local loop; malformed/no-tool/cap tests execute upstream | Exact upstream |
 | Provider retry | Chat: at most 3 attempts for transport, 429 and 5xx, sleeping 1 s then 2 s; non-429 4xx fails immediately | Azure changes only URL/auth/model and retains `ChatClient.complete`; retry test | Exact upstream |

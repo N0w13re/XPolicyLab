@@ -278,7 +278,15 @@ class LlmPolicy:
             termination_reason=termination_reason,
         )
         self.inner.on_trial_end(record, log_dir, run_id)
-        return dict(record.metadata)
+        return {
+            **dict(record.metadata),
+            "trial_record": {
+                "terminated": record.terminated,
+                "truncated": record.truncated,
+                "termination_reason": record.termination_reason,
+                "seed": record.seed,
+            },
+        }
 
     def act(self, observation: Observation) -> ActionChunk:
         if not self._bound:

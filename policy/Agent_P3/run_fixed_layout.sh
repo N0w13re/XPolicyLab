@@ -24,6 +24,9 @@ export ROBODOJO_UNTILED_CAMERAS="${ROBODOJO_UNTILED_CAMERAS:-0}"
 export ROBODOJO_PATH_TRACING="${ROBODOJO_PATH_TRACING:-1}"
 export ROBODOJO_NUM_ENVS=1
 export ROBODOJO_ACTION_TYPE="${P3_ACTION_TYPE:-joint}"
+if [[ "${P3_DEPTH:-render}" == "render" ]]; then
+    export ROBODOJO_ENABLE_METRIC_DEPTH=1
+fi
 export ROBODOJO_SIM_ENV="${ROBODOJO_ROOT:-${XPL_ROOT}/../RoboDojo-eval}/.venv"
 export P3_TRACE_DIR="${P3_TRACE_DIR:-${XPL_ROOT}/experiments/l5-inspect-agent/${task_name}/layout-${layout}/${run_id}}"
 mkdir -p "${P3_TRACE_DIR}"

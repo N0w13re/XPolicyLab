@@ -273,16 +273,20 @@ def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
         if stopped or not TASK_ENV.is_episode_end():
             _mark_incomplete_episode_failed(TASK_ENV)
         ended = TASK_ENV.is_episode_end()
+        policy_requested_stop = termination_reason in {"done", "give_up"}
         truncated = bool(
-            ended
-            and not any(bool(value) for value in getattr(TASK_ENV, "success", []))
-            and termination_reason is None
+            policy_requested_stop
+            or (
+                ended
+                and not any(bool(value) for value in getattr(TASK_ENV, "success", []))
+                and termination_reason is None
+            )
         )
         if trace_dir:
             inspect_metadata = policy.finish_capture(
                 trace_dir,
                 run_id,
-                terminated=ended and not truncated,
+                terminated=ended and not truncated and termination_reason is None,
                 truncated=truncated,
                 termination_reason=termination_reason,
             )
