@@ -295,6 +295,7 @@ class LlmPolicy:
         terminated: bool,
         truncated: bool,
         termination_reason: str | None,
+        error: str | None = None,
     ) -> dict[str, Any]:
         scene = self._scene or Scene(id="robodojo", instruction="")
         record = TrialRecord(
@@ -304,6 +305,10 @@ class LlmPolicy:
             terminated=terminated,
             truncated=truncated,
             termination_reason=termination_reason,
+            # Upstream marks a policy exception "error" and leaves both
+            # terminated and truncated false; only the reason is ours.
+            status="error" if error else "success",
+            error=error,
         )
         self.inner.on_trial_end(record, log_dir, run_id)
         return {
@@ -312,6 +317,8 @@ class LlmPolicy:
                 "terminated": record.terminated,
                 "truncated": record.truncated,
                 "termination_reason": record.termination_reason,
+                "status": record.status,
+                "error": record.error,
                 "seed": record.seed,
             },
         }

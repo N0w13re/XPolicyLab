@@ -254,6 +254,7 @@ def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
     policy_step = 0
     stopped = False
     termination_reason: str | None = None
+    policy_error: str | None = None
     inspect_metadata: dict[str, Any] = {}
     trace_dir = os.environ.get("P3_TRACE_DIR")
     run_id = os.environ.get("ROBODOJO_RUN_ID", "agent-p3")
@@ -297,6 +298,7 @@ def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
         print(f"[P3] {error}", flush=True)
         stopped = True
         termination_reason = "policy_error"
+        policy_error = f"{type(error).__name__}: {error}"
     finally:
         if stopped or not TASK_ENV.is_episode_end():
             _mark_incomplete_episode_failed(TASK_ENV)
@@ -317,6 +319,7 @@ def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
                 terminated=ended and not truncated and termination_reason is None,
                 truncated=truncated,
                 termination_reason=termination_reason,
+                error=policy_error,
             )
         print(
             f"[P3] {policy.calls} llm calls, usage={policy.usage_totals}",

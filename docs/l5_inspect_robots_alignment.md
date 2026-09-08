@@ -48,6 +48,7 @@ RoboDojo's benchmark with Inspect's scenes or scorer.
 | Provider controls | wire-specific validation for temperature, named/fractional effort, Messages max tokens and fast mode | `P3_TEMPERATURE`, `P3_EFFORT`, `P3_MAX_OUTPUT_TOKENS`, `P3_SPEED` passed directly | Exact upstream |
 | Wires | Chat, Messages, Responses, Gemini Live, Interactions | `P3_WIRE` forwards all native wires | Exact upstream |
 | Azure Chat | not an upstream endpoint resolver | transport changes only deployment URL, API version, API-key header and deployment model; upstream owns body/retry/parse/capture | Transport-only exception |
+| Trial record | `terminated`/`truncated`/`termination_reason`; a policy exception is `status="error"` with the exception string and neither flag set | the bridge fills the same `TrialRecord` fields from the RoboDojo outcome, including the error status; give-up and policy-failure tests | Exact upstream |
 | Capture/config | one row per wire attempt, deduplicated PNGs, sanitized transcript, policy config, hindsight and LLM calls | `on_trial_start/end`; `p3_config.json` adds package versions, Azure version, scene and live embodiment | Equivalent plus benchmark metadata |
 | Token metrics | Chat v0.26.0 does not populate `AssistantMessage.usage`; raw provider usage remains in capture. Other clients normalize supported usage | report never invents missing totals; `llm_calls` and raw per-attempt responses remain auditable | Exact known upstream limitation |
 

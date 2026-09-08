@@ -831,8 +831,36 @@ def test_give_up_marks_the_episode_failed_before_the_audit_is_written(
         "terminated": False,
         "truncated": True,
         "termination_reason": "give_up",
+        "status": "success",
+        "error": None,
         "seed": 7,
     }
+
+
+def test_a_policy_failure_is_recorded_as_an_error_trial_not_a_clean_stop(
+    monkeypatch, tmp_path
+):
+    env = _FakeEnv(ends_after=99)
+    policy = _policy([_move({"not_a_joint": 0.1}) for _ in range(3)])
+    monkeypatch.setenv("P3_TRACE_DIR", str(tmp_path))
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Agent_P3.deploy._action_spec",
+        lambda task_env: _spec(),
+    )
+    monkeypatch.setattr(
+        "XPolicyLab.policy.Agent_P3.deploy.LlmPolicy",
+        lambda **kwargs: policy,
+    )
+
+    eval_one_episode(env, model_client=None)
+
+    audit = json.loads((tmp_path / "p3_transcript.json").read_text())
+    record = audit["inspect_metadata"]["trial_record"]
+    assert record["status"] == "error"
+    assert record["error"].startswith("RuntimeError:")
+    assert record["terminated"] is False
+    assert record["truncated"] is False
+    assert audit["official_success"] == [False]
 
 
 def test_policy_stop_cannot_override_a_successful_robodojo_final_check(monkeypatch):
