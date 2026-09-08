@@ -18,6 +18,7 @@ if [[ -z "${P3_MODEL:-}" ]]; then
 fi
 
 export ROBODOJO_RUN_ID="${run_id}"
+export P3_TASK_NAME="${task_name}"
 export P3_LAYOUT_ID="${layout}"
 export ROBODOJO_UNTILED_CAMERAS="${ROBODOJO_UNTILED_CAMERAS:-0}"
 export ROBODOJO_PATH_TRACING="${ROBODOJO_PATH_TRACING:-1}"

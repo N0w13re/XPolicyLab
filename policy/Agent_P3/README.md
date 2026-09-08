@@ -26,8 +26,9 @@ official results are published on the
 
 ## How an action gets made
 
-1. `deploy.py` reads RGB, joint state, task instruction, the live Isaac joint
-   limits, and RoboDojo's actual observation/control rate (25 Hz).
+1. `deploy.py` reads RoboDojo's public `vision.*.color`, `state` and
+   `instruction` fields, plus the live Isaac joint limits and actual
+   observation/control rate (25 Hz).
 2. `policy.py` presents those as an Inspect `EmbodimentInfo` and `Observation`.
 3. The upstream policy emits `move_joints`, `done`, or `give_up`; it also owns
    optional `images=on_demand`, depth rendering, all supported provider wires,
@@ -56,7 +57,7 @@ not be an aligned condition.
 | `P3_MAX_LLM_CALLS` | 100 | Trial LLM budget |
 | `P3_MAX_SPEED_FRAC` | 0.1 | Inspect interpolant speed |
 | control rate | live RoboDojo value | `obs_manager.collect_freq` (25 Hz for `arx_x5`) |
-| `P3_IMAGE_HORIZON` | 2 | Keep this many image-bearing turns (`none` = all) |
+| `P3_IMAGE_HORIZON` | upstream wire default | 2 for replayed HTTP wires; server-side history for Live/Interactions; `none` = full replayable history |
 | `P3_IMAGES` | `always` | `always` or upstream `on_demand` |
 | `P3_DEPTH` | `render` | `render` or `off`; renders only when depth exists |
 | `P3_ACTION_TYPE` | `joint` | `ee` is rejected for unsafe quaternion semantics |

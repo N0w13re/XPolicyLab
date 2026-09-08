@@ -33,6 +33,15 @@ def _observation(task_env: Any, policy_step: int) -> Observation:
     for key in ("additional_info", "data_format_version", "env_idx"):
         if key in raw:
             extra[key] = raw[key]
+    env_idx = raw.get("env_idx", 0)
+    env_seeds = getattr(task_env, "env_seeds", None)
+    if isinstance(env_idx, int) and env_seeds is not None:
+        try:
+            layout_id = env_seeds[env_idx]
+        except (IndexError, KeyError, TypeError):
+            layout_id = None
+        if layout_id is not None:
+            extra["layout_id"] = int(layout_id)
     return Observation(
         images=images,
         state=raw.get("state") or {},
@@ -197,15 +206,16 @@ def _write_transcript(
         return
     path = Path(directory)
     path.mkdir(parents=True, exist_ok=True)
+    policy_config = policy.audit_config()
     result = {
         "task": getattr(task_env, "task_name", None),
-        "layout_id": getattr(task_env, "seed", None),
+        "layout_id": policy_config["scene"]["init_seed"],
         "llm_calls": policy.calls,
         "usage": policy.usage_totals,
         "hindsight": policy.hindsight,
         "termination_reason": termination_reason,
         "official_success": list(getattr(task_env, "success", [])),
-        "policy_config": policy.audit_config(),
+        "policy_config": policy_config,
         "inspect_metadata": inspect_metadata,
         "transcript": policy.transcript(),
     }
@@ -215,7 +225,7 @@ def _write_transcript(
     )
     (path / "p3_config.json").write_text(
         json.dumps(
-            policy.audit_config(),
+            policy_config,
             indent=2,
         ),
         encoding="utf-8",

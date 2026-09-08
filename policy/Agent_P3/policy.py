@@ -232,11 +232,14 @@ class LlmPolicy:
         self._approver_store.clear()
         self._pending_approvals.clear()
         self._env_action_step = 0
+        layout_id = observation.extra.get("layout_id")
+        if not isinstance(layout_id, int):
+            layout_id = _optional_number(self._env, "P3_LAYOUT_ID", int)
         scene = Scene(
             id=f"{self._env.get('P3_TASK_NAME', 'robodojo')}-layout-"
-            f"{self._env.get('P3_LAYOUT_ID', 'unknown')}",
+            f"{layout_id if layout_id is not None else 'unknown'}",
             instruction=observation.instruction or "",
-            init_seed=_optional_number(self._env, "P3_LAYOUT_ID", int),
+            init_seed=layout_id,
         )
         self.inner.reset(scene)
         self._scene = scene
@@ -289,9 +292,9 @@ class LlmPolicy:
             state={"joint_pos": vector},
             instruction=observation.instruction,
             extra={
+                **dict(observation.extra),
                 "env_step": self._env_action_step,
                 "approvals": list(self._pending_approvals),
-                **dict(observation.extra),
             },
         )
         self._pending_approvals.clear()
@@ -345,6 +348,7 @@ class LlmPolicy:
         return self.inner.transcript()
 
     def audit_config(self) -> dict[str, Any]:
+        scene = self._scene
         return {
             "adapter": "inspect-robots-agent",
             "inspect_robots_version": version("inspect-robots"),
@@ -352,6 +356,11 @@ class LlmPolicy:
             "requested_wire": self.requested_wire,
             "azure_api_version": self._env.get("P3_API_VERSION"),
             "upstream_policy_config": asdict(self.inner.config),
+            "scene": {
+                "id": scene.id if scene is not None else None,
+                "instruction": scene.instruction if scene is not None else None,
+                "init_seed": scene.init_seed if scene is not None else None,
+            },
             "embodiment": {
                 "labels": list(self.action_spec.labels),
                 "low": self.action_spec.low.tolist(),

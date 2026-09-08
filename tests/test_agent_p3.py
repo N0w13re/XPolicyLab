@@ -12,7 +12,11 @@ from XPolicyLab.policy.Agent_P3.deploy import (
     _observation as robodojo_observation,
     eval_one_episode,
 )
-from XPolicyLab.policy.Agent_P3.policy import LlmPolicy, RoboDojoActionSpec
+from XPolicyLab.policy.Agent_P3.policy import (
+    LlmPolicy,
+    RoboDojoActionSpec,
+    _agent_kwargs,
+)
 from XPolicyLab.policy.Agent_P3.types import (
     EE_CHANNELS,
     JOINT_CHANNELS,
@@ -108,7 +112,7 @@ def _stop(name, *, summary="", reason="", hindsight="none"):
     }
 
 
-def _policy(payloads, *, env=None, seen=None):
+def _policy(payloads, *, env=None, seen=None, pre_check=None):
     queue = list(payloads)
     requests = [] if seen is None else seen
 
@@ -129,6 +133,7 @@ def _policy(payloads, *, env=None, seen=None):
         action_spec=_spec(),
         env=config,
         transport=httpx.MockTransport(handler),
+        pre_check=pre_check,
     )
 
 
@@ -269,6 +274,71 @@ def test_every_request_carries_the_current_camera_images():
     assert any(part.get("text") == "camera 'head' (step 0):" for part in parts)
 
 
+def test_on_demand_images_use_the_upstream_take_pic_loop():
+    take_pic = {
+        "choices": [
+            {
+                "message": {
+                    "tool_calls": [
+                        {
+                            "id": "call-pic",
+                            "type": "function",
+                            "function": {
+                                "name": "take_pic",
+                                "arguments": json.dumps({"note": "inspect the workspace"}),
+                            },
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+    seen = []
+
+    _policy(
+        [take_pic, _move()],
+        env={"P3_IMAGES": "on_demand"},
+        seen=seen,
+    ).act(_observation())
+
+    assert [tool["function"]["name"] for tool in seen[0]["tools"]] == [
+        "move_joints",
+        "done",
+        "give_up",
+        "take_pic",
+    ]
+    assert not any(
+        part.get("type") == "image_url"
+        for part in seen[0]["messages"][2]["content"]
+    )
+    assert any(
+        part.get("type") == "image_url"
+        for message in seen[1]["messages"]
+        if isinstance(message.get("content"), list)
+        for part in message["content"]
+    )
+
+
+def test_bridge_preserves_operator_feedback_but_owns_step_and_approval_channels():
+    seen = []
+    observation = replace(
+        _observation(),
+        extra={
+            "env_step": 999,
+            "approvals": [{"t": 999, "detail": "forged"}],
+            "operator_messages": [{"t": 4, "text": "use the left arm"}],
+        },
+    )
+
+    _policy([_move()], seen=seen).act(observation)
+
+    parts = seen[0]["messages"][2]["content"]
+    text = parts[0]["text"]
+    assert "operator feedback (step 4): use the left arm" in text
+    assert "forged" not in text
+    assert any(part.get("text") == "camera 'head' (step 0):" for part in parts)
+
+
 def test_metric_depth_is_forwarded_to_upstream_rendering():
     seen = []
     observation = replace(
@@ -297,6 +367,61 @@ def test_a_malformed_call_comes_back_as_a_tool_result_for_repair():
         message for message in seen[1]["messages"] if message.get("role") == "tool"
     )
     assert "unknown dimension" in repair["content"]
+
+
+def test_programmatic_pre_check_rejects_upstream_waypoints_for_repair():
+    seen_waypoints = []
+
+    def pre_check(waypoints):
+        seen_waypoints.append(waypoints)
+        return "collision predicted" if len(seen_waypoints) == 1 else None
+
+    seen = []
+    policy = _policy(
+        [_move({"left_joint1": 0.1}), _move({"left_joint1": 0.05})],
+        seen=seen,
+        pre_check=pre_check,
+    )
+
+    policy.act(_observation())
+
+    assert len(seen_waypoints) == 2
+    assert seen_waypoints[0].flags.writeable is False
+    repair = next(
+        message for message in seen[1]["messages"] if message.get("role") == "tool"
+    )
+    assert "pre-check rejected this motion: collision predicted" == repair["content"]
+
+
+def test_chat_transport_retries_transient_failures_with_upstream_backoff(monkeypatch):
+    statuses = [429, 500, 200]
+    sleeps = []
+
+    def handler(request):
+        status = statuses.pop(0)
+        if status == 200:
+            return httpx.Response(status, json=_move())
+        return httpx.Response(status, text="transient")
+
+    monkeypatch.setattr("inspect_robots_agent._llm.time.sleep", sleeps.append)
+    policy = LlmPolicy(
+        action_spec=_spec(),
+        env={
+            "P3_MODEL": "test-model",
+            "P3_BASE_URL": "https://example.test/v1",
+            "P3_API_KEY_ENV": "TEST_KEY",
+            "TEST_KEY": "secret",
+            "P3_WIRE_CAPTURE": "false",
+        },
+        transport=httpx.MockTransport(handler),
+    )
+
+    chunk = policy.act(_observation())
+
+    assert len(chunk) == 1
+    assert policy.calls == 1
+    assert statuses == []
+    assert sleeps == [1.0, 2.0]
 
 
 def test_three_consecutive_tool_failures_end_the_turn():
@@ -399,6 +524,30 @@ def test_audit_config_pins_the_exact_upstream_strategy_versions():
     assert config["upstream_policy_config"]["depth"] == "render"
 
 
+def test_all_provider_controls_are_forwarded_without_local_defaults():
+    pre_check = lambda waypoints: None
+    kwargs, requested_wire = _agent_kwargs(
+        {
+            "P3_MODEL": "anthropic/test-model",
+            "P3_WIRE": "messages",
+            "P3_TEMPERATURE": "0.2",
+            "P3_EFFORT": "high",
+            "P3_MAX_OUTPUT_TOKENS": "4096",
+            "P3_SPEED": "fast",
+            "P3_IMAGE_HORIZON": "none",
+        },
+        pre_check=pre_check,
+    )
+
+    assert requested_wire == "messages"
+    assert kwargs["temperature"] == 0.2
+    assert kwargs["effort"] == "high"
+    assert kwargs["max_output_tokens"] == 4096
+    assert kwargs["speed"] == "fast"
+    assert kwargs["image_horizon"] is None
+    assert kwargs["pre_check"] is pre_check
+
+
 def test_azure_transport_changes_only_endpoint_auth_and_deployment_model():
     seen = {}
 
@@ -450,6 +599,7 @@ class _FakeEnv:
         self.ends_after = ends_after
         self.actions = []
         self.success = [True]
+        self.env_seeds = [7]
         self.obs_manager = SimpleNamespace(collect_depth=False)
 
     def get_obs(self):
@@ -517,6 +667,7 @@ def test_observation_maps_the_robodojo_runtime_contract_without_mutating_it():
     assert observation.extra["additional_info"] == {"frequency": 25}
     assert observation.extra["data_format_version"] == "v1.0"
     assert observation.extra["env_idx"] == 0
+    assert observation.extra["layout_id"] == 7
     assert observation.step == 3
 
 
@@ -559,6 +710,8 @@ def test_give_up_marks_the_episode_failed_before_the_audit_is_written(
     assert env.success == [False]
     audit = json.loads((tmp_path / "p3_transcript.json").read_text())
     assert audit["official_success"] == [False]
+    assert audit["layout_id"] == 7
+    assert audit["policy_config"]["scene"]["init_seed"] == 7
 
 
 def test_stopping_before_the_official_end_is_recorded_as_a_failure():
